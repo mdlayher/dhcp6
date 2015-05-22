@@ -6,9 +6,7 @@ import (
 
 // DefaultServeMux is the default ServeMux used by Serve.  When the Handle and
 // HandleFunc functions are called, handlers are applied to DefaultServeMux.
-var DefaultServeMux = &ServeMux{
-	m: make(map[MessageType]Handler),
-}
+var DefaultServeMux = NewServeMux()
 
 // ServeMux is a DHCP request multiplexer, which implements Handler.  ServeMux
 // matches handlers based on their MessageType, enabling different handlers
@@ -18,6 +16,13 @@ var DefaultServeMux = &ServeMux{
 type ServeMux struct {
 	mu sync.RWMutex
 	m  map[MessageType]Handler
+}
+
+// NewServeMux creates a new ServeMux which is ready to accept Handlers.
+func NewServeMux() *ServeMux {
+	return &ServeMux{
+		m: make(map[MessageType]Handler),
+	}
 }
 
 // ServeDHCP implements Handler for ServeMux, and serves a DHCP request using
