@@ -43,6 +43,13 @@ type Server struct {
 	// If configuring a relay agent, only the former value should be used.
 	MulticastGroups []*net.IPAddr
 
+	// The server's DUID, which uniquely identifies this server to clients.
+	// If no DUID is specified, a DUID-LL will be generated using the
+	// specified interface's hardware type and address.  If possible,
+	// servers with persistent storage available should generate a DUID-LLT
+	// and store it for future use.
+	ServerID DUID
+
 	ifIndex int
 }
 
@@ -75,6 +82,16 @@ func (srv *Server) ListenAndServe() error {
 	iface, err := net.InterfaceByName(srv.Iface)
 	if err != nil {
 		return err
+	}
+
+	// If no DUID was set for server previously, generate a DUID-LL
+	// now using the interface's hardware type and address
+	if srv.ServerID == nil {
+		// BUG(mdlayher): see if hardware type can be easily determined for
+		// an interface.  For now, default to Ethernet (10mb) as defined here:
+		// http://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml.
+		const ethernet10Mb = 1
+		srv.ServerID = NewDUIDLL(ethernet10Mb, iface.HardwareAddr)
 	}
 
 	// Open UDP6 packet connection listener on designated DHCPv6 port

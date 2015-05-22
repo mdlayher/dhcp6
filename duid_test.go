@@ -260,6 +260,50 @@ func TestDUIDLL(t *testing.T) {
 	}
 }
 
+// TestNewDUIDLL verifies that NewDUIDLL generates a proper DUIDLL from
+// an input hardware type and hardware address.
+func TestNewDUIDLL(t *testing.T) {
+	var tests = []struct {
+		hardwareType uint16
+		hardwareAddr net.HardwareAddr
+		duid         DUIDLL
+	}{
+		{
+			hardwareType: 1,
+			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
+			duid: DUIDLL([]byte{
+				0, 3,
+				0, 1,
+				0, 0, 0, 0, 0, 0,
+			}),
+		},
+		{
+			hardwareType: 10,
+			hardwareAddr: net.HardwareAddr([]byte{1, 2, 3, 4, 5, 6}),
+			duid: DUIDLL([]byte{
+				0, 3,
+				0, 10,
+				1, 2, 3, 4, 5, 6,
+			}),
+		},
+		{
+			hardwareType: 256,
+			hardwareAddr: net.HardwareAddr([]byte{6, 7, 8, 9, 10, 11}),
+			duid: DUIDLL([]byte{
+				0, 3,
+				1, 0,
+				6, 7, 8, 9, 10, 11,
+			}),
+		},
+	}
+
+	for i, tt := range tests {
+		if want, got := tt.duid, NewDUIDLL(tt.hardwareType, tt.hardwareAddr); !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] unexpected DUIDLL:\n- want %v\n-  got %v", i, want, got)
+		}
+	}
+}
+
 // Test_parseDUID verifies that parseDUID detects the correct DUID type for a
 // variety of input data.
 func Test_parseDUID(t *testing.T) {

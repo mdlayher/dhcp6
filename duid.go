@@ -123,6 +123,21 @@ func (d DUIDEN) Identifier() []byte {
 // interface, but without stable, persistent storage.
 type DUIDLL []byte
 
+// NewDUIDLL generates a new DUIDLL from an input IANA-assigned hardware
+// type and a hardware address.
+func NewDUIDLL(hardwareType uint16, hardwareAddr net.HardwareAddr) DUIDLL {
+	d := make(DUIDLL, 4+len(hardwareAddr))
+
+	// 2 bytes: DUID type (DUID-LL in this case)
+	binary.BigEndian.PutUint16(d[0:2], uint16(DUIDTypeLL))
+	// 2 bytes: hardware type
+	binary.BigEndian.PutUint16(d[2:4], hardwareType)
+	// N bytes: hardware address
+	copy(d[4:4+len(hardwareAddr)], hardwareAddr)
+
+	return d
+}
+
 // Bytes implements DUID, and returns the entire underlying byte slice for
 // a DUIDLL.  If the caller changes the contents of the returned slice,
 // the contents of the DUIDLL will change as well.
