@@ -43,10 +43,12 @@ type Request struct {
 	packet Packet
 }
 
-// newRequest creates a new *Request from an input Packet and UDP address.
+// newServerRequest creates a new *Request from an input Packet and UDP address.
 // It populates the basic struct members which can be used in a DHCP handler,
 // and also parses some well-known options into a simpler form.
-func newRequest(p Packet, remoteAddr *net.UDPAddr) *Request {
+//
+// It is only intended to be used by the server component and tests.
+func newServerRequest(p Packet, remoteAddr *net.UDPAddr) *Request {
 	r := &Request{
 		MessageType:   p.MessageType(),
 		TransactionID: p.TransactionID(),

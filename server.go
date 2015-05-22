@@ -193,7 +193,7 @@ func (c *conn) serve() {
 
 	// Set up Request with information from a Packet, providing a nicer
 	// API for callers to implement their own DHCP request handlers
-	r := newRequest(p, c.remoteAddr)
+	r := newServerRequest(p, c.remoteAddr)
 
 	// Set up response to send responses back to the original requester
 	w := &response{
