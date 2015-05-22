@@ -12,12 +12,23 @@ type Packet []byte
 
 // MessageType returns the MessageType constant identified in this Packet.
 func (p Packet) MessageType() MessageType {
+	// Empty packet means no message type
+	if len(p) == 0 {
+		return 0
+	}
+
 	return MessageType(p[0])
 }
 
 // TransactionID returns the transaction ID byte slice identified in this
 // Packet.
 func (p Packet) TransactionID() []byte {
+	// If packet is too short to contain a transaction ID,
+	// just return a nil ID
+	if len(p) < 4 {
+		return nil
+	}
+
 	return p[1:4]
 }
 
@@ -37,23 +48,33 @@ type Option struct {
 func (p Packet) Options() []Option {
 	var options []Option
 
-	// Skip message type and transaction ID
+	// Skip message type and transaction ID,
+	// ensure packet is long enough to contain options
+	var length int
 	buf := bytes.NewBuffer(p[4:])
-	for {
+	for buf.Len() > 4 {
 		// 2 bytes: option code
 		o := Option{}
 		o.Code = OptionCode(binary.BigEndian.Uint16(buf.Next(2)))
 
-		// 2 bytes: option length, used to parse N bytes for
-		// option data
-		o.Data = buf.Next(int(binary.BigEndian.Uint16(buf.Next(2))))
-		options = append(options, o)
+		// 2 bytes: option length
+		length = int(binary.BigEndian.Uint16(buf.Next(2)))
 
-		// If less than 5 bytes remain, there cannot possibly be any more
-		// option code, length, and data triples, so end parsing
-		if buf.Len() < 5 {
-			break
+		// If length indicated is zero, skip to next iteration
+		if length == 0 {
+			continue
 		}
+
+		// N bytes: option data
+		o.Data = buf.Next(length)
+
+		// If option data has less bytes than indicated by length,
+		// discard the option
+		if len(o.Data) < length {
+			continue
+		}
+
+		options = append(options, o)
 	}
 
 	return options
