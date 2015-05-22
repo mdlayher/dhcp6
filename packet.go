@@ -3,6 +3,13 @@ package dhcp6
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
+)
+
+var (
+	// errInvalidTransactionID is returned when a transaction ID not exactly
+	// 3 bytes in length.
+	errInvalidTransactionID = errors.New("transaction ID must be exactly 3 bytes")
 )
 
 // Packet represents a raw DHCPv6 packet, using the format described in IETF
@@ -78,4 +85,62 @@ func (p Packet) Options() []Option {
 	}
 
 	return options
+}
+
+// newPacket creates a new Packet from an input message type, transaction ID,
+// and options slice.  The resulting Packet can be used to send a request to
+// a DHCP server, or a response to DHCP client.
+//
+// The transaction ID must be exactly 3 bytes, or an error will be returned.
+func newPacket(mt MessageType, txID []byte, options []Option) (Packet, error) {
+	// Transaction ID must always be 3 bytes
+	if len(txID) != 3 {
+		return nil, errInvalidTransactionID
+	}
+
+	// If no options, allocate only enough space for message type
+	// and transaction ID
+	if len(options) == 0 {
+		p := make(Packet, 4)
+		p[0] = byte(mt)
+		copy(p[1:4], txID[:])
+		return p, nil
+	}
+
+	// Calculate size of packet so the entire packet can be allocated
+	// at once
+
+	// 1 byte: message type
+	// 3 bytes: transaction ID
+	i := 4
+	for _, o := range options {
+		// 2 bytes: option code
+		// 2 bytes: option length
+		// N bytes: option data
+		i += 2 + 2 + len(o.Data)
+	}
+
+	// Allocate packet and fill basic fields
+	p := make(Packet, i, i)
+	p[0] = byte(mt)
+	copy(p[1:4], txID[:])
+
+	// Copy options into packet, advancing index to copy options data into
+	// proper indices
+	i = 4
+	for _, o := range options {
+		// 2 bytes: option code
+		binary.BigEndian.PutUint16(p[i:i+2], uint16(o.Code))
+		i += 2
+
+		// 2 bytes: option length
+		binary.BigEndian.PutUint16(p[i:i+2], uint16(len(o.Data)))
+		i += 2
+
+		// N bytes: option data
+		copy(p[i:i+len(o.Data)], o.Data)
+		i += len(o.Data)
+	}
+
+	return p, nil
 }
