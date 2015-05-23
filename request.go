@@ -1,9 +1,7 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"net"
-	"time"
 )
 
 // Request represents a processed DHCP request received by a server.
@@ -19,20 +17,11 @@ type Request struct {
 	// transaction ID is used.
 	TransactionID []byte
 
-	// Slice of options sent by client, carrying additional
+	// Map of options sent by client, carrying additional
 	// information or requesting additional information from
-	// the server.
-	Options []Option
-
-	// Unique client ID, represented by a DHCP Unique Identifier,
-	// or DUID.  A DUID may not be present for all requests, in
-	// which case, ClientID is nil.  See the documentation for
-	// DUID for more details.
-	ClientID DUID
-
-	// Time elapsed during a DHCP transaction, as reported by the
-	// client.
-	Elapsed time.Duration
+	// the server.  Its methods can be used to check for and parse
+	// additional information relating to a request.
+	Options Options
 
 	// Length of the DHCP request, in bytes.
 	Length int64
@@ -52,24 +41,17 @@ func newServerRequest(p Packet, remoteAddr *net.UDPAddr) *Request {
 	r := &Request{
 		MessageType:   p.MessageType(),
 		TransactionID: p.TransactionID(),
-		Options:       p.Options(),
 		Length:        int64(len(p)),
 		RemoteAddr:    remoteAddr.String(),
 
 		packet: p,
 	}
 
-	// Parse and iterate all options from packet to gather additional
-	// fields for Request
-	for _, o := range r.Options {
-		switch o.Code {
-		case OptionClientID:
-			r.ClientID = parseDUID(o.Data)
-		case OptionElapsedTime:
-			// Time is reported in hundredths of seconds, so we convert
-			// it to a more manageable milliseconds
-			r.Elapsed = time.Duration(binary.BigEndian.Uint16(o.Data)) * 10 * time.Millisecond
-		}
+	// Parse options into Options map
+	options := p.Options()
+	r.Options = make(Options, len(options))
+	for _, o := range options {
+		r.Options.add(o.Code, o.Data)
 	}
 
 	return r
