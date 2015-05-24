@@ -362,3 +362,79 @@ func TestOptions_enumerate(t *testing.T) {
 		}
 	}
 }
+
+// Test_parseOptions verifies that parseOptions parses correct option values
+// from a slice of bytes, and that it returns a nil option slice if the byte
+// slice cannot contain options.
+func Test_parseOptions(t *testing.T) {
+	var tests = []struct {
+		description string
+		buf         []byte
+		options     []option
+	}{
+		{
+			description: "nil options bytes",
+			buf:         nil,
+			options:     nil,
+		},
+		{
+			description: "empty options bytes",
+			buf:         []byte{},
+			options:     nil,
+		},
+		{
+			description: "too short options bytes",
+			buf:         []byte{0},
+			options:     nil,
+		},
+		{
+			description: "zero code, zero length option bytes",
+			buf:         []byte{0, 0, 0, 0},
+			options:     nil,
+		},
+		{
+			description: "zero code, zero length option bytes with trailing byte",
+			buf:         []byte{0, 0, 0, 0, 1},
+			options:     nil,
+		},
+		{
+			description: "zero code, length 3, incorrect length for data",
+			buf:         []byte{0, 0, 0, 3, 1, 2},
+			options:     nil,
+		},
+		{
+			description: "client ID, length 1, value [1]",
+			buf:         []byte{0, 1, 0, 1, 1},
+			options: []option{
+				option{
+					Code: OptionClientID,
+					Data: []byte{1},
+				},
+			},
+		},
+		{
+			description: "client ID, length 2, value [1 1] + server ID, length 3, value [1 2 3]",
+			buf: []byte{
+				0, 1, 0, 2, 1, 1,
+				0, 2, 0, 3, 1, 2, 3,
+			},
+			options: []option{
+				option{
+					Code: OptionClientID,
+					Data: []byte{1, 1},
+				},
+				option{
+					Code: OptionServerID,
+					Data: []byte{1, 2, 3},
+				},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		if want, got := tt.options, parseOptions(tt.buf); !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] unexpected options slice for parseOptions(%v):\n- want: %v\n-  got: %v",
+				i, tt.buf, want, got)
+		}
+	}
+}

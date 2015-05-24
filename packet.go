@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 )
@@ -51,38 +50,8 @@ type option struct {
 // both an OptionCode type and its raw data value.  Options are returned in
 // the order they are placed in the packet.
 func (p packet) Options() []option {
-	var options []option
-
-	// Skip message type and transaction ID,
-	// ensure packet is long enough to contain options
-	var length int
-	buf := bytes.NewBuffer(p[4:])
-	for buf.Len() > 4 {
-		// 2 bytes: option code
-		o := option{}
-		o.Code = OptionCode(binary.BigEndian.Uint16(buf.Next(2)))
-
-		// 2 bytes: option length
-		length = int(binary.BigEndian.Uint16(buf.Next(2)))
-
-		// If length indicated is zero, skip to next iteration
-		if length == 0 {
-			continue
-		}
-
-		// N bytes: option data
-		o.Data = buf.Next(length)
-
-		// If option data has less bytes than indicated by length,
-		// discard the option
-		if len(o.Data) < length {
-			continue
-		}
-
-		options = append(options, o)
-	}
-
-	return options
+	// Skip message type and transaction ID
+	return parseOptions(p[4:])
 }
 
 // newPacket creates a new packet from an input message type, transaction ID,

@@ -1,6 +1,7 @@
 package dhcp6
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"sort"
@@ -117,5 +118,42 @@ func (o Options) enumerate() []option {
 	}
 
 	sort.Sort(byOptionCode(options))
+	return options
+}
+
+// parseOptions returns a slice of option code and values from an input byte
+// slice.  It is used with various different types to enable parsing of both
+// top-level options, and options embedded within other options.
+func parseOptions(b []byte) []option {
+	var length int
+	var options []option
+
+	buf := bytes.NewBuffer(b)
+
+	for buf.Len() > 4 {
+		// 2 bytes: option code
+		o := option{}
+		o.Code = OptionCode(binary.BigEndian.Uint16(buf.Next(2)))
+
+		// 2 bytes: option length
+		length = int(binary.BigEndian.Uint16(buf.Next(2)))
+
+		// If length indicated is zero, skip to next iteration
+		if length == 0 {
+			continue
+		}
+
+		// N bytes: option data
+		o.Data = buf.Next(length)
+
+		// If option data has less bytes than indicated by length,
+		// discard the option
+		if len(o.Data) < length {
+			continue
+		}
+
+		options = append(options, o)
+	}
+
 	return options
 }
