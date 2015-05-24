@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"encoding/binary"
+	"errors"
 	"net"
 	"time"
 )
@@ -20,6 +21,16 @@ const (
 	DUIDTypeLL  DUIDType = 3
 
 	// BUG(mdlayher): add additional DUID types defined by IANA
+)
+
+var (
+	// errInvalidDUID is returned when not enough bytes are present
+	// to parse a valid DUID from a byte slice.
+	errInvalidDUID = errors.New("not enough bytes for valid DUID")
+
+	// errUnknownDUID is returned when an unknown DUID type is
+	// encountered, and thus, a DUID cannot be parsed.
+	errUnknownDUID = errors.New("unknown DUID type")
 )
 
 // DUID represents a DHCP Unique Identifier, as defined in IETF RFC
@@ -166,16 +177,21 @@ func (d DUIDLL) HardwareAddr() net.HardwareAddr {
 
 // parseDUID returns the correct DUID type of the input byte slice as a
 // DUID interface type.
-func parseDUID(d []byte) DUID {
+func parseDUID(d []byte) (DUID, error) {
+	// DUID must have enough bytes to determine its type
+	if len(d) < 2 {
+		return nil, errInvalidDUID
+	}
+
 	// BUG(mdlayher): add DUID-UUID to this in the future.
 	switch DUIDType(binary.BigEndian.Uint16(d[0:2])) {
 	case DUIDTypeLLT:
-		return DUIDLLT(d)
+		return DUIDLLT(d), nil
 	case DUIDTypeEN:
-		return DUIDEN(d)
+		return DUIDEN(d), nil
 	case DUIDTypeLL:
-		return DUIDLL(d)
+		return DUIDLL(d), nil
 	}
 
-	return nil
+	return nil, errUnknownDUID
 }

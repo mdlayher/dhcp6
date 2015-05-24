@@ -310,10 +310,15 @@ func Test_parseDUID(t *testing.T) {
 	var tests = []struct {
 		buf    []byte
 		result reflect.Type
+		err    error
 	}{
 		{
-			buf:    []byte{0, 0},
-			result: nil,
+			buf: []byte{0},
+			err: errInvalidDUID,
+		},
+		{
+			buf: []byte{0, 0},
+			err: errUnknownDUID,
 		},
 		{
 			buf:    []byte{0, 1},
@@ -328,14 +333,24 @@ func Test_parseDUID(t *testing.T) {
 			result: reflect.TypeOf(DUIDLL{}),
 		},
 		{
-			buf:    []byte{0, 4},
-			result: nil,
+			buf: []byte{0, 4},
+			err: errUnknownDUID,
 		},
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.result, reflect.TypeOf(parseDUID(tt.buf)); want != got {
-			t.Fatalf("[%02d] unexpected type for parseDUID(%v):\n- test: want %v, got %v",
+		d, err := parseDUID(tt.buf)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] unexpected error for parseDUID(%v): %v != %v",
+					i, tt.buf, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.result, reflect.TypeOf(d); want != got {
+			t.Fatalf("[%02d] unexpected type for parseDUID(%v): %v != %v",
 				i, tt.buf, want, got)
 		}
 	}

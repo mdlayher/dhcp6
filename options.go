@@ -38,27 +38,31 @@ func (o Options) Get(key OptionCode) ([]byte, bool) {
 // ClientID returns the Client Identifier Option value, described in RFC 3315,
 // Section 22.2.  The DUID returned allows unique identification of a client
 // to a server.  The boolean return value indicates if OptionClientID was
-// present in the Options map.
-func (o Options) ClientID() (DUID, bool) {
+// present in the Options map.  The error return value indicates if a known,
+// valid DUID type could be parsed from the option.
+func (o Options) ClientID() (DUID, bool, error) {
 	v, ok := o.Get(OptionClientID)
 	if !ok {
-		return nil, false
+		return nil, false, nil
 	}
 
-	return parseDUID(v), true
+	d, err := parseDUID(v)
+	return d, true, err
 }
 
 // ServerID returns the Server Identifier Option value, described in RFC 3315,
 // Section 22.3.  The DUID returned allows unique identification of a server
 // to a client.  The boolean return value indicates if OptionServerID was
-// present in the Options map.
-func (o Options) ServerID() (DUID, bool) {
+// present in the Options map.  The error return value indicates if a known,
+// valid DUID type could be parsed from the option.
+func (o Options) ServerID() (DUID, bool, error) {
 	v, ok := o.Get(OptionServerID)
 	if !ok {
-		return nil, false
+		return nil, false, nil
 	}
 
-	return parseDUID(v), true
+	d, err := parseDUID(v)
+	return d, true, err
 }
 
 // ElapsedTime returns the Elapsed Time Option value, described in RFC 3315,
