@@ -51,7 +51,7 @@ func newServerRequest(p Packet, remoteAddr *net.UDPAddr) *Request {
 	options := p.Options()
 	r.Options = make(Options, len(options))
 	for _, o := range options {
-		r.Options.add(o.Code, o.Data)
+		r.Options.Add(o.Code, o.Data)
 	}
 
 	return r

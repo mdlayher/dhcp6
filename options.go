@@ -11,15 +11,16 @@ import (
 // can be accessed directly.
 type Options map[OptionCode][][]byte
 
-// add adds a new OptionCode key and value byte slice to the Options map.
-func (o Options) add(key OptionCode, value []byte) {
+// Add adds a new OptionCode key and value byte slice to the Options map.
+func (o Options) Add(key OptionCode, value []byte) {
 	o[key] = append(o[key], value)
 }
 
-// get attempts to retrieve the first value specified by an OptionCode
+// Get attempts to retrieve the first value specified by an OptionCode
 // key.  If a value is found, get returns the value and boolean true.
-// If it is not found, get returns nil and boolean false.
-func (o Options) get(key OptionCode) ([]byte, bool) {
+// If it is not found, or the value slice is entirely empty, Get
+// returns nil and boolean false.
+func (o Options) Get(key OptionCode) ([]byte, bool) {
 	// Empty map has no key/value pairs
 	if len(o) == 0 {
 		return nil, false
@@ -39,7 +40,7 @@ func (o Options) get(key OptionCode) ([]byte, bool) {
 // to a server.  The boolean return value indicates if OptionClientID was
 // present in the Options map.
 func (o Options) ClientID() (DUID, bool) {
-	v, ok := o.get(OptionClientID)
+	v, ok := o.Get(OptionClientID)
 	if !ok {
 		return nil, false
 	}
@@ -52,7 +53,7 @@ func (o Options) ClientID() (DUID, bool) {
 // to a client.  The boolean return value indicates if OptionServerID was
 // present in the Options map.
 func (o Options) ServerID() (DUID, bool) {
-	v, ok := o.get(OptionServerID)
+	v, ok := o.Get(OptionServerID)
 	if !ok {
 		return nil, false
 	}
@@ -65,7 +66,7 @@ func (o Options) ServerID() (DUID, bool) {
 // a DHCP transaction, as reported by a client.  The boolean return value
 // indicates if OptionElapsedTime was present in the Options map.
 func (o Options) ElapsedTime() (time.Duration, bool) {
-	v, ok := o.get(OptionElapsedTime)
+	v, ok := o.Get(OptionElapsedTime)
 	if !ok {
 		return 0, false
 	}
