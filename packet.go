@@ -12,13 +12,13 @@ var (
 	errInvalidTransactionID = errors.New("transaction ID must be exactly 3 bytes")
 )
 
-// Packet represents a raw DHCPv6 packet, using the format described in IETF
-// RFC 3315, Section 6.  A Packet has methods which allow easy access to
-// its message type, transaction ID, and any options available in the Packet.
-type Packet []byte
+// packet represents a raw DHCPv6 packet, using the format described in IETF
+// RFC 3315, Section 6.  A packet has methods which allow easy access to
+// its message type, transaction ID, and any options available in the packet.
+type packet []byte
 
-// MessageType returns the MessageType constant identified in this Packet.
-func (p Packet) MessageType() MessageType {
+// MessageType returns the MessageType constant identified in this packet.
+func (p packet) MessageType() MessageType {
 	// Empty packet means no message type
 	if len(p) == 0 {
 		return 0
@@ -28,8 +28,8 @@ func (p Packet) MessageType() MessageType {
 }
 
 // TransactionID returns the transaction ID byte slice identified in this
-// Packet.
-func (p Packet) TransactionID() []byte {
+// packet.
+func (p packet) TransactionID() []byte {
 	// If packet is too short to contain a transaction ID,
 	// just return a nil ID
 	if len(p) < 4 {
@@ -47,10 +47,10 @@ type option struct {
 	Data []byte
 }
 
-// Options parses a Packet's options and returns them as a slice containing
+// Options parses a packet's options and returns them as a slice containing
 // both an OptionCode type and its raw data value.  Options are returned in
-// the order they are placed in the Packet.
-func (p Packet) Options() []option {
+// the order they are placed in the packet.
+func (p packet) Options() []option {
 	var options []option
 
 	// Skip message type and transaction ID,
@@ -85,12 +85,12 @@ func (p Packet) Options() []option {
 	return options
 }
 
-// newPacket creates a new Packet from an input message type, transaction ID,
-// and options slice.  The resulting Packet can be used to send a request to
+// newPacket creates a new packet from an input message type, transaction ID,
+// and options slice.  The resulting packet can be used to send a request to
 // a DHCP server, or a response to DHCP client.
 //
 // The transaction ID must be exactly 3 bytes, or an error will be returned.
-func newPacket(mt MessageType, txID []byte, options []option) (Packet, error) {
+func newPacket(mt MessageType, txID []byte, options []option) (packet, error) {
 	// Transaction ID must always be 3 bytes
 	if len(txID) != 3 {
 		return nil, errInvalidTransactionID
@@ -99,7 +99,7 @@ func newPacket(mt MessageType, txID []byte, options []option) (Packet, error) {
 	// If no options, allocate only enough space for message type
 	// and transaction ID
 	if len(options) == 0 {
-		p := make(Packet, 4)
+		p := make(packet, 4)
 		p[0] = byte(mt)
 		copy(p[1:4], txID[:])
 		return p, nil
@@ -119,7 +119,7 @@ func newPacket(mt MessageType, txID []byte, options []option) (Packet, error) {
 	}
 
 	// Allocate packet and fill basic fields
-	p := make(Packet, i, i)
+	p := make(packet, i, i)
 	p[0] = byte(mt)
 	copy(p[1:4], txID[:])
 

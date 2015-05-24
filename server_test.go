@@ -133,10 +133,10 @@ func (c *testServeConn) WriteTo(p []byte, cm *ipv6.ControlMessage, addr net.Addr
 	return len(p), nil
 }
 
-// testConnServe sets up a Server, Handler, and conn for an input Packet and
+// testConnServe sets up a Server, Handler, and conn for an input packet and
 // address.  Once setup is complete, it invokes function fn using conn.serve
 // and returns the captured response data.
-func testConnServe(t *testing.T, p Packet, addr *net.UDPAddr, fn func(Responser, *Request)) *testServeConn {
+func testConnServe(t *testing.T, p packet, addr *net.UDPAddr, fn func(Responser, *Request)) *testServeConn {
 	mux := NewServeMux()
 	mux.HandleFunc(p.MessageType(), fn)
 

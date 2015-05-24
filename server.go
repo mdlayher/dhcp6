@@ -222,10 +222,10 @@ func (r *response) Write(p []byte) (int, error) {
 // serve handles serving an individual DHCP connection, and is invoked in a
 // goroutine.
 func (c *conn) serve() {
-	// Parse Packet data from raw buffer
-	p := Packet(c.buf)
+	// Parse packet data from raw buffer
+	p := packet(c.buf)
 
-	// Set up Request with information from a Packet, providing a nicer
+	// Set up Request with information from a packet, providing a nicer
 	// API for callers to implement their own DHCP request handlers
 	r := newServerRequest(p, c.remoteAddr)
 

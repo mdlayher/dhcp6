@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-// TestPacketMessageType verifies that Packet.MessageType returns a correct
+// Test_packetMessageType verifies that packet.MessageType returns a correct
 // message type value from a byte, and that it returns a zero value if the
 // message type byte is empty.
-func TestPacketMessageType(t *testing.T) {
+func Test_packetMessageType(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -53,17 +53,17 @@ func TestPacketMessageType(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.mt, Packet(tt.buf).MessageType(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected Packet(%v).MessageType(): %v != %v",
+		if want, got := tt.mt, packet(tt.buf).MessageType(); want != got {
+			t.Fatalf("[%02d] test %q, unexpected packet(%v).MessageType(): %v != %v",
 				i, tt.description, tt.buf, want, got)
 		}
 	}
 }
 
-// TestPacketTransactionID verifies that Packet.TransactionID returns a correct
+// Test_packetTransactionID verifies that packet.TransactionID returns a correct
 // transaction ID value from a slice of bytes, and that it returns nil if the
 // byte slice is too short to contain a transaction ID.
-func TestPacketTransactionID(t *testing.T) {
+func Test_packetTransactionID(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -109,17 +109,17 @@ func TestPacketTransactionID(t *testing.T) {
 	// Message type is not relevant in this test, so we automatically
 	// prepend an empty message type
 	for i, tt := range tests {
-		if want, got := tt.txID, Packet(append([]byte{0}, tt.buf...)).TransactionID(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected Packet(%v).TransactionID(): %v != %v",
+		if want, got := tt.txID, packet(append([]byte{0}, tt.buf...)).TransactionID(); !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected packet(%v).TransactionID(): %v != %v",
 				i, tt.description, tt.buf, want, got)
 		}
 	}
 }
 
-// TestPacketOptions verifies that Packet.Options parses correct Option values
+// Test_packetOptions verifies that packet.Options parses correct Option values
 // from a slice of bytes, and that it returns a nil Options slice if the byte
 // slice cannot contain options.
-func TestPacketOptions(t *testing.T) {
+func Test_packetOptions(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -187,14 +187,14 @@ func TestPacketOptions(t *testing.T) {
 	// Message type and transaction ID are not relevant in this test,so we
 	// automatically prepend an empty message type and transaction ID
 	for i, tt := range tests {
-		if want, got := tt.options, Packet(append([]byte{0, 0, 0, 0}, tt.buf...)).Options(); !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] unexpected Packet(%v).Options():\n- want: %v\n-  got: %v",
+		if want, got := tt.options, packet(append([]byte{0, 0, 0, 0}, tt.buf...)).Options(); !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] unexpected packet(%v).Options():\n- want: %v\n-  got: %v",
 				i, tt.buf, want, got)
 		}
 	}
 }
 
-// Test_newPacket verifies that newPacket generates an appropriate output Packet,
+// Test_newPacket verifies that newPacket generates an appropriate output packet,
 // when provided with a variety of message types, (possibly erroneous)
 // transaction IDs, and options.
 func Test_newPacket(t *testing.T) {

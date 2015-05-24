@@ -23,7 +23,7 @@ func TestServeMuxHandleNoReply(t *testing.T) {
 
 	mux.ServeDHCP(buf, req)
 
-	res := Packet(buf.Bytes())
+	res := packet(buf.Bytes())
 	if l := len(res); l > 0 {
 		t.Fatalf("reply packet should be empty, but got length: %d", l)
 	}
@@ -72,7 +72,7 @@ func assertAdvertisePacket(t *testing.T, mux *ServeMux, mt MessageType, txID []b
 
 	mux.ServeDHCP(buf, req)
 
-	res := Packet(buf.Bytes())
+	res := packet(buf.Bytes())
 
 	if want, got := MessageTypeAdvertise, res.MessageType(); want != got {
 		t.Fatalf("unexpected reply message type: %v != %v", want, got)
