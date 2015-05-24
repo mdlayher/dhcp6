@@ -19,11 +19,16 @@ func TestServeMuxHandleNoReply(t *testing.T) {
 	}
 
 	req := newServerRequest(p, nil)
-	buf := bytes.NewBuffer(nil)
 
-	mux.ServeDHCP(buf, req)
+	tc := &testServeConn{}
+	w := &response{
+		conn:    tc,
+		req:     req,
+		options: make(Options),
+	}
+	mux.ServeDHCP(w, req)
 
-	res := packet(buf.Bytes())
+	res := packet(tc.buf)
 	if l := len(res); l > 0 {
 		t.Fatalf("reply packet should be empty, but got length: %d", l)
 	}
@@ -68,11 +73,15 @@ func assertAdvertisePacket(t *testing.T, mux *ServeMux, mt MessageType, txID []b
 	}
 
 	req := newServerRequest(p, nil)
-	buf := bytes.NewBuffer(nil)
+	tc := &testServeConn{}
+	w := &response{
+		conn:    tc,
+		req:     req,
+		options: make(Options),
+	}
+	mux.ServeDHCP(w, req)
 
-	mux.ServeDHCP(buf, req)
-
-	res := packet(buf.Bytes())
+	res := packet(tc.buf)
 
 	if want, got := MessageTypeAdvertise, res.MessageType(); want != got {
 		t.Fatalf("unexpected reply message type: %v != %v", want, got)
@@ -92,10 +101,6 @@ func (h *solicitHandler) ServeDHCP(w Responser, r *Request) {
 
 // solicit is a function which can be adapted as a HandlerFunc.
 func solicit(w Responser, r *Request) {
-	p, err := newPacket(MessageTypeAdvertise, r.TransactionID, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	w.Write(p)
+	w.MessageType(MessageTypeAdvertise)
+	w.Write()
 }

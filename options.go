@@ -3,6 +3,7 @@ package dhcp6
 import (
 	"encoding/binary"
 	"errors"
+	"sort"
 	"time"
 )
 
@@ -91,4 +92,30 @@ func (o Options) ElapsedTime() (time.Duration, bool, error) {
 	// Time is reported in hundredths of seconds, so we convert
 	// it to a more manageable milliseconds
 	return time.Duration(binary.BigEndian.Uint16(v)) * 10 * time.Millisecond, true, nil
+}
+
+// byOptionCode implements sort.Interface for []option.
+type byOptionCode []option
+
+func (b byOptionCode) Len() int               { return len(b) }
+func (b byOptionCode) Less(i int, j int) bool { return b[i].Code < b[j].Code }
+func (b byOptionCode) Swap(i int, j int)      { b[i], b[j] = b[j], b[i] }
+
+// enumerate returns an ordered slice of option data from the Options map,
+// for use with sending responses to clients.
+func (o Options) enumerate() []option {
+	options := make([]option, 0)
+
+	// Send all values for a given key
+	for k, v := range o {
+		for _, vv := range v {
+			options = append(options, option{
+				Code: k,
+				Data: vv,
+			})
+		}
+	}
+
+	sort.Sort(byOptionCode(options))
+	return options
 }

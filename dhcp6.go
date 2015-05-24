@@ -6,10 +6,6 @@ package dhcp6
 
 //go:generate stringer -output=string.go -type=DUIDType,MessageType,Status,OptionCode
 
-import (
-	"io"
-)
-
 // Handler provides an interface which allows structs to act as DHCPv6 server
 // handlers.  ServeDHCP implementations receive a copy of the incoming DHCP
 // request via the Request parameter, and allow outgoing communication via
@@ -36,4 +32,19 @@ func (f HandlerFunc) ServeDHCP(w Responser, r *Request) {
 // Responser provides an interface which allows a DHCP handler to construct
 // and write a DHCP packet.
 // BUG(mdlayher): the interface for Responser will most likely change.
-type Responser io.Writer
+type Responser interface {
+	// MessageType sets the DHCP message type for a Responser, indicating
+	// the type of message that a client will receive.  Changing message
+	// type after a call to Write has no effect.
+	MessageType(MessageType)
+
+	// Options returns the Options map that will be sent to a client
+	// after a call to Write.  Changing options after a call to Write
+	// has no effect.
+	Options() Options
+
+	// Write generates a DHCP response packet using the message type set
+	// by MessageType and options set by Options.  Write returns the number
+	// of bytes sent and any errors which occurred.
+	Write() (int, error)
+}

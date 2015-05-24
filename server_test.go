@@ -46,14 +46,11 @@ func Test_conn_serve(t *testing.T) {
 	}
 	options := []option{opt}
 
-	p, err := newPacket(MessageTypeSolicit, []byte{0, 1, 2}, options)
+	mt := MessageTypeSolicit
+	p, err := newPacket(mt, []byte{0, 1, 2}, options)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Though this data is not actually representative of a DHCP response,
-	// it will confirm that conn.serve acts as intended
-	var response = []byte("helloworld")
 
 	addr := &net.UDPAddr{
 		IP:   net.IP("::1"),
@@ -98,13 +95,14 @@ func Test_conn_serve(t *testing.T) {
 			t.Fatalf("unexpected packet:\n- want: %v\n-  got: %v", want, got)
 		}
 
-		if _, err := w.Write(response); err != nil {
+		w.MessageType(mt)
+		if _, err := w.Write(); err != nil {
 			t.Fatal(err)
 		}
 	})
 
 	// Verify correct response from testServeConn
-	if want, got := response, tc.buf; !bytes.Equal(want, got) {
+	if want, got := p, tc.buf; !bytes.Equal(want, got) {
 		t.Fatalf("unexpected response:\n- want: %v\n-  got: %v", want, got)
 	}
 	if tc.cm != nil {

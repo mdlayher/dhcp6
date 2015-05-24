@@ -206,17 +206,38 @@ func (s *Server) newConn(p serveConn, addr *net.UDPAddr, n int, buf []byte) (*co
 }
 
 // response represents a DHCP response, and implements Responser so that
-// outbound packets can be appropriately sent.
+// outbound packets can be appropriately created and sent to a client.
 type response struct {
 	remoteAddr *net.UDPAddr
 	conn       serveConn
 	req        *Request
+
+	mt      MessageType
+	options Options
 }
 
-// Write implements Responser, and writes a packet directly to the address
-// indicated in the response.
-func (r *response) Write(p []byte) (int, error) {
+// Writes uses the message type set by MessageType, the transaction ID sent
+// by a client, and the options set by Options to create and send a packet
+// to the client's address.
+func (r *response) Write() (int, error) {
+	p, err := newPacket(r.mt, r.req.TransactionID, r.options.enumerate())
+	if err != nil {
+		return 0, err
+	}
+
 	return r.conn.WriteTo(p, nil, r.remoteAddr)
+}
+
+// MessageType sets the MessageType, which will be used when Write is called.
+func (r *response) MessageType(mt MessageType) {
+	r.mt = mt
+}
+
+// Options returns the Options map, which can be modified before a call
+// to Write.  When Write is called, the Options map is enumerated into an
+// ordered slice of option codes and values.
+func (r *response) Options() Options {
+	return r.options
 }
 
 // serve handles serving an individual DHCP connection, and is invoked in a
@@ -234,6 +255,17 @@ func (c *conn) serve() {
 		remoteAddr: c.remoteAddr,
 		conn:       c.conn,
 		req:        r,
+		options:    make(Options),
+	}
+
+	// Add server ID to response
+	if sID := c.server.ServerID; sID != nil {
+		w.options.Add(OptionServerID, sID.Bytes())
+	}
+
+	// If available in request, add client ID to response
+	if duid, ok, err := r.Options.ClientID(); err == nil && ok {
+		w.options.Add(OptionClientID, duid.Bytes())
 	}
 
 	// If set, invoke DHCP handler using request and response
