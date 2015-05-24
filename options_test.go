@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
+	"time"
 )
 
 // TestOptionsAdd verifies that Options.Add correctly creates or appends
@@ -224,6 +225,66 @@ func TestOptionsServerID(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.ServerID(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsElapsedTime verifies that Options.ElapsedTime properly parses and
+// returns a time.Duration value, if one is available with OptionElapsedTime.
+func TestOptionsElapsedTime(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		duration    time.Duration
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionElapsedTime not present in Options map",
+		},
+		{
+			description: "OptionElapsedTime present in Options map, but too short",
+			options: Options{
+				OptionElapsedTime: [][]byte{[]byte{1}},
+			},
+			err: errInvalidElapsedTime,
+		},
+		{
+			description: "OptionElapsedTime present in Options map, but too long",
+			options: Options{
+				OptionElapsedTime: [][]byte{[]byte{1, 2, 3}},
+			},
+			err: errInvalidElapsedTime,
+		},
+		{
+			description: "OptionElapsedTime present in Options map",
+			options: Options{
+				OptionElapsedTime: [][]byte{[]byte{1, 1}},
+			},
+			duration: 2570 * time.Millisecond,
+			ok:       true,
+		},
+	}
+
+	for i, tt := range tests {
+		duration, ok, err := tt.options.ElapsedTime()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.ElapsedTime: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.duration, duration; want != got {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.ElapsedTime(): %v != %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.ElapsedTime(): %v != %v",
 				i, tt.description, want, got)
 		}
 	}
