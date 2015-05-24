@@ -33,6 +33,10 @@ type Server struct {
 	// and ignored by the server.
 	Iface string
 
+	// Addr is the network address which this server should bind to.  The
+	// default value is [::]:547, as specified in IETF RFC 3315, Section 5.2.
+	Addr string
+
 	// Handler is the handler to use while serving DHCP requests.  If this
 	// value is nil, DefaultServeMux will be used in place of Handler.
 	Handler Handler
@@ -56,7 +60,7 @@ type Server struct {
 	ifIndex int
 }
 
-// ListenAndServe listens for UDP6 connections on port [::]:567 of the
+// ListenAndServe listens for UDP6 connections on the specified address of the
 // specified interface, using the default Server configuration and specified
 // handler to handle DHCPv6 connections.  If the handler is nil,
 // DefaultServeMux is used instead.
@@ -70,6 +74,7 @@ type Server struct {
 func ListenAndServe(iface string, handler Handler) error {
 	return (&Server{
 		Iface:   iface,
+		Addr:    "[::]:547",
 		Handler: handler,
 		MulticastGroups: []*net.IPAddr{
 			AllRelayAgentsAndServersAddr,
@@ -78,11 +83,11 @@ func ListenAndServe(iface string, handler Handler) error {
 	}).ListenAndServe()
 }
 
-// ListenAndServe listens on the UDP6 [::]:547 using the interface defined in
-// s.Iface.  Traffic from any other interface will be filtered out and ignored.
-// Serve is called to handle serving DHCP traffic once ListenAndServe opens a
-// UDP6 packet connection, and joins the multicast groups defined in
-// s.MulticastGroups.
+// ListenAndServe listens on the address specified by s.Addr using the network
+// interface defined in s.Iface.  Traffic from any other interface will be
+// filtered out and ignored.  Serve is called to handle serving DHCP traffic
+// once ListenAndServe opens a UDP6 packet connection, and joins the multicast
+// groups defined in s.MulticastGroups.
 func (s *Server) ListenAndServe() error {
 	// Check for valid interface
 	iface, err := net.InterfaceByName(s.Iface)
@@ -100,8 +105,8 @@ func (s *Server) ListenAndServe() error {
 		s.ServerID = NewDUIDLL(ethernet10Mb, iface.HardwareAddr)
 	}
 
-	// Open UDP6 packet connection listener on designated DHCPv6 port
-	conn, err := net.ListenPacket("udp6", "[::]:547")
+	// Open UDP6 packet connection listener on specified address
+	conn, err := net.ListenPacket("udp6", s.Addr)
 	if err != nil {
 		return err
 	}
