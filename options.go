@@ -74,6 +74,33 @@ func (o Options) ServerID() (DUID, bool, error) {
 	return d, true, err
 }
 
+// IANA returns the Identity Association for Non-temporary Address Option
+// value, described in RFC 3315, Section 22.4.  Multiple IANA values may
+// be present in a single DHCP request.  The boolean return value indicates if
+// OptionIANA was present in the Options map.  The error return value
+// indicates if one or more valid IANAs could not be parsed from the option.
+func (o Options) IANA() ([]IANA, bool, error) {
+	// Client may send multiple IANA option requests, so we must
+	// access the map directly
+	vv, ok := o[OptionIANA]
+	if !ok {
+		return nil, false, nil
+	}
+
+	// Parse each IA_NA value
+	iana := make([]IANA, len(vv), len(vv))
+	for i := range vv {
+		ia, err := parseIANA(vv[i])
+		if err != nil {
+			return nil, true, err
+		}
+
+		iana[i] = ia
+	}
+
+	return iana, true, nil
+}
+
 // ElapsedTime returns the Elapsed Time Option value, described in RFC 3315,
 // Section 22.9.  The time.Duration returned reports the time elapsed during
 // a DHCP transaction, as reported by a client.  The boolean return value
