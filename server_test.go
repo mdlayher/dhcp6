@@ -40,11 +40,11 @@ func TestServer_newConn(t *testing.T) {
 // Test_conn_serve verifies that conn.serve invokes a Handler with correct
 // Request and Responser values.
 func Test_conn_serve(t *testing.T) {
-	option := Option{
+	opt := option{
 		Code: OptionClientID,
 		Data: []byte{0, 1},
 	}
-	options := []Option{option}
+	options := []option{opt}
 
 	p, err := newPacket(MessageTypeSolicit, []byte{0, 1, 2}, options)
 	if err != nil {
@@ -82,7 +82,7 @@ func Test_conn_serve(t *testing.T) {
 			t.Fatal("no client ID found in request")
 		}
 
-		if want, got := option.Data, duid.Bytes(); !bytes.Equal(want, got) {
+		if want, got := opt.Data, duid.Bytes(); !bytes.Equal(want, got) {
 			t.Fatalf("unexpected client ID:\n- want: %v\n-  got: %v", want, got)
 		}
 

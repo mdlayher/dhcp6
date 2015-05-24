@@ -12,13 +12,13 @@ import (
 func TestOptionsAdd(t *testing.T) {
 	var tests = []struct {
 		description string
-		kv          []Option
+		kv          []option
 		options     Options
 	}{
 		{
 			description: "one key/value pair",
-			kv: []Option{
-				Option{
+			kv: []option{
+				option{
 					Code: 1,
 					Data: []byte("foo"),
 				},
@@ -29,12 +29,12 @@ func TestOptionsAdd(t *testing.T) {
 		},
 		{
 			description: "two key/value pairs",
-			kv: []Option{
-				Option{
+			kv: []option{
+				option{
 					Code: 1,
 					Data: []byte("foo"),
 				},
-				Option{
+				option{
 					Code: 2,
 					Data: []byte("bar"),
 				},
@@ -46,16 +46,16 @@ func TestOptionsAdd(t *testing.T) {
 		},
 		{
 			description: "three key/value pairs, two with same key",
-			kv: []Option{
-				Option{
+			kv: []option{
+				option{
 					Code: 1,
 					Data: []byte("foo"),
 				},
-				Option{
+				option{
 					Code: 1,
 					Data: []byte("baz"),
 				},
-				Option{
+				option{
 					Code: 2,
 					Data: []byte("bar"),
 				},

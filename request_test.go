@@ -9,11 +9,11 @@ import (
 // Test_newServerRequest verifies that newServerRequest returns a consistent
 // Request struct for use in Handler types.
 func Test_newServerRequest(t *testing.T) {
-	option := Option{
+	opt := option{
 		Code: OptionClientID,
 		Data: []byte{0, 1},
 	}
-	p, err := newPacket(MessageTypeSolicit, []byte{1, 2, 3}, []Option{option})
+	p, err := newPacket(MessageTypeSolicit, []byte{1, 2, 3}, []option{opt})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func Test_newServerRequest(t *testing.T) {
 
 		packet: p,
 	}
-	r.Options.Add(option.Code, option.Data)
+	r.Options.Add(opt.Code, opt.Data)
 
 	if want, got := r, newServerRequest(p, addr); !reflect.DeepEqual(want, got) {
 		t.Fatalf("unexpected Request for newServerRequest(%v, %v)\n- want: %v\n-  got: %v",

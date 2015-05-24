@@ -39,12 +39,10 @@ func (p Packet) TransactionID() []byte {
 	return p[1:4]
 }
 
-// Option represents an individual DHCP Option, as defined in IETF RFC 3315,
+// option represents an individual DHCP Option, as defined in IETF RFC 3315,
 // Section 22.  An Option carries both an OptionCode and its raw Data.  The
-// OptionCode can be compared against the set of OptionCode constants provided
-// with this package to easily identify a given option.  The format of the
-// option data varies depending on the option code.
-type Option struct {
+// format of option data varies depending on the option code.
+type option struct {
 	Code OptionCode
 	Data []byte
 }
@@ -52,8 +50,8 @@ type Option struct {
 // Options parses a Packet's options and returns them as a slice containing
 // both an OptionCode type and its raw data value.  Options are returned in
 // the order they are placed in the Packet.
-func (p Packet) Options() []Option {
-	var options []Option
+func (p Packet) Options() []option {
+	var options []option
 
 	// Skip message type and transaction ID,
 	// ensure packet is long enough to contain options
@@ -61,7 +59,7 @@ func (p Packet) Options() []Option {
 	buf := bytes.NewBuffer(p[4:])
 	for buf.Len() > 4 {
 		// 2 bytes: option code
-		o := Option{}
+		o := option{}
 		o.Code = OptionCode(binary.BigEndian.Uint16(buf.Next(2)))
 
 		// 2 bytes: option length
@@ -92,7 +90,7 @@ func (p Packet) Options() []Option {
 // a DHCP server, or a response to DHCP client.
 //
 // The transaction ID must be exactly 3 bytes, or an error will be returned.
-func newPacket(mt MessageType, txID []byte, options []Option) (Packet, error) {
+func newPacket(mt MessageType, txID []byte, options []option) (Packet, error) {
 	// Transaction ID must always be 3 bytes
 	if len(txID) != 3 {
 		return nil, errInvalidTransactionID

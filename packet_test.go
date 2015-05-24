@@ -123,7 +123,7 @@ func TestPacketOptions(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
-		options     []Option
+		options     []option
 	}{
 		{
 			description: "nil options bytes",
@@ -158,8 +158,8 @@ func TestPacketOptions(t *testing.T) {
 		{
 			description: "client ID, length 1, value [1]",
 			buf:         []byte{0, 1, 0, 1, 1},
-			options: []Option{
-				Option{
+			options: []option{
+				option{
 					Code: OptionClientID,
 					Data: []byte{1},
 				},
@@ -171,12 +171,12 @@ func TestPacketOptions(t *testing.T) {
 				0, 1, 0, 2, 1, 1,
 				0, 2, 0, 3, 1, 2, 3,
 			},
-			options: []Option{
-				Option{
+			options: []option{
+				option{
 					Code: OptionClientID,
 					Data: []byte{1, 1},
 				},
-				Option{
+				option{
 					Code: OptionServerID,
 					Data: []byte{1, 2, 3},
 				},
@@ -202,7 +202,7 @@ func Test_newPacket(t *testing.T) {
 		description string
 		mt          MessageType
 		txID        []byte
-		options     []Option
+		options     []option
 		err         error
 	}{
 		{
@@ -220,8 +220,8 @@ func Test_newPacket(t *testing.T) {
 			description: "renew, tx 012, option client ID foo",
 			mt:          MessageTypeRenew,
 			txID:        []byte{0, 1, 2},
-			options: []Option{
-				Option{
+			options: []option{
+				option{
 					Code: OptionClientID,
 					Data: []byte("foo"),
 				},
@@ -231,12 +231,12 @@ func Test_newPacket(t *testing.T) {
 			description: "release, tx 345, multiple options",
 			mt:          MessageTypeRenew,
 			txID:        []byte{0, 1, 2},
-			options: []Option{
-				Option{
+			options: []option{
+				option{
 					Code: OptionClientID,
 					Data: []byte("foo"),
 				},
-				Option{
+				option{
 					Code: OptionElapsedTime,
 					Data: []byte("0123"),
 				},
