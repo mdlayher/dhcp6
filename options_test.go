@@ -144,3 +144,87 @@ func TestOptionsGet(t *testing.T) {
 		}
 	}
 }
+
+// TestOptionsClientID verifies that Options.ClientID properly parses and returns
+// a DUID value, if one is available with OptionClientID.
+func TestOptionsClientID(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		duid        DUID
+		ok          bool
+	}{
+		{
+			description: "OptionClientID not present in Options map",
+		},
+		{
+			description: "OptionClientID present in Options map",
+			options: Options{
+				OptionClientID: [][]byte{[]byte{0, 1}},
+			},
+			duid: DUIDLLT([]byte{0, 1}),
+			ok:   true,
+		},
+	}
+
+	for i, tt := range tests {
+		// DUID parsing is tested elsewhere, so errors should automatically fail
+		// test here
+		duid, ok, err := tt.options.ClientID()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.ClientID():\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.ClientID(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsServerID verifies that Options.ServerID properly parses and returns
+// a DUID value, if one is available with OptionServerID.
+func TestOptionsServerID(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		duid        DUID
+		ok          bool
+	}{
+		{
+			description: "OptionServerID not present in Options map",
+		},
+		{
+			description: "OptionServerID present in Options map",
+			options: Options{
+				OptionServerID: [][]byte{[]byte{0, 1}},
+			},
+			duid: DUIDLLT([]byte{0, 1}),
+			ok:   true,
+		},
+	}
+
+	for i, tt := range tests {
+		// DUID parsing is tested elsewhere, so errors should automatically fail
+		// test here
+		duid, ok, err := tt.options.ServerID()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.ServerID():\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.ServerID(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
