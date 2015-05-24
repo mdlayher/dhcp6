@@ -75,7 +75,8 @@ func (o Options) ServerID() (DUID, bool, error) {
 // ElapsedTime returns the Elapsed Time Option value, described in RFC 3315,
 // Section 22.9.  The time.Duration returned reports the time elapsed during
 // a DHCP transaction, as reported by a client.  The boolean return value
-// indicates if OptionElapsedTime was present in the Options map.
+// indicates if OptionElapsedTime was present in the Options map.  The error
+// return value indicates if a valid duration could be parsed from the option.
 func (o Options) ElapsedTime() (time.Duration, bool, error) {
 	v, ok := o.Get(OptionElapsedTime)
 	if !ok {
