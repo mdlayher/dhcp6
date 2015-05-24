@@ -168,12 +168,18 @@ func (s *Server) Serve(p *ipv6.PacketConn) error {
 	}
 }
 
+// serveConn is an internal type which allows a packet connection to be swapped
+// out for testing, without opening a network connection.
+type serveConn interface {
+	WriteTo([]byte, *ipv6.ControlMessage, net.Addr) (int, error)
+}
+
 // conn represents an in-flight DHCP connection, and contains information about
 // the connection and server.
 type conn struct {
 	remoteAddr *net.UDPAddr
 	server     *Server
-	conn       *ipv6.PacketConn
+	conn       serveConn
 	buf        []byte
 }
 
@@ -182,7 +188,7 @@ type conn struct {
 // a single connection.
 // BUG(mdlayher): consider using a sync.Pool with many buffers available to avoid
 // allocating a new one on each connection
-func (s *Server) newConn(p *ipv6.PacketConn, addr *net.UDPAddr, n int, buf []byte) (*conn, error) {
+func (s *Server) newConn(p serveConn, addr *net.UDPAddr, n int, buf []byte) (*conn, error) {
 	c := &conn{
 		remoteAddr: addr,
 		server:     s,
@@ -198,7 +204,7 @@ func (s *Server) newConn(p *ipv6.PacketConn, addr *net.UDPAddr, n int, buf []byt
 // outbound packets can be appropriately sent.
 type response struct {
 	remoteAddr *net.UDPAddr
-	conn       *ipv6.PacketConn
+	conn       serveConn
 	req        *Request
 }
 
