@@ -1,4 +1,7 @@
 // Package dhcp6 implements a DHCPv6 server, as described in IETF RFC 3315.
+//
+// Unless otherwise stated, any reference to "DHCP" in this package refers to
+// DHCPv6 only.
 package dhcp6
 
 //go:generate stringer -output=string.go -type=DUIDType,MessageType,Status,OptionCode
