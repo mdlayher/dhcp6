@@ -2,7 +2,14 @@ package dhcp6
 
 import (
 	"encoding/binary"
+	"errors"
 	"time"
+)
+
+var (
+	// errInvalidElapsedTime is returned when a valid duration cannot be parsed
+	// from OptionElapsedTime, because too many or too few bytes are present.
+	errInvalidElapsedTime = errors.New("invalid option value for OptionElapsedTime")
 )
 
 // Options is a map of OptionCode keys with a slice of byte slice values.
@@ -69,13 +76,18 @@ func (o Options) ServerID() (DUID, bool, error) {
 // Section 22.9.  The time.Duration returned reports the time elapsed during
 // a DHCP transaction, as reported by a client.  The boolean return value
 // indicates if OptionElapsedTime was present in the Options map.
-func (o Options) ElapsedTime() (time.Duration, bool) {
+func (o Options) ElapsedTime() (time.Duration, bool, error) {
 	v, ok := o.Get(OptionElapsedTime)
 	if !ok {
-		return 0, false
+		return 0, false, nil
+	}
+
+	// Data must be exactly two bytes
+	if len(v) != 2 {
+		return 0, false, errInvalidElapsedTime
 	}
 
 	// Time is reported in hundredths of seconds, so we convert
 	// it to a more manageable milliseconds
-	return time.Duration(binary.BigEndian.Uint16(v)) * 10 * time.Millisecond, true
+	return time.Duration(binary.BigEndian.Uint16(v)) * 10 * time.Millisecond, true, nil
 }
