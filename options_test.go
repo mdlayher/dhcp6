@@ -289,3 +289,76 @@ func TestOptionsElapsedTime(t *testing.T) {
 		}
 	}
 }
+
+// TestOptions_enumerate verifies that Options.enumerate correctly enumerates
+// and sorts an Options map into key/value optain pairs.
+func TestOptions_enumerate(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		kv          []option
+	}{
+		{
+			description: "one key/value pair",
+			options: Options{
+				1: [][]byte{[]byte("foo")},
+			},
+			kv: []option{
+				option{
+					Code: 1,
+					Data: []byte("foo"),
+				},
+			},
+		},
+		{
+			description: "two key/value pairs",
+			options: Options{
+				1: [][]byte{[]byte("foo")},
+				2: [][]byte{[]byte("bar")},
+			},
+			kv: []option{
+				option{
+					Code: 1,
+					Data: []byte("foo"),
+				},
+				option{
+					Code: 2,
+					Data: []byte("bar"),
+				},
+			},
+		},
+		{
+			description: "four key/value pairs, two with same key",
+			options: Options{
+				1: [][]byte{[]byte("foo"), []byte("baz")},
+				3: [][]byte{[]byte("qux")},
+				2: [][]byte{[]byte("bar")},
+			},
+			kv: []option{
+				option{
+					Code: 1,
+					Data: []byte("foo"),
+				},
+				option{
+					Code: 1,
+					Data: []byte("baz"),
+				},
+				option{
+					Code: 2,
+					Data: []byte("bar"),
+				},
+				option{
+					Code: 3,
+					Data: []byte("qux"),
+				},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		if want, got := tt.kv, tt.options.enumerate(); !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected key/value options:\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+	}
+}
