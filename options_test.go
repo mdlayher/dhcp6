@@ -591,6 +591,67 @@ func TestOptionsPreference(t *testing.T) {
 	}
 }
 
+// TestOptionsStatusCode verifies that Options.StatusCode properly parses
+// and returns a StatusCode value, if it is available with OptionStatusCode.
+func TestOptionsStatusCode(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		sc          StatusCode
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionStatusCode not present in Options map",
+		},
+		{
+			description: "OptionStatusCode present in Options map, but too short length",
+			options: Options{
+				OptionStatusCode: [][]byte{[]byte{}},
+			},
+			err: errInvalidStatusCode,
+		},
+		{
+			description: "OptionStatusCode present in Options map, no message",
+			options: Options{
+				OptionStatusCode: [][]byte{[]byte{0, 0}},
+			},
+			sc: StatusCode([]byte{0, 0}),
+			ok: true,
+		},
+		{
+			description: "OptionStatusCode present in Options map, with message",
+			options: Options{
+				OptionStatusCode: [][]byte{append([]byte{0, 0}, []byte("deadbeef")...)},
+			},
+			sc: StatusCode(append([]byte{0, 0}, []byte("deadbeef")...)),
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		sc, ok, err := tt.options.StatusCode()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.StatusCode(): %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.sc, sc; !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.StatusCode():\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.StatusCode(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
 // TestOptionsElapsedTime verifies that Options.ElapsedTime properly parses and
 // returns a time.Duration value, if one is available with OptionElapsedTime.
 func TestOptionsElapsedTime(t *testing.T) {

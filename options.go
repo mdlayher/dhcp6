@@ -212,6 +212,22 @@ func (o Options) ElapsedTime() (time.Duration, bool, error) {
 	return time.Duration(binary.BigEndian.Uint16(v)) * 10 * time.Millisecond, true, nil
 }
 
+// StatusCode returns the Status Code Option value, described in RFC 3315,
+// Section 22.13.  The StatusCode struct's methods may be used to determine
+// a code and an explanation for the status.  The boolean return value
+// indicates if OptionStatusCode was present in the Options map.  The error
+// return value indicates if a valid StatusCode could not be parsed from
+// the option.
+func (o Options) StatusCode() (StatusCode, bool, error) {
+	v, ok := o.Get(OptionStatusCode)
+	if !ok {
+		return nil, false, nil
+	}
+
+	status, err := parseStatusCode(v)
+	return status, true, err
+}
+
 // byOptionCode implements sort.Interface for optslice.
 type byOptionCode optslice
 
