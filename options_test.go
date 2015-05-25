@@ -307,6 +307,90 @@ func TestOptionsIANA(t *testing.T) {
 	}
 }
 
+// TestOptionsIAAddr verifies that Options.IAAddr properly parses and
+// returns multiple IAAddr values, if one or more are available with
+// OptionIAAddr.
+func TestOptionsIAAddr(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		iaaddr      []IAAddr
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionIAAddr not present in Options map",
+		},
+		{
+			description: "OptionIAAddr present in Options map, but too short",
+			options: Options{
+				OptionIAAddr: [][]byte{bytes.Repeat([]byte{0}, 23)},
+			},
+			err: errInvalidIAAddr,
+		},
+		{
+			description: "one OptionIAAddr present in Options map",
+			options: Options{
+				OptionIAAddr: [][]byte{[]byte{
+					0, 0, 0, 0,
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					0, 0, 1, 0,
+					0, 0, 2, 0,
+				}},
+			},
+			iaaddr: []IAAddr{
+				IAAddr([]byte{
+					0, 0, 0, 0,
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					0, 0, 1, 0,
+					0, 0, 2, 0,
+				}),
+			},
+			ok: true,
+		},
+		{
+			description: "two OptionIAAddr present in Options map",
+			options: Options{
+				OptionIAAddr: [][]byte{
+					bytes.Repeat([]byte{0}, 24),
+					bytes.Repeat([]byte{1}, 24),
+				},
+			},
+			iaaddr: []IAAddr{
+				IAAddr(bytes.Repeat([]byte{0}, 24)),
+				IAAddr(bytes.Repeat([]byte{1}, 24)),
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		iaaddr, ok, err := tt.options.IAAddr()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.IAAddr: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.iaaddr, iaaddr; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.IAAddr():\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAAddr(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
 // TestOptionsElapsedTime verifies that Options.ElapsedTime properly parses and
 // returns a time.Duration value, if one is available with OptionElapsedTime.
 func TestOptionsElapsedTime(t *testing.T) {

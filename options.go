@@ -101,6 +101,34 @@ func (o Options) IANA() ([]IANA, bool, error) {
 	return iana, true, nil
 }
 
+// IAAddr returns the Identity Association Address Option value, described in
+// RFC 3315, Section 22.6.  The IAAddr option must always appear enscapsulated
+// in the Options map of a IANA or IATA option.  Multiple IAAddr values may be
+// present in a single DHCP request.  The boolean return value indicates if
+// OptionIAAddr was present in the Options map.  The error return value
+// indicates if one or more valid IAAddrs could be be parsed from the option.
+func (o Options) IAAddr() ([]IAAddr, bool, error) {
+	// Client may send multiple IAAddr option requests, so we must
+	// access the map directly
+	vv, ok := o[OptionIAAddr]
+	if !ok {
+		return nil, false, nil
+	}
+
+	// Parse each IAAddr value
+	iaaddr := make([]IAAddr, len(vv), len(vv))
+	for i := range vv {
+		iaa, err := parseIAAddr(vv[i])
+		if err != nil {
+			return nil, true, err
+		}
+
+		iaaddr[i] = iaa
+	}
+
+	return iaaddr, true, nil
+}
+
 // ElapsedTime returns the Elapsed Time Option value, described in RFC 3315,
 // Section 22.9.  The time.Duration returned reports the time elapsed during
 // a DHCP transaction, as reported by a client.  The boolean return value
