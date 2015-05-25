@@ -384,7 +384,7 @@ func TestOptionsIAAddr(t *testing.T) {
 	var tests = []struct {
 		description string
 		options     Options
-		iaaddr      []IAAddr
+		iaaddr      []*IAAddr
 		ok          bool
 		err         error
 	}{
@@ -410,15 +410,17 @@ func TestOptionsIAAddr(t *testing.T) {
 					0, 0, 2, 0,
 				}},
 			},
-			iaaddr: []IAAddr{
-				IAAddr([]byte{
-					0, 0, 0, 0,
-					1, 1, 1, 1,
-					2, 2, 2, 2,
-					3, 3, 3, 3,
-					0, 0, 1, 0,
-					0, 0, 2, 0,
-				}),
+			iaaddr: []*IAAddr{
+				&IAAddr{
+					iaaddr: []byte{
+						0, 0, 0, 0,
+						1, 1, 1, 1,
+						2, 2, 2, 2,
+						3, 3, 3, 3,
+						0, 0, 1, 0,
+						0, 0, 2, 0,
+					},
+				},
 			},
 			ok: true,
 		},
@@ -430,9 +432,13 @@ func TestOptionsIAAddr(t *testing.T) {
 					bytes.Repeat([]byte{1}, 24),
 				},
 			},
-			iaaddr: []IAAddr{
-				IAAddr(bytes.Repeat([]byte{0}, 24)),
-				IAAddr(bytes.Repeat([]byte{1}, 24)),
+			iaaddr: []*IAAddr{
+				&IAAddr{
+					iaaddr: bytes.Repeat([]byte{0}, 24),
+				},
+				&IAAddr{
+					iaaddr: bytes.Repeat([]byte{1}, 24),
+				},
 			},
 			ok: true,
 		},
@@ -449,9 +455,11 @@ func TestOptionsIAAddr(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.iaaddr, iaaddr; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.IAAddr():\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+		for j := range tt.iaaddr {
+			if want, got := tt.iaaddr[j].Bytes(), iaaddr[j].Bytes(); !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAAddr():\n- want: %v\n-  got: %v",
+					i, j, tt.description, want, got)
+			}
 		}
 
 		if want, got := tt.ok, ok; want != got {

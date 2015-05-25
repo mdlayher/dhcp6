@@ -122,7 +122,7 @@ func (o Options) IANA() ([]*IANA, bool, error) {
 // present in a single DHCP request.  The boolean return value indicates if
 // OptionIAAddr was present in the Options map.  The error return value
 // indicates if one or more valid IAAddrs could be be parsed from the option.
-func (o Options) IAAddr() ([]IAAddr, bool, error) {
+func (o Options) IAAddr() ([]*IAAddr, bool, error) {
 	// Client may send multiple IAAddr option requests, so we must
 	// access the map directly
 	vv, ok := o[OptionIAAddr]
@@ -131,7 +131,7 @@ func (o Options) IAAddr() ([]IAAddr, bool, error) {
 	}
 
 	// Parse each IAAddr value
-	iaaddr := make([]IAAddr, len(vv), len(vv))
+	iaaddr := make([]*IAAddr, len(vv), len(vv))
 	for i := range vv {
 		iaa, err := parseIAAddr(vv[i])
 		if err != nil {

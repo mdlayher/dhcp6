@@ -61,7 +61,9 @@ func TestIAAddrIP(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.ip, IAAddr(tt.buf).IP(); !bytes.Equal(want, got) {
+		if want, got := tt.ip, (&IAAddr{
+			iaaddr: tt.buf,
+		}).IP(); !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr(%v).IP():\n- want: %v\n-  got: %v",
 				i, tt.description, tt.buf, want, got)
 		}
@@ -101,7 +103,9 @@ func TestIAAddrPreferredLifetime(t *testing.T) {
 
 	// Prepend all-zero IP value on each test
 	for i, tt := range tests {
-		if want, got := tt.preferredLifetime, IAAddr(append(bytes.Repeat([]byte{0}, 16), tt.buf...)).PreferredLifetime(); want != got {
+		if want, got := tt.preferredLifetime, (&IAAddr{
+			iaaddr: append(bytes.Repeat([]byte{0}, 16), tt.buf...),
+		}).PreferredLifetime(); want != got {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr(%v).PreferredLifetime(): %v != %v",
 				i, tt.description, tt.buf, want, got)
 		}
@@ -141,7 +145,9 @@ func TestIAAddrValidLifetime(t *testing.T) {
 
 	// Prepend all-zero IP and PreferredLifetime value on each test
 	for i, tt := range tests {
-		if want, got := tt.validLifetime, IAAddr(append(bytes.Repeat([]byte{0}, 20), tt.buf...)).ValidLifetime(); want != got {
+		if want, got := tt.validLifetime, (&IAAddr{
+			iaaddr: append(bytes.Repeat([]byte{0}, 20), tt.buf...),
+		}).ValidLifetime(); want != got {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr(%v).ValidLifetime(): %v != %v",
 				i, tt.description, tt.buf, want, got)
 		}
@@ -194,7 +200,12 @@ func TestIAAddrOptions(t *testing.T) {
 
 	// Prepend all-zero IP, preferred, and valid lifetime value on each test
 	for i, tt := range tests {
-		if want, got := tt.options, IAAddr(append(bytes.Repeat([]byte{0}, 24), tt.buf...)).Options(); !reflect.DeepEqual(want, got) {
+		iaaddr, err := parseIAAddr(append(bytes.Repeat([]byte{0}, 24), tt.buf...))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if want, got := tt.options, iaaddr.Options(); !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr(%v).Options():\n- want: %v\n-  got: %v",
 				i, tt.description, tt.buf, want, got)
 		}
@@ -206,7 +217,7 @@ func TestIAAddrOptions(t *testing.T) {
 func Test_parseIAAddr(t *testing.T) {
 	var tests = []struct {
 		buf    []byte
-		iaaddr IAAddr
+		iaaddr *IAAddr
 		err    error
 	}{
 		{
@@ -226,14 +237,16 @@ func Test_parseIAAddr(t *testing.T) {
 				0, 0, 1, 0,
 				0, 0, 2, 0,
 			},
-			iaaddr: IAAddr([]byte{
-				0, 0, 0, 0,
-				1, 1, 1, 1,
-				2, 2, 2, 2,
-				3, 3, 3, 3,
-				0, 0, 1, 0,
-				0, 0, 2, 0,
-			}),
+			iaaddr: &IAAddr{
+				iaaddr: []byte{
+					0, 0, 0, 0,
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					0, 0, 1, 0,
+					0, 0, 2, 0,
+				},
+			},
 		},
 	}
 
@@ -248,8 +261,8 @@ func Test_parseIAAddr(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.iaaddr, iaaddr; !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] unexpected IAAddr for parseIAAddr(%v):\n- want: %v\n-  got: v",
+		if want, got := tt.iaaddr.Bytes(), iaaddr.Bytes(); !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] unexpected IAAddr for parseIAAddr(%v):\n- want: %v\n-  got: %v",
 				i, tt.buf, want, got)
 		}
 	}
