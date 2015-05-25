@@ -254,12 +254,12 @@ func (c *conn) serve() {
 
 	// Add server ID to response
 	if sID := c.server.ServerID; sID != nil {
-		w.options.AddRaw(OptionServerID, sID.Bytes())
+		w.options.Add(OptionServerID, sID)
 	}
 
 	// If available in request, add client ID to response
 	if duid, ok, err := r.Options.ClientID(); err == nil && ok {
-		w.options.AddRaw(OptionClientID, duid.Bytes())
+		w.options.Add(OptionClientID, duid)
 	}
 
 	// If set, invoke DHCP handler using request and response
