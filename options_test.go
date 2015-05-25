@@ -453,6 +453,66 @@ func TestOptionsOptionRequest(t *testing.T) {
 	}
 }
 
+// TestOptionsPreference verifies that Options.Preference properly parses
+// and returns an integer value, if it is available with OptionPreference.
+func TestOptionsPreference(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		preference  int
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionPreference not present in Options map",
+		},
+		{
+			description: "OptionPreference present in Options map, but too short length",
+			options: Options{
+				OptionPreference: [][]byte{[]byte{}},
+			},
+			err: errInvalidPreference,
+		},
+		{
+			description: "OptionPreference present in Options map, but too long length",
+			options: Options{
+				OptionPreference: [][]byte{[]byte{0, 1}},
+			},
+			err: errInvalidPreference,
+		},
+		{
+			description: "OptionPreference present in Options map",
+			options: Options{
+				OptionPreference: [][]byte{[]byte{255}},
+			},
+			preference: 255,
+			ok:         true,
+		},
+	}
+
+	for i, tt := range tests {
+		preference, ok, err := tt.options.Preference()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.Preference(): %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.preference, preference; want != got {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.Preference(): %v != %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.Preference(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
 // TestOptionsElapsedTime verifies that Options.ElapsedTime properly parses and
 // returns a time.Duration value, if one is available with OptionElapsedTime.
 func TestOptionsElapsedTime(t *testing.T) {
