@@ -8,6 +8,107 @@ import (
 	"time"
 )
 
+// TestNewIAAddr verifies that NewIAAddr creates a proper IAAddr value or returns
+// the correct error, depending on the input values.
+func TestNewIAAddr(t *testing.T) {
+	var tests = []struct {
+		description string
+		ip          net.IP
+		preferred   time.Duration
+		valid       time.Duration
+		options     Options
+		iaaddr      *IAAddr
+		err         error
+	}{
+		{
+			description: "nil IP, invalid IAAddr IP error",
+			err:         ErrInvalidIAAddrIP,
+		},
+		{
+			description: "short IP, invalid IAAddr IP error",
+			ip:          bytes.Repeat([]byte{1}, 15),
+			err:         ErrInvalidIAAddrIP,
+		},
+		{
+			description: "long IP, invalid IAAddr IP error",
+			ip:          bytes.Repeat([]byte{1}, 17),
+			err:         ErrInvalidIAAddrIP,
+		},
+		{
+			description: "preferred > valid, invalid IAAddr lifetimes error",
+			ip:          bytes.Repeat([]byte{1}, 16),
+			preferred:   60 * time.Second,
+			valid:       59 * time.Second,
+			err:         ErrInvalidIAAddrLifetimes,
+		},
+		{
+			description: "ok IP, 60s preferred, 90s valid, nil options",
+			ip: net.IP([]byte{
+				0, 0, 0, 0,
+				1, 1, 1, 1,
+				2, 2, 2, 2,
+				3, 3, 3, 3,
+			}),
+			preferred: 60 * time.Second,
+			valid:     90 * time.Second,
+			iaaddr: &IAAddr{
+				iaaddr: []byte{
+					0, 0, 0, 0,
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					0, 0, 0, 60,
+					0, 0, 0, 90,
+				},
+			},
+		},
+		{
+			description: "ok IP, 3600s preferred, 5400s valid, client ID [0 1] option",
+			ip: net.IP([]byte{
+				0, 0, 0, 0,
+				1, 1, 1, 1,
+				2, 2, 2, 2,
+				3, 3, 3, 3,
+			}),
+			preferred: 3600 * time.Second,
+			valid:     5400 * time.Second,
+			options: Options{
+				OptionClientID: [][]byte{[]byte{0, 1}},
+			},
+			iaaddr: &IAAddr{
+				iaaddr: []byte{
+					0, 0, 0, 0,
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					0, 0, 14, 16,
+					0, 0, 21, 24,
+				},
+				options: Options{
+					OptionClientID: [][]byte{[]byte{0, 1}},
+				},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		iaaddr, err := NewIAAddr(tt.ip, tt.preferred, tt.valid, tt.options)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for NewIAAddr(%v, %v, %v, %v): %v != %v",
+					i, tt.description, tt.ip, tt.preferred, tt.valid, tt.options, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.iaaddr.Bytes(), iaaddr.Bytes(); !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected IAAddr bytes for NewIAAddr(%v, %v, %v, %v).Bytes()\n- want: %v\n-  got: %v",
+				i, tt.description, tt.ip, tt.preferred, tt.valid, tt.options, want, got)
+		}
+	}
+}
+
 // TestIAAddrIP verifies that IAAddr.IP produces a correct net.IP value
 // for an input buffer.
 func TestIAAddrIP(t *testing.T) {
