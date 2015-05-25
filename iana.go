@@ -7,6 +7,10 @@ import (
 )
 
 var (
+	// errInvalidIANAID is returned when an input IAID value is not
+	// exactly 4 bytes in length.
+	ErrInvalidIANAIAID = errors.New("IAID must be exactly 4 bytes")
+
 	// errInvalidIANA is returned when a byte slice does not contain
 	// enough bytes to parse a valid IANA value.
 	errInvalidIANA = errors.New("not enough bytes for valid IA_NA")
@@ -23,6 +27,33 @@ type IANA struct {
 
 	// Options map which is marshaled to binary when Bytes is called
 	options Options
+}
+
+// NewIANA creates a new IANA from an IAID, T1 and T2 durations, and
+// an optional Options map.  The IAID must be exactly 4 bytes in length.
+// If an Options map is not specified, a new one will be allocated.
+func NewIANA(iaid []byte, t1 time.Duration, t2 time.Duration, options Options) (*IANA, error) {
+	// IANA is always 4 bytes
+	if len(iaid) != 4 {
+		return nil, ErrInvalidIANAIAID
+	}
+
+	iana := make([]byte, 12)
+	copy(iana[0:4], iaid)
+
+	// Convert durations to uint32 binary form
+	binary.BigEndian.PutUint32(iana[4:8], uint32(t1/time.Second))
+	binary.BigEndian.PutUint32(iana[8:12], uint32(t2/time.Second))
+
+	// If no options set, make empty map
+	if options == nil {
+		options = make(Options)
+	}
+
+	return &IANA{
+		iana:    iana,
+		options: options,
+	}, nil
 }
 
 // Bytes returns the underlying byte slice for an IANA, as well as a

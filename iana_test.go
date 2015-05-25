@@ -7,6 +7,84 @@ import (
 	"time"
 )
 
+// TestNewIANA verifies that NewIANA creates a proper IANA value or returns
+// the correct error, depending on the input values.
+func TestNewIANA(t *testing.T) {
+	var tests = []struct {
+		description string
+		iaid        []byte
+		t1          time.Duration
+		t2          time.Duration
+		options     Options
+		iana        *IANA
+		err         error
+	}{
+		{
+			description: "nil IAID, invalid IANA IAID error",
+			err:         ErrInvalidIANAIAID,
+		},
+		{
+			description: "short IAID, invalid IANA IAID error",
+			iaid:        []byte{0, 1, 2},
+			err:         ErrInvalidIANAIAID,
+		},
+		{
+			description: "long IAID, invalid IANA IAID error",
+			iaid:        []byte{0, 1, 2, 3, 4},
+			err:         ErrInvalidIANAIAID,
+		},
+		{
+			description: "ok IAID, 60s t1, 90s t2, nil options",
+			iaid:        []byte{0, 1, 2, 3},
+			t1:          60 * time.Second,
+			t2:          90 * time.Second,
+			iana: &IANA{
+				iana: []byte{
+					0, 1, 2, 3,
+					0, 0, 0, 60,
+					0, 0, 0, 90,
+				},
+			},
+		},
+		{
+			description: "ok IAID, 3600s t1, 5400s t2, client ID [0 1] option",
+			iaid:        []byte{0, 1, 2, 3},
+			t1:          3600 * time.Second,
+			t2:          5400 * time.Second,
+			options: Options{
+				OptionClientID: [][]byte{[]byte{0, 1}},
+			},
+			iana: &IANA{
+				iana: []byte{
+					0, 1, 2, 3,
+					0, 0, 14, 16,
+					0, 0, 21, 24,
+				},
+				options: Options{
+					OptionClientID: [][]byte{[]byte{0, 1}},
+				},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		iana, err := NewIANA(tt.iaid, tt.t1, tt.t2, tt.options)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for NewIANA(%v, %v, %v, %v): %v != %v",
+					i, tt.description, tt.iaid, tt.t1, tt.t2, tt.options, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.iana.Bytes(), iana.Bytes(); !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected IANA bytes for NewIANA(%v, %v, %v, %v).Bytes()\n- want: %v\n-  got: %v",
+				i, tt.description, tt.iaid, tt.t1, tt.t2, tt.options, want, got)
+		}
+	}
+}
+
 // TestIANAIAID verifies that IANA.IAID produces a correct IAID byte slice
 // for an input buffer.
 func TestIANAIAID(t *testing.T) {
