@@ -230,6 +230,83 @@ func TestOptionsServerID(t *testing.T) {
 	}
 }
 
+// TestOptionsIANA verifies that Options.IANA properly parses and
+// returns multiple IANA values, if one or more are available with OptionIANA.
+func TestOptionsIANA(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		iana        []IANA
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionIANA not present in Options map",
+		},
+		{
+			description: "OptionIANA present in Options map, but too short",
+			options: Options{
+				OptionIANA: [][]byte{bytes.Repeat([]byte{0}, 11)},
+			},
+			err: errInvalidIANA,
+		},
+		{
+			description: "one OptionIANA present in Options map",
+			options: Options{
+				OptionIANA: [][]byte{[]byte{
+					1, 2, 3, 4,
+					0, 0, 1, 0,
+					0, 0, 2, 0,
+				}},
+			},
+			iana: []IANA{
+				IANA([]byte{
+					1, 2, 3, 4,
+					0, 0, 1, 0,
+					0, 0, 2, 0,
+				}),
+			},
+			ok: true,
+		},
+		{
+			description: "two OptionIANA present in Options map",
+			options: Options{
+				OptionIANA: [][]byte{
+					bytes.Repeat([]byte{0}, 12),
+					bytes.Repeat([]byte{1}, 12),
+				},
+			},
+			iana: []IANA{
+				IANA(bytes.Repeat([]byte{0}, 12)),
+				IANA(bytes.Repeat([]byte{1}, 12)),
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		iana, ok, err := tt.options.IANA()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.IANA: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.iana, iana; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.IANA():\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.IANA(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
 // TestOptionsElapsedTime verifies that Options.ElapsedTime properly parses and
 // returns a time.Duration value, if one is available with OptionElapsedTime.
 func TestOptionsElapsedTime(t *testing.T) {
