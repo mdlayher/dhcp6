@@ -9,7 +9,7 @@ import (
 
 // TestOptionsAdd verifies that Options.Add correctly creates or appends
 // key/value Option pairs to an Options map.
-func TestOptionsAdd(t *testing.T) {
+func TestOptionsAddRaw(t *testing.T) {
 	var tests = []struct {
 		description string
 		kv          []option
@@ -70,7 +70,7 @@ func TestOptionsAdd(t *testing.T) {
 	for i, tt := range tests {
 		o := make(Options)
 		for _, p := range tt.kv {
-			o.Add(p.Code, p.Data)
+			o.AddRaw(p.Code, p.Data)
 		}
 
 		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {

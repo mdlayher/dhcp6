@@ -28,8 +28,9 @@ var (
 // can be accessed directly.
 type Options map[OptionCode][][]byte
 
-// Add adds a new OptionCode key and value byte slice to the Options map.
-func (o Options) Add(key OptionCode, value []byte) {
+// AddRaw adds a new OptionCode key and raw value byte slice to the
+// Options map.
+func (o Options) AddRaw(key OptionCode, value []byte) {
 	o[key] = append(o[key], value)
 }
 
@@ -261,7 +262,7 @@ func parseOptions(b []byte) Options {
 			continue
 		}
 
-		options.Add(o.Code, o.Data)
+		options.AddRaw(o.Code, o.Data)
 	}
 
 	return options

@@ -34,7 +34,7 @@ func Test_newServerRequest(t *testing.T) {
 
 		packet: p,
 	}
-	r.Options.Add(opt.Code, opt.Data)
+	r.Options.AddRaw(opt.Code, opt.Data)
 
 	if want, got := r, newServerRequest(p, addr); !reflect.DeepEqual(want, got) {
 		t.Fatalf("unexpected Request for newServerRequest(%v, %v)\n- want: %v\n-  got: %v",
