@@ -101,6 +101,5 @@ func (h *solicitHandler) ServeDHCP(w Responser, r *Request) {
 
 // solicit is a function which can be adapted as a HandlerFunc.
 func solicit(w Responser, r *Request) {
-	w.MessageType(MessageTypeAdvertise)
-	w.Write()
+	w.Send(MessageTypeAdvertise)
 }

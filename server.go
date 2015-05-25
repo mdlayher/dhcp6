@@ -212,25 +212,7 @@ type response struct {
 	conn       serveConn
 	req        *Request
 
-	mt      MessageType
 	options Options
-}
-
-// Writes uses the message type set by MessageType, the transaction ID sent
-// by a client, and the options set by Options to create and send a packet
-// to the client's address.
-func (r *response) Write() (int, error) {
-	p, err := newPacket(r.mt, r.req.TransactionID, r.options.enumerate())
-	if err != nil {
-		return 0, err
-	}
-
-	return r.conn.WriteTo(p, nil, r.remoteAddr)
-}
-
-// MessageType sets the MessageType, which will be used when Write is called.
-func (r *response) MessageType(mt MessageType) {
-	r.mt = mt
 }
 
 // Options returns the Options map, which can be modified before a call
@@ -238,6 +220,18 @@ func (r *response) MessageType(mt MessageType) {
 // ordered slice of option codes and values.
 func (r *response) Options() Options {
 	return r.options
+}
+
+// Send uses the input message typ, the transaction ID sent by a client,
+// and the options set by Options, to create and send a packet to the
+// client's address.
+func (r *response) Send(mt MessageType) (int, error) {
+	p, err := newPacket(mt, r.req.TransactionID, r.options.enumerate())
+	if err != nil {
+		return 0, err
+	}
+
+	return r.conn.WriteTo(p, nil, r.remoteAddr)
 }
 
 // serve handles serving an individual DHCP connection, and is invoked in a

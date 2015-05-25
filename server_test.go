@@ -95,8 +95,7 @@ func Test_conn_serve(t *testing.T) {
 			t.Fatalf("unexpected packet:\n- want: %v\n-  got: %v", want, got)
 		}
 
-		w.MessageType(mt)
-		if _, err := w.Write(); err != nil {
+		if _, err := w.Send(mt); err != nil {
 			t.Fatal(err)
 		}
 	})
