@@ -226,7 +226,7 @@ func (r *response) Options() Options {
 // and the options set by Options, to create and send a packet to the
 // client's address.
 func (r *response) Send(mt MessageType) (int, error) {
-	p, err := newPacket(mt, r.req.TransactionID, r.options.enumerate())
+	p, err := newPacket(mt, r.req.TransactionID, r.options)
 	if err != nil {
 		return 0, err
 	}

@@ -87,7 +87,7 @@ func (o Options) ServerID() (DUID, bool, error) {
 // be present in a single DHCP request.  The boolean return value indicates if
 // OptionIANA was present in the Options map.  The error return value
 // indicates if one or more valid IANAs could not be parsed from the option.
-func (o Options) IANA() ([]IANA, bool, error) {
+func (o Options) IANA() ([]*IANA, bool, error) {
 	// Client may send multiple IANA option requests, so we must
 	// access the map directly
 	vv, ok := o[OptionIANA]
@@ -96,7 +96,7 @@ func (o Options) IANA() ([]IANA, bool, error) {
 	}
 
 	// Parse each IA_NA value
-	iana := make([]IANA, len(vv), len(vv))
+	iana := make([]*IANA, len(vv), len(vv))
 	for i := range vv {
 		ia, err := parseIANA(vv[i])
 		if err != nil {
@@ -205,8 +205,8 @@ func (o Options) ElapsedTime() (time.Duration, bool, error) {
 	return time.Duration(binary.BigEndian.Uint16(v)) * 10 * time.Millisecond, true, nil
 }
 
-// byOptionCode implements sort.Interface for []option.
-type byOptionCode []option
+// byOptionCode implements sort.Interface for optslice.
+type byOptionCode optslice
 
 func (b byOptionCode) Len() int               { return len(b) }
 func (b byOptionCode) Less(i int, j int) bool { return b[i].Code < b[j].Code }
@@ -214,9 +214,9 @@ func (b byOptionCode) Swap(i int, j int)      { b[i], b[j] = b[j], b[i] }
 
 // enumerate returns an ordered slice of option data from the Options map,
 // for use with sending responses to clients.
-func (o Options) enumerate() []option {
+func (o Options) enumerate() optslice {
 	// Send all values for a given key
-	var options []option
+	var options optslice
 	for k, v := range o {
 		for _, vv := range v {
 			options = append(options, option{
@@ -233,9 +233,9 @@ func (o Options) enumerate() []option {
 // parseOptions returns a slice of option code and values from an input byte
 // slice.  It is used with various different types to enable parsing of both
 // top-level options, and options embedded within other options.
-func parseOptions(b []byte) []option {
+func parseOptions(b []byte) Options {
 	var length int
-	var options []option
+	options := make(Options)
 
 	buf := bytes.NewBuffer(b)
 
@@ -261,8 +261,45 @@ func parseOptions(b []byte) []option {
 			continue
 		}
 
-		options = append(options, o)
+		options.Add(o.Code, o.Data)
 	}
 
 	return options
+}
+
+// optslice is a slice of option values, and is used to help marshal option
+// values into binary form.
+type optslice []option
+
+// count returns the number of bytes that this slice of options will occupy
+// when marshaled to binary form.
+func (o optslice) count() int {
+	var c int
+	for _, oo := range o {
+		// 2 bytes: option code
+		// 2 bytes: option length
+		// N bytes: option data
+		c += 2 + 2 + len(oo.Data)
+	}
+
+	return c
+}
+
+// write writes the option slice into the provided buffer.  The caller must
+// ensure that a large enough buffer is provided to write to avoid panics.
+func (o optslice) write(p []byte) {
+	var i int
+	for _, oo := range o {
+		// 2 bytes: option code
+		binary.BigEndian.PutUint16(p[i:i+2], uint16(oo.Code))
+		i += 2
+
+		// 2 bytes: option length
+		binary.BigEndian.PutUint16(p[i:i+2], uint16(len(oo.Data)))
+		i += 2
+
+		// N bytes: option data
+		copy(p[i:i+len(oo.Data)], oo.Data)
+		i += len(oo.Data)
+	}
 }

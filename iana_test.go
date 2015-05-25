@@ -39,7 +39,7 @@ func TestIANAIAID(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.iaid, IANA(tt.buf).IAID(); !bytes.Equal(want, got) {
+		if want, got := tt.iaid, (&IANA{iana: tt.buf}).IAID(); !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IANA(%v).IAID():\n- want: %v\n-  got: %v",
 				i, tt.description, tt.buf, want, got)
 		}
@@ -79,7 +79,9 @@ func TestIANAT1(t *testing.T) {
 
 	// Prepend all-zero IAID value on each test
 	for i, tt := range tests {
-		if want, got := tt.t1, IANA(append([]byte{0, 0, 0, 0}, tt.buf...)).T1(); want != got {
+		if want, got := tt.t1, (&IANA{
+			iana: append([]byte{0, 0, 0, 0}, tt.buf...),
+		}).T1(); want != got {
 			t.Fatalf("[%02d] test %q, unexpected IANA(%v).T1(): %v != %v",
 				i, tt.description, tt.buf, want, got)
 		}
@@ -117,9 +119,11 @@ func TestIANAT2(t *testing.T) {
 		},
 	}
 
-	// Prepend all-zero T1 value on each test
+	// Prepend all-zero IAID and T1 values on each test
 	for i, tt := range tests {
-		if want, got := tt.t2, IANA(append(bytes.Repeat([]byte{0}, 8), tt.buf...)).T2(); want != got {
+		if want, got := tt.t2, (&IANA{
+			iana: append(bytes.Repeat([]byte{0}, 8), tt.buf...),
+		}).T2(); want != got {
 			t.Fatalf("[%02d] test %q, unexpected IANA(%v).T2(): %v != %v",
 				i, tt.description, tt.buf, want, got)
 		}
@@ -170,9 +174,14 @@ func TestIANAOptions(t *testing.T) {
 		},
 	}
 
-	// Prepend all-zero IAID value on each test
+	// Prepend all-zero IAID, T1, and T2 values on each test
 	for i, tt := range tests {
-		if want, got := tt.options, IANA(append(bytes.Repeat([]byte{0}, 12), tt.buf...)).Options(); !reflect.DeepEqual(want, got) {
+		iana, err := parseIANA(append(bytes.Repeat([]byte{0}, 12), tt.buf...))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if want, got := tt.options, iana.Options(); !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IANA(%v).Options():\n- want: %v\n-  got: %v",
 				i, tt.description, tt.buf, want, got)
 		}
@@ -183,9 +192,10 @@ func TestIANAOptions(t *testing.T) {
 // for an input buffer.
 func Test_parseIANA(t *testing.T) {
 	var tests = []struct {
-		buf  []byte
-		iana IANA
-		err  error
+		buf     []byte
+		iana    *IANA
+		options Options
+		err     error
 	}{
 		{
 			buf: []byte{0},
@@ -200,12 +210,18 @@ func Test_parseIANA(t *testing.T) {
 				1, 2, 3, 4,
 				0, 0, 1, 0,
 				0, 0, 2, 0,
+				0, 1, 0, 2, 0, 1,
 			},
-			iana: IANA([]byte{
-				1, 2, 3, 4,
-				0, 0, 1, 0,
-				0, 0, 2, 0,
-			}),
+			iana: &IANA{
+				iana: []byte{
+					1, 2, 3, 4,
+					0, 0, 1, 0,
+					0, 0, 2, 0,
+				},
+				options: Options{
+					OptionClientID: [][]byte{[]byte{0, 1}},
+				},
+			},
 		},
 	}
 
@@ -220,7 +236,7 @@ func Test_parseIANA(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.iana, iana; !bytes.Equal(want, got) {
+		if want, got := tt.iana, iana; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] unexpected IANA for parseIANA(%v):\n- want: %v\n-  got: v",
 				i, tt.buf, want, got)
 		}

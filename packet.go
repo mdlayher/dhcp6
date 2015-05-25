@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"errors"
 )
 
@@ -49,17 +48,17 @@ type option struct {
 // Options parses a packet's options and returns them as a slice containing
 // both an OptionCode type and its raw data value.  Options are returned in
 // the order they are placed in the packet.
-func (p packet) Options() []option {
+func (p packet) Options() Options {
 	// Skip message type and transaction ID
 	return parseOptions(p[4:])
 }
 
 // newPacket creates a new packet from an input message type, transaction ID,
-// and options slice.  The resulting packet can be used to send a request to
+// and Options map.  The resulting packet can be used to send a request to
 // a DHCP server, or a response to DHCP client.
 //
 // The transaction ID must be exactly 3 bytes, or an error will be returned.
-func newPacket(mt MessageType, txID []byte, options []option) (packet, error) {
+func newPacket(mt MessageType, txID []byte, options Options) (packet, error) {
 	// Transaction ID must always be 3 bytes
 	if len(txID) != 3 {
 		return nil, errInvalidTransactionID
@@ -79,35 +78,17 @@ func newPacket(mt MessageType, txID []byte, options []option) (packet, error) {
 
 	// 1 byte: message type
 	// 3 bytes: transaction ID
-	i := 4
-	for _, o := range options {
-		// 2 bytes: option code
-		// 2 bytes: option length
-		// N bytes: option data
-		i += 2 + 2 + len(o.Data)
-	}
+	// N bytes: options slice byte count
+	opts := options.enumerate()
+	i := 4 + opts.count()
 
 	// Allocate packet and fill basic fields
 	p := make(packet, i, i)
 	p[0] = byte(mt)
 	copy(p[1:4], txID[:])
 
-	// Copy options into packet, advancing index to copy options data into
-	// proper indices
-	i = 4
-	for _, o := range options {
-		// 2 bytes: option code
-		binary.BigEndian.PutUint16(p[i:i+2], uint16(o.Code))
-		i += 2
-
-		// 2 bytes: option length
-		binary.BigEndian.PutUint16(p[i:i+2], uint16(len(o.Data)))
-		i += 2
-
-		// N bytes: option data
-		copy(p[i:i+len(o.Data)], o.Data)
-		i += len(o.Data)
-	}
+	// Write options into packet at proper index
+	opts.write(p[4:])
 
 	return p, nil
 }

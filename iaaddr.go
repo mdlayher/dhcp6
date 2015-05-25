@@ -63,14 +63,7 @@ func (i IAAddr) ValidLifetime() time.Duration {
 // Options parses the Options map associated with this IAAddr.  The Options
 // may contain additional information regarding this IAAddr.
 func (i IAAddr) Options() Options {
-	options := parseOptions(i[24:])
-
-	opt := make(Options, len(options))
-	for _, o := range options {
-		opt.Add(o.Code, o.Data)
-	}
-
-	return opt
+	return parseOptions(i[24:])
 }
 
 // parseIAAddr attempts to parse an input byte slice as an IAAddr.

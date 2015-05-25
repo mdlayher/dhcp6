@@ -124,44 +124,37 @@ func Test_newPacket(t *testing.T) {
 		description string
 		mt          MessageType
 		txID        []byte
-		options     []option
+		options     Options
 		err         error
 	}{
 		{
 			description: "solicit, tx 11, no options, invalid transaction ID",
 			mt:          MessageTypeSolicit,
 			txID:        []byte{1, 1},
+			options:     Options{},
 			err:         errInvalidTransactionID,
 		},
 		{
 			description: "solicit, tx 111, no options",
 			mt:          MessageTypeSolicit,
 			txID:        []byte{1, 1, 1},
+			options:     Options{},
 		},
 		{
 			description: "renew, tx 012, option client ID foo",
 			mt:          MessageTypeRenew,
 			txID:        []byte{0, 1, 2},
-			options: []option{
-				option{
-					Code: OptionClientID,
-					Data: []byte("foo"),
-				},
+			options: Options{
+				OptionClientID: [][]byte{[]byte("foo")},
 			},
 		},
 		{
 			description: "release, tx 345, multiple options",
 			mt:          MessageTypeRenew,
 			txID:        []byte{0, 1, 2},
-			options: []option{
-				option{
-					Code: OptionClientID,
-					Data: []byte("foo"),
-				},
-				option{
-					Code: OptionElapsedTime,
-					Data: []byte("0123"),
-				},
+			options: Options{
+				OptionClientID:    [][]byte{[]byte("foo")},
+				OptionElapsedTime: [][]byte{[]byte("0123")},
 			},
 		},
 	}

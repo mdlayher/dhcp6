@@ -236,7 +236,7 @@ func TestOptionsIANA(t *testing.T) {
 	var tests = []struct {
 		description string
 		options     Options
-		iana        []IANA
+		iana        []*IANA
 		ok          bool
 		err         error
 	}{
@@ -259,12 +259,14 @@ func TestOptionsIANA(t *testing.T) {
 					0, 0, 2, 0,
 				}},
 			},
-			iana: []IANA{
-				IANA([]byte{
-					1, 2, 3, 4,
-					0, 0, 1, 0,
-					0, 0, 2, 0,
-				}),
+			iana: []*IANA{
+				&IANA{
+					iana: []byte{
+						1, 2, 3, 4,
+						0, 0, 1, 0,
+						0, 0, 2, 0,
+					},
+				},
 			},
 			ok: true,
 		},
@@ -272,13 +274,23 @@ func TestOptionsIANA(t *testing.T) {
 			description: "two OptionIANA present in Options map",
 			options: Options{
 				OptionIANA: [][]byte{
-					bytes.Repeat([]byte{0}, 12),
-					bytes.Repeat([]byte{1}, 12),
+					append(bytes.Repeat([]byte{0}, 12), []byte{0, 1, 0, 1, 1}...),
+					append(bytes.Repeat([]byte{1}, 12), []byte{0, 2, 0, 1, 2}...),
 				},
 			},
-			iana: []IANA{
-				IANA(bytes.Repeat([]byte{0}, 12)),
-				IANA(bytes.Repeat([]byte{1}, 12)),
+			iana: []*IANA{
+				&IANA{
+					iana: bytes.Repeat([]byte{0}, 12),
+					options: Options{
+						OptionClientID: [][]byte{[]byte{1}},
+					},
+				},
+				&IANA{
+					iana: bytes.Repeat([]byte{1}, 12),
+					options: Options{
+						OptionServerID: [][]byte{[]byte{2}},
+					},
+				},
 			},
 			ok: true,
 		},
@@ -295,9 +307,11 @@ func TestOptionsIANA(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.iana, iana; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.IANA():\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+		for j := range tt.iana {
+			if want, got := tt.iana[j].Bytes(), iana[j].Bytes(); !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IANA():\n- want: %v\n-  got: %v",
+					i, j, tt.description, want, got)
+			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
@@ -574,19 +588,19 @@ func TestOptionsElapsedTime(t *testing.T) {
 }
 
 // TestOptions_enumerate verifies that Options.enumerate correctly enumerates
-// and sorts an Options map into key/value optain pairs.
+// and sorts an Options map into key/value option pairs.
 func TestOptions_enumerate(t *testing.T) {
 	var tests = []struct {
 		description string
 		options     Options
-		kv          []option
+		kv          optslice
 	}{
 		{
 			description: "one key/value pair",
 			options: Options{
 				1: [][]byte{[]byte("foo")},
 			},
-			kv: []option{
+			kv: optslice{
 				option{
 					Code: 1,
 					Data: []byte("foo"),
@@ -599,7 +613,7 @@ func TestOptions_enumerate(t *testing.T) {
 				1: [][]byte{[]byte("foo")},
 				2: [][]byte{[]byte("bar")},
 			},
-			kv: []option{
+			kv: optslice{
 				option{
 					Code: 1,
 					Data: []byte("foo"),
@@ -617,7 +631,7 @@ func TestOptions_enumerate(t *testing.T) {
 				3: [][]byte{[]byte("qux")},
 				2: [][]byte{[]byte("bar")},
 			},
-			kv: []option{
+			kv: optslice{
 				option{
 					Code: 1,
 					Data: []byte("foo"),
@@ -647,52 +661,49 @@ func TestOptions_enumerate(t *testing.T) {
 }
 
 // Test_parseOptions verifies that parseOptions parses correct option values
-// from a slice of bytes, and that it returns a nil option slice if the byte
+// from a slice of bytes, and that it returns an empty Options map if the byte
 // slice cannot contain options.
 func Test_parseOptions(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
-		options     []option
+		options     Options
 	}{
 		{
 			description: "nil options bytes",
 			buf:         nil,
-			options:     nil,
+			options:     Options{},
 		},
 		{
 			description: "empty options bytes",
 			buf:         []byte{},
-			options:     nil,
+			options:     Options{},
 		},
 		{
 			description: "too short options bytes",
 			buf:         []byte{0},
-			options:     nil,
+			options:     Options{},
 		},
 		{
 			description: "zero code, zero length option bytes",
 			buf:         []byte{0, 0, 0, 0},
-			options:     nil,
+			options:     Options{},
 		},
 		{
 			description: "zero code, zero length option bytes with trailing byte",
 			buf:         []byte{0, 0, 0, 0, 1},
-			options:     nil,
+			options:     Options{},
 		},
 		{
 			description: "zero code, length 3, incorrect length for data",
 			buf:         []byte{0, 0, 0, 3, 1, 2},
-			options:     nil,
+			options:     Options{},
 		},
 		{
 			description: "client ID, length 1, value [1]",
 			buf:         []byte{0, 1, 0, 1, 1},
-			options: []option{
-				option{
-					Code: OptionClientID,
-					Data: []byte{1},
-				},
+			options: Options{
+				OptionClientID: [][]byte{[]byte{1}},
 			},
 		},
 		{
@@ -701,23 +712,17 @@ func Test_parseOptions(t *testing.T) {
 				0, 1, 0, 2, 1, 1,
 				0, 2, 0, 3, 1, 2, 3,
 			},
-			options: []option{
-				option{
-					Code: OptionClientID,
-					Data: []byte{1, 1},
-				},
-				option{
-					Code: OptionServerID,
-					Data: []byte{1, 2, 3},
-				},
+			options: Options{
+				OptionClientID: [][]byte{[]byte{1, 1}},
+				OptionServerID: [][]byte{[]byte{1, 2, 3}},
 			},
 		},
 	}
 
 	for i, tt := range tests {
 		if want, got := tt.options, parseOptions(tt.buf); !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] unexpected options slice for parseOptions(%v):\n- want: %v\n-  got: %v",
-				i, tt.buf, want, got)
+			t.Fatalf("[%02d] test %q, unexpected Options map for parseOptions(%v):\n- want: %v\n-  got: %v",
+				i, tt.description, tt.buf, want, got)
 		}
 	}
 }

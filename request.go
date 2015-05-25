@@ -38,21 +38,13 @@ type Request struct {
 //
 // It is only intended to be used by the server component and tests.
 func newServerRequest(p packet, remoteAddr *net.UDPAddr) *Request {
-	r := &Request{
+	return &Request{
 		MessageType:   p.MessageType(),
 		TransactionID: p.TransactionID(),
+		Options:       p.Options(),
 		Length:        int64(len(p)),
 		RemoteAddr:    remoteAddr.String(),
 
 		packet: p,
 	}
-
-	// Parse options into Options map
-	options := p.Options()
-	r.Options = make(Options, len(options))
-	for _, o := range options {
-		r.Options.Add(o.Code, o.Data)
-	}
-
-	return r
 }

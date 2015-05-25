@@ -13,7 +13,9 @@ func Test_newServerRequest(t *testing.T) {
 		Code: OptionClientID,
 		Data: []byte{0, 1},
 	}
-	p, err := newPacket(MessageTypeSolicit, []byte{1, 2, 3}, []option{opt})
+	p, err := newPacket(MessageTypeSolicit, []byte{1, 2, 3}, Options{
+		opt.Code: [][]byte{opt.Data},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

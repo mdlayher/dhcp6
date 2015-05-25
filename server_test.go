@@ -47,7 +47,9 @@ func Test_conn_serve(t *testing.T) {
 	options := []option{opt}
 
 	mt := MessageTypeSolicit
-	p, err := newPacket(mt, []byte{0, 1, 2}, options)
+	p, err := newPacket(mt, []byte{0, 1, 2}, Options{
+		opt.Code: [][]byte{opt.Data},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
