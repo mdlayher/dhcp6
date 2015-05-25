@@ -23,6 +23,11 @@ type IANA []byte
 // by a client, chosen to be unique among other IAs for that client.  An IAID
 // must always produce the same value across restarts of a client.
 func (i IANA) IAID() []byte {
+	// Too short to contain IAID
+	if len(i) < 4 {
+		return nil
+	}
+
 	return i[0:4]
 }
 
@@ -30,6 +35,11 @@ func (i IANA) IAID() []byte {
 // contact the server, to extend the lifetimes of the addresses assigned to
 // this IANA by this server.
 func (i IANA) T1() time.Duration {
+	// Too short to contain T1
+	if len(i) < 8 {
+		return 0
+	}
+
 	return time.Duration(binary.BigEndian.Uint32(i[4:8])) * time.Second
 }
 
@@ -37,6 +47,11 @@ func (i IANA) T1() time.Duration {
 // contact any server, to extend the lifetimes of the addresses assigned to
 // this IANA by any server.
 func (i IANA) T2() time.Duration {
+	// Too short to contain T2
+	if len(i) < 12 {
+		return 0
+	}
+
 	return time.Duration(binary.BigEndian.Uint32(i[8:12])) * time.Second
 }
 
