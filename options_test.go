@@ -391,6 +391,68 @@ func TestOptionsIAAddr(t *testing.T) {
 	}
 }
 
+// TestOptionsOptionRequest verifies that Options.OptionRequest properly parses
+// and returns a slice of OptionCode values, if they are available with
+// OptionORO.
+func TestOptionsOptionRequest(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		codes       []OptionCode
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionORO not present in Options map",
+		},
+		{
+			description: "OptionORO present in Options map, but not even length",
+			options: Options{
+				OptionORO: [][]byte{[]byte{0}},
+			},
+			err: errInvalidOptionRequest,
+		},
+		{
+			description: "OptionORO present in Options map",
+			options: Options{
+				OptionORO: [][]byte{[]byte{0, 1}},
+			},
+			codes: []OptionCode{1},
+			ok:    true,
+		},
+		{
+			description: "OptionORO present in Options map, with multiple values",
+			options: Options{
+				OptionORO: [][]byte{[]byte{0, 1, 0, 2, 0, 3}},
+			},
+			codes: []OptionCode{1, 2, 3},
+			ok:    true,
+		},
+	}
+
+	for i, tt := range tests {
+		codes, ok, err := tt.options.OptionRequest()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.OptionRequest(): %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.codes, codes; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.OptionRequest():\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.OptionRequest(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
 // TestOptionsElapsedTime verifies that Options.ElapsedTime properly parses and
 // returns a time.Duration value, if one is available with OptionElapsedTime.
 func TestOptionsElapsedTime(t *testing.T) {

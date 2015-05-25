@@ -12,6 +12,10 @@ var (
 	// errInvalidElapsedTime is returned when a valid duration cannot be parsed
 	// from OptionElapsedTime, because too many or too few bytes are present.
 	errInvalidElapsedTime = errors.New("invalid option value for OptionElapsedTime")
+
+	// errInvalidOptionRequest is returned when a valid duration cannot be parsed
+	// from OptionOptionRequest, because an odd number of bytes are present.
+	errInvalidOptionRequest = errors.New("invalid option value for OptionRequestOption")
 )
 
 // Options is a map of OptionCode keys with a slice of byte slice values.
@@ -127,6 +131,33 @@ func (o Options) IAAddr() ([]IAAddr, bool, error) {
 	}
 
 	return iaaddr, true, nil
+}
+
+// OptionRequest returns the Option Request Option value, described in RFC 3315,
+// Section 22.7.  The slice of OptionCode values indicates the options a DHCP
+// client is interested in receiving from a server.  The boolean return value
+// indicates if OptionORO was present in the Options map.  The error return
+// value indicates if a valid OptionCode slice could be parsed from the option.
+func (o Options) OptionRequest() ([]OptionCode, bool, error) {
+	v, ok := o.Get(OptionORO)
+	if !ok {
+		return nil, false, nil
+	}
+
+	// Length must be divisible by 2
+	if len(v)%2 != 0 {
+		return nil, false, errInvalidOptionRequest
+	}
+
+	// Fill slice by parsing every two bytes using index i,
+	// and using index j to insert options and track number
+	// of iterations until no more options exist
+	opts := make([]OptionCode, len(v)/2, len(v)/2)
+	for i, j := 0, 0; j < len(v)/2; i, j = i+2, j+1 {
+		opts[j] = OptionCode(binary.BigEndian.Uint16(v[i : i+2]))
+	}
+
+	return opts, true, nil
 }
 
 // ElapsedTime returns the Elapsed Time Option value, described in RFC 3315,
