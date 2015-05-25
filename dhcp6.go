@@ -37,11 +37,17 @@ type Byteser interface {
 }
 
 // Responser provides an interface which allows a DHCP handler to construct
-// and write a DHCP packet.
+// and write a DHCP packet.  In addition, the server automatically handles
+// copying certain parameters from a client Request to a Responser's Options
+// and outbound packet, including:
+//   - Transaction ID
+//   - Client ID (OptionClientID)
+//   - Server ID (OptionServerID)
+//
 // BUG(mdlayher): the interface for Responser will most likely change.
 type Responser interface {
 	// Options returns the Options map that will be sent to a client
-	// after a call to Write.  Changing options after a call to Write
+	// after a call to Send.  Changing options after a call to Send
 	// has no effect.
 	Options() Options
 
