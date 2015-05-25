@@ -29,6 +29,13 @@ func (f HandlerFunc) ServeDHCP(w Responser, r *Request) {
 	f(w, r)
 }
 
+// Byteser is an interface which structs may implement if they can marshal
+// themselves into a byte slice form.  Byteser is used to allow some types
+// to be inserted directly into an Options map.
+type Byteser interface {
+	Bytes() []byte
+}
+
 // Responser provides an interface which allows a DHCP handler to construct
 // and write a DHCP packet.
 // BUG(mdlayher): the interface for Responser will most likely change.

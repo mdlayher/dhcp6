@@ -28,6 +28,12 @@ var (
 // can be accessed directly.
 type Options map[OptionCode][][]byte
 
+// Add adds a new OptionCode key and Byteser struct's bytes to the
+// Options map.
+func (o Options) Add(key OptionCode, value Byteser) {
+	o.AddRaw(key, value.Bytes())
+}
+
 // AddRaw adds a new OptionCode key and raw value byte slice to the
 // Options map.
 func (o Options) AddRaw(key OptionCode, value []byte) {

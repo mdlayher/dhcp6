@@ -8,6 +8,62 @@ import (
 )
 
 // TestOptionsAdd verifies that Options.Add correctly creates or appends
+// OptionCode keys with Byteser values to an Options map.
+func TestOptionsAdd(t *testing.T) {
+	var tests = []struct {
+		description string
+		code        OptionCode
+		byteser     Byteser
+		options     Options
+	}{
+		{
+			description: "DUID-LLT",
+			code:        OptionClientID,
+			byteser:     DUIDLLT([]byte{0, 1}),
+			options: Options{
+				OptionClientID: [][]byte{[]byte{0, 1}},
+			},
+		},
+		{
+			description: "DUID-EN",
+			code:        OptionServerID,
+			byteser:     DUIDEN([]byte{0, 2}),
+			options: Options{
+				OptionServerID: [][]byte{[]byte{0, 2}},
+			},
+		},
+		{
+			description: "DUID-LL",
+			code:        OptionServerID,
+			byteser:     DUIDEN([]byte{0, 3}),
+			options: Options{
+				OptionServerID: [][]byte{[]byte{0, 3}},
+			},
+		},
+		{
+			description: "IA_NA",
+			code:        OptionIANA,
+			byteser: &IANA{
+				iana: []byte{0, 1, 2, 3},
+			},
+			options: Options{
+				OptionIANA: [][]byte{[]byte{0, 1, 2, 3}},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		o := make(Options)
+		o.Add(tt.code, tt.byteser)
+
+		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected Options map:\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsAdd verifies that Options.AddRaw correctly creates or appends
 // key/value Option pairs to an Options map.
 func TestOptionsAddRaw(t *testing.T) {
 	var tests = []struct {
