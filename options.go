@@ -160,9 +160,8 @@ func (b byOptionCode) Swap(i int, j int)      { b[i], b[j] = b[j], b[i] }
 // enumerate returns an ordered slice of option data from the Options map,
 // for use with sending responses to clients.
 func (o Options) enumerate() []option {
-	options := make([]option, 0)
-
 	// Send all values for a given key
+	var options []option
 	for k, v := range o {
 		for _, vv := range v {
 			options = append(options, option{
