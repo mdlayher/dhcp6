@@ -7,6 +7,22 @@ import (
 	"time"
 )
 
+const (
+	// ethernet10Mb is the default IANA hardware type used in DUID generation,
+	// if a hardware type cannot be parsed from a network interface.
+	ethernet10Mb = 1
+)
+
+var (
+	// ErrParseHardwareType is returned when a valid hardware type could
+	// not be found for a given interface.
+	ErrParseHardwareType = errors.New("could not parse hardware type for interface")
+
+	// ErrHardwareTypeNotImplemented is returned when HardwareType is not
+	// implemented on the current platform.
+	ErrHardwareTypeNotImplemented = errors.New("hardware type detection not implemented on this platform")
+)
+
 // DUIDType is a type of DHCP Unique Identifier, as defined in IETF RFC
 // 3315, Section 9.  DUIDs are used to uniquely identify a client to a
 // server, or vice-versa.

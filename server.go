@@ -98,11 +98,23 @@ func (s *Server) ListenAndServe() error {
 	// If no DUID was set for server previously, generate a DUID-LL
 	// now using the interface's hardware type and address
 	if s.ServerID == nil {
-		// BUG(mdlayher): see if hardware type can be easily determined for
-		// an interface.  For now, default to Ethernet (10mb) as defined here:
+		// Attempt to check for IANA hardware type, default to Ethernet (10Mb)
+		// on failure (this relies on syscalls which only work on Linux)
+		// Hardware types can be found here:
 		// http://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml.
-		const ethernet10Mb = 1
-		s.ServerID = NewDUIDLL(ethernet10Mb, iface.HardwareAddr)
+		htype, err := HardwareType(iface)
+		if err != nil {
+			// Return syscall errors
+			if err != ErrParseHardwareType && err != ErrHardwareTypeNotImplemented {
+				return err
+			}
+
+			// Use default value if hardware type can't be found or
+			// detection isn't implemented
+			htype = ethernet10Mb
+		}
+
+		s.ServerID = NewDUIDLL(uint16(htype), iface.HardwareAddr)
 	}
 
 	// Open UDP6 packet connection listener on specified address
