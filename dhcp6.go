@@ -29,9 +29,9 @@ func (f HandlerFunc) ServeDHCP(w Responser, r *Request) {
 	f(w, r)
 }
 
-// Byteser is an interface which structs may implement if they can marshal
-// themselves into a byte slice form.  Byteser is used to allow some types
-// to be inserted directly into an Options map.
+// Byteser is implemented by any value that has a Bytes method.  The Bytes
+// method is used to return a value in byte slice form.  Byteser can be used
+// to add some types directly to an Options map.
 type Byteser interface {
 	Bytes() []byte
 }
