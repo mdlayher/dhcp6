@@ -116,7 +116,7 @@ func (i *IANA) T2() time.Duration {
 // Options parses the Options map associated with this IANA.  The Options
 // may contain additional information regarding this IANA.  Options can be
 // added, removed, or modified directly via this map.
-func (i IANA) Options() Options {
+func (i *IANA) Options() Options {
 	return i.options
 }
 

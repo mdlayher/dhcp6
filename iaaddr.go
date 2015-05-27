@@ -135,7 +135,7 @@ func (i *IAAddr) ValidLifetime() time.Duration {
 // Options parses the Options map associated with this IAAddr.  The Options
 // may contain additional information regarding this IAAddr.  Options can be
 // added, removed, or modified directly via this map.
-func (i IAAddr) Options() Options {
+func (i *IAAddr) Options() Options {
 	return i.options
 }
 
