@@ -21,6 +21,14 @@ var (
 	// ErrHardwareTypeNotImplemented is returned when HardwareType is not
 	// implemented on the current platform.
 	ErrHardwareTypeNotImplemented = errors.New("hardware type detection not implemented on this platform")
+
+	// errInvalidDUID is returned when not enough bytes are present
+	// to parse a valid DUID from a byte slice.
+	errInvalidDUID = errors.New("not enough bytes for valid DUID")
+
+	// errUnknownDUID is returned when an unknown DUID type is
+	// encountered, and thus, a DUID cannot be parsed.
+	errUnknownDUID = errors.New("unknown DUID type")
 )
 
 // DUIDType is a type of DHCP Unique Identifier, as defined in IETF RFC
@@ -39,16 +47,6 @@ const (
 	// BUG(mdlayher): add additional DUID types defined by IANA
 )
 
-var (
-	// errInvalidDUID is returned when not enough bytes are present
-	// to parse a valid DUID from a byte slice.
-	errInvalidDUID = errors.New("not enough bytes for valid DUID")
-
-	// errUnknownDUID is returned when an unknown DUID type is
-	// encountered, and thus, a DUID cannot be parsed.
-	errUnknownDUID = errors.New("unknown DUID type")
-)
-
 // DUID represents a DHCP Unique Identifier, as defined in IETF RFC
 // 3315, Section 9.  A DUID is used by a DHCP server to identify
 // unique clients.  A DUID can also be used by a DHCP client to identify
@@ -64,28 +62,29 @@ var (
 // The specific type of a DUID can be identified using its Type method.
 // If further introspection of the DUID is needed, a type switch is
 // recommended:
-//   switch d := duid.(type) {
-//   case dhcp6.DUIDLLT:
-//       fmt.Println(d.Time())
-//   case dhcp6.DUIDEN:
-//       fmt.Println(d.EnterpriseNumber())
-//   case dhcp6.DUIDLL:
-//       fmt.Println(d.HardwareAddr())
-//   }
+//	switch d := duid.(type) {
+//	case dhcp6.DUIDLLT:
+//		fmt.Println(d.Time())
+//	case dhcp6.DUIDEN:
+//		fmt.Println(d.EnterpriseNumber())
+//	case dhcp6.DUIDLL:
+//		fmt.Println(d.HardwareAddr())
+//	}
 type DUID interface {
-	Bytes() []byte
+	Byteser
 	Type() DUIDType
 }
 
 // DUIDLLT represents a DUID Based on Link-layer Address Plus Time [DUID-LLT],
-// as defined in IETF RFC 3315, Section 9.2.  This DUID type must only be
-// used with clients and servers with stable, persistent storage.  It is the
-// recommended DUID type for all general purpose computing devices.
+// as defined in IETF RFC 3315, Section 9.2.
+//
+// This DUID type must only be used with clients and servers with stable,
+// persistent storage.  It is the recommended DUID type for all general
+// purpose computing devices.
 type DUIDLLT []byte
 
-// Bytes implements DUID, and returns the entire underlying byte slice for
-// a DUIDLLT.  If the caller changes the contents of the returned slice,
-// the contents of the DUIDLLT will change as well.
+// Bytes implements DUID and Byteser, and returns the entire underlying byte
+// slice for a DUIDLLT.
 func (d DUIDLLT) Bytes() []byte {
 	return []byte(d)
 }
@@ -120,9 +119,8 @@ func (d DUIDLLT) HardwareAddr() net.HardwareAddr {
 // uses an IANA-assigned Private Enterprise Number for a given vendor.
 type DUIDEN []byte
 
-// Bytes implements DUID, and returns the entire underlying byte slice for
-// a DUIDEN.  If the caller changes the contents of the returned slice,
-// the contents of the DUIDEN will change as well.
+// Bytes implements DUID and Byteser, and returns the entire underlying byte
+// slice for a DUIDEN.
 func (d DUIDEN) Bytes() []byte {
 	return []byte(d)
 }
@@ -133,7 +131,7 @@ func (d DUIDEN) Type() DUIDType {
 }
 
 // EnterpriseNumber returns a vendor's registerered Private Enterprise
-// Number, as assigned by IANA.
+// Number, as assigned by the IANA.
 func (d DUIDEN) EnterpriseNumber() int {
 	return int(binary.BigEndian.Uint32(d[2:6]))
 }
@@ -145,9 +143,15 @@ func (d DUIDEN) Identifier() []byte {
 }
 
 // DUIDLL represents a DUID Based on Link-layer Address [DUID-LL],
-// as defined in IETF RFC 3315, Section 9.4.  This DUID type is
-// recommended for devices with a permanently-connected network
-// interface, but without stable, persistent storage.
+// as defined in IETF RFC 3315, Section 9.4.
+//
+// This DUID type is recommended for devices with a
+// permanently-connected network interface, but without stable,
+// persistent storage.
+//
+// DUIDLL values are generated automatically for Servers which are not
+// created with a ServerID, using the hardware type found by HardwareType
+// and the hardware address of the listening network interface.
 type DUIDLL []byte
 
 // NewDUIDLL generates a new DUIDLL from an input IANA-assigned hardware
@@ -160,14 +164,13 @@ func NewDUIDLL(hardwareType uint16, hardwareAddr net.HardwareAddr) DUIDLL {
 	// 2 bytes: hardware type
 	binary.BigEndian.PutUint16(d[2:4], hardwareType)
 	// N bytes: hardware address
-	copy(d[4:4+len(hardwareAddr)], hardwareAddr)
+	copy(d[4:], hardwareAddr)
 
 	return d
 }
 
-// Bytes implements DUID, and returns the entire underlying byte slice for
-// a DUIDLL.  If the caller changes the contents of the returned slice,
-// the contents of the DUIDLL will change as well.
+// Bytes implements DUID and Byteser, and returns the entire underlying byte
+// slice for a DUIDLL.
 func (d DUIDLL) Bytes() []byte {
 	return []byte(d)
 }
