@@ -22,11 +22,13 @@ var (
 )
 
 // IAAddr represents an Identity Association Address, as defined in RFC 3315,
-// Section 22.6.  DHCP clients use identity assocation addresses (IAAddrs) to
-// request IPv6 addresses from a DHCP server, using the lifetimes specified
-// in the preferred lifetime and valid lifetime fields.  Multiple IAAddrs may
-// be present in a DHCP request, but only enscapsulated within an IANA or
-// IATA option's option fields.
+// Section 22.6.
+//
+// DHCP clients use identity assocation addresses (IAAddrs) to request IPv6
+// addresses from a DHCP server, using the lifetimes specified in the preferred
+// lifetime and valid lifetime fields.  Multiple IAAddrs may be present in a
+// single DHCP request, but only enscapsulated within an IANA or IATA options
+// field.
 type IAAddr struct {
 	// The raw byte slice containing the IAAddr, with options stripped
 	iaaddr []byte
@@ -36,10 +38,12 @@ type IAAddr struct {
 }
 
 // NewIAAddr creates a new IAAddr from an IPv6 IP, preferred and valid lifetime
-// durations, and an optional Options map.  The IP must be exactly 16 bytes,
-// the correct length for an IPv6 address.  The preferred lifetime duration
-// must be less than the valid lifetime duration.  If an Options map is not
-// specified, a new one will be allocated.
+// durations, and an optional Options map.
+//
+// The IP must be exactly 16 bytes, the correct length for an IPv6 address.
+// The preferred lifetime duration must be less than the valid lifetime
+// duration.  Failure to meet either of these conditions will result in an error.
+// If an Options map is not specified, a new one will be allocated.
 func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options Options) (*IAAddr, error) {
 	// IP is always 16 bytes
 	if len(ip) != 16 || ip.To16() == nil {
@@ -69,9 +73,9 @@ func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options 
 	}, nil
 }
 
-// Bytes returns the underlying byte slice for an IAAddr, as well as a
-// byte slice for all options which have been applied to the Options map
-// for this IAAddr.
+// Bytes implements Byteser, and returns the underlying byte slice for an
+// IAAddr, appended with a byte slice of all options which have been applied
+// to the Options map for this IAAddr.
 func (i *IAAddr) Bytes() []byte {
 	// Enumerate optslice and check byte count
 	opts := i.options.enumerate()
@@ -96,12 +100,15 @@ func (i *IAAddr) IP() net.IP {
 }
 
 // PreferredLifetime returns the preferred lifetime of an IPv6 address,
-// in seconds, as described in RFC 2462, Section 5.5.4.  When the preferred
-// lifetime of an address expires, the address becomes deprecated.  A deprecated
-// address should be used as a source address in existing communications, but
-// should not be used in new communications if a non-deprecated address is
-// available.  The preferred lifetime of an address must not be greater than its
-// valid lifetime.
+// in seconds, as described in RFC 2462, Section 5.5.4.
+//
+// When the preferred lifetime of an address expires, the address becomes
+// deprecated.  A deprecated address should be used as a source address in
+// existing communications, but should not be used in new communications if a
+// non-deprecated address is available.
+//
+// The preferred lifetime of an address must not be greater than its valid
+// lifetime.
 func (i *IAAddr) PreferredLifetime() time.Duration {
 	// Too short to contain preferred lifetime
 	if len(i.iaaddr) < 20 {
@@ -112,9 +119,10 @@ func (i *IAAddr) PreferredLifetime() time.Duration {
 }
 
 // ValidLifetime returns the valid lifetime of an IPv6 address in seconds, as
-// described in RFC 2462, Section 5.5.4.  When the valid lifetime of an address
-// expires, the address becomes invalid and must not be used for further
-// communication.
+// described in RFC 2462, Section 5.5.4.
+//
+// When the valid lifetime of an address expires, the address becomes invalid
+// and must not be used for further communication.
 func (i *IAAddr) ValidLifetime() time.Duration {
 	// Too short to contain valid lifetime
 	if len(i.iaaddr) < 24 {
