@@ -25,13 +25,27 @@ var (
 	}
 )
 
+// PacketConn is an interface which types must implement in order to serve
+// DHCP connections using Server.Serve.
+type PacketConn interface {
+	ReadFrom(b []byte) (n int, cm *ipv6.ControlMessage, src net.Addr, err error)
+	WriteTo(b []byte, cm *ipv6.ControlMessage, dst net.Addr) (n int, err error)
+
+	Close() error
+
+	JoinGroup(ifi *net.Interface, group net.Addr) error
+	LeaveGroup(ifi *net.Interface, group net.Addr) error
+
+	SetControlMessage(cf ipv6.ControlFlags, on bool) error
+}
+
 // Server represents a DHCP server, and is used to configure a DHCP server's
 // behavior.
 type Server struct {
-	// Iface is the name of the network interface on which this server should
+	// Iface is the the network interface on which this server should
 	// listen.  Traffic from any other network interface will be filtered out
 	// and ignored by the server.
-	Iface string
+	Iface *net.Interface
 
 	// Addr is the network address which this server should bind to.  The
 	// default value is [::]:547, as specified in IETF RFC 3315, Section 5.2.
@@ -54,10 +68,6 @@ type Server struct {
 	// servers with persistent storage available should generate a DUID-LLT
 	// and store it for future use.
 	ServerID DUID
-
-	// ifIndex stores the index of Iface, which is used to filter out traffic
-	// bound for other interfaces on this machine.
-	ifIndex int
 }
 
 // ListenAndServe listens for UDP6 connections on the specified address of the
@@ -72,8 +82,14 @@ type Server struct {
 // DHCP relay agent.  For more information on DHCP relay agents, see
 // IETF RFC 3315, Section 20.
 func ListenAndServe(iface string, handler Handler) error {
+	// Verify network interface exists
+	ifi, err := net.InterfaceByName(iface)
+	if err != nil {
+		return err
+	}
+
 	return (&Server{
-		Iface:   iface,
+		Iface:   ifi,
 		Addr:    "[::]:547",
 		Handler: handler,
 		MulticastGroups: []*net.IPAddr{
@@ -86,53 +102,35 @@ func ListenAndServe(iface string, handler Handler) error {
 // ListenAndServe listens on the address specified by s.Addr using the network
 // interface defined in s.Iface.  Traffic from any other interface will be
 // filtered out and ignored.  Serve is called to handle serving DHCP traffic
-// once ListenAndServe opens a UDP6 packet connection, and joins the multicast
-// groups defined in s.MulticastGroups.
+// once ListenAndServe opens a UDP6 packet connection.
 func (s *Server) ListenAndServe() error {
-	// Check for valid interface
-	iface, err := net.InterfaceByName(s.Iface)
-	if err != nil {
-		return err
-	}
-
-	// If no DUID was set for server previously, generate a DUID-LL
-	// now using the interface's hardware type and address
-	if s.ServerID == nil {
-		// Attempt to check for IANA hardware type, default to Ethernet (10Mb)
-		// on failure (this relies on syscalls which only work on Linux)
-		// Hardware types can be found here:
-		// http://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml.
-		htype, err := HardwareType(iface)
-		if err != nil {
-			// Return syscall errors
-			if err != ErrParseHardwareType && err != ErrHardwareTypeNotImplemented {
-				return err
-			}
-
-			// Use default value if hardware type can't be found or
-			// detection isn't implemented
-			htype = ethernet10Mb
-		}
-
-		s.ServerID = NewDUIDLL(uint16(htype), iface.HardwareAddr)
-	}
-
 	// Open UDP6 packet connection listener on specified address
 	conn, err := net.ListenPacket("udp6", s.Addr)
 	if err != nil {
 		return err
 	}
 
-	// Set up IPv6 packet connection, and on return, handle leaving multicast
-	// groups and closing connection
-	p := ipv6.NewPacketConn(conn)
-	defer func() {
-		for _, g := range s.MulticastGroups {
-			_ = p.LeaveGroup(iface, g)
+	defer conn.Close()
+	return s.Serve(ipv6.NewPacketConn(conn))
+}
+
+// Serve configures and accepts incoming connections on PacketConn p, creating a
+// new goroutine for each.  Serve configures IPv6 control message settings, joins
+// the appropriate multicast groups, and begins listening for incoming connections.
+//
+// The service goroutine reads requests, generate the appropriate Request and
+// Responser values, then calls s.Handler to handle the request.
+func (s *Server) Serve(p PacketConn) error {
+	// If no DUID was set for server previously, generate a DUID-LL
+	// now using the interface's hardware type and address
+	if s.ServerID == nil {
+		duid, err := interfaceDUID(s.Iface)
+		if err != nil {
+			return err
 		}
 
-		_ = conn.Close()
-	}()
+		s.ServerID = duid
+	}
 
 	// Filter any traffic which does not indicate the interface
 	// defined by s.Iface.
@@ -142,22 +140,20 @@ func (s *Server) ListenAndServe() error {
 
 	// Join appropriate multicast groups
 	for _, g := range s.MulticastGroups {
-		if err := p.JoinGroup(iface, g); err != nil {
+		if err := p.JoinGroup(s.Iface, g); err != nil {
 			return err
 		}
 	}
 
-	// Begin serving connections
-	s.ifIndex = iface.Index
-	return s.Serve(p)
-}
+	// Set up IPv6 packet connection, and on return, handle leaving multicast
+	// groups and closing connection
+	defer func() {
+		for _, g := range s.MulticastGroups {
+			_ = p.LeaveGroup(s.Iface, g)
+		}
 
-// Serve accepts incoming connections on ipv6.PacketConn p, creating a
-// new goroutine for each.  The service goroutine reads requests, generates
-// the appropriate Request and Responser values, then calls s.Handler to handle
-// the request.
-func (s *Server) Serve(p *ipv6.PacketConn) error {
-	defer p.Close()
+		_ = p.Close()
+	}()
 
 	// Loop and read requests until exit
 	buf := make([]byte, 1500)
@@ -170,7 +166,7 @@ func (s *Server) Serve(p *ipv6.PacketConn) error {
 
 		// Filter any traffic with a control message indicating an incorrect
 		// interface index
-		if cm != nil && cm.IfIndex != s.ifIndex {
+		if cm != nil && cm.IfIndex != s.Iface.Index {
 			continue
 		}
 
@@ -185,18 +181,12 @@ func (s *Server) Serve(p *ipv6.PacketConn) error {
 	}
 }
 
-// serveConn is an internal type which allows a packet connection to be swapped
-// out for testing, without opening a network connection.
-type serveConn interface {
-	WriteTo([]byte, *ipv6.ControlMessage, net.Addr) (int, error)
-}
-
 // conn represents an in-flight DHCP connection, and contains information about
 // the connection and server.
 type conn struct {
+	conn       PacketConn
 	remoteAddr *net.UDPAddr
 	server     *Server
-	conn       serveConn
 	buf        []byte
 }
 
@@ -205,11 +195,11 @@ type conn struct {
 // a single connection.
 // BUG(mdlayher): consider using a sync.Pool with many buffers available to avoid
 // allocating a new one on each connection
-func (s *Server) newConn(p serveConn, addr *net.UDPAddr, n int, buf []byte) (*conn, error) {
+func (s *Server) newConn(p PacketConn, addr *net.UDPAddr, n int, buf []byte) (*conn, error) {
 	c := &conn{
+		conn:       p,
 		remoteAddr: addr,
 		server:     s,
-		conn:       p,
 		buf:        make([]byte, n, n),
 	}
 	copy(c.buf, buf[:n])
@@ -220,8 +210,8 @@ func (s *Server) newConn(p serveConn, addr *net.UDPAddr, n int, buf []byte) (*co
 // response represents a DHCP response, and implements Responser so that
 // outbound packets can be appropriately created and sent to a client.
 type response struct {
+	conn       PacketConn
 	remoteAddr *net.UDPAddr
-	conn       serveConn
 	req        *Request
 
 	options Options

@@ -214,3 +214,25 @@ func parseDUID(d []byte) (DUID, error) {
 
 	return nil, errUnknownDUID
 }
+
+// interfaceDUID generates a DUIDLL for an input net.Interface, using its
+// IANA-assigned hardware type and its hardware address.
+func interfaceDUID(ifi *net.Interface) (DUID, error) {
+	// Attempt to check for IANA hardware type, default to Ethernet (10Mb)
+	// on failure (this relies on syscalls which only work on Linux)
+	// Hardware types can be found here:
+	// http://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml.
+	htype, err := HardwareType(ifi)
+	if err != nil {
+		// Return syscall errors
+		if err != ErrParseHardwareType && err != ErrHardwareTypeNotImplemented {
+			return nil, err
+		}
+
+		// Use default value if hardware type can't be found or
+		// detection isn't implemented
+		htype = ethernet10Mb
+	}
+
+	return NewDUIDLL(uint16(htype), ifi.HardwareAddr), nil
+}
