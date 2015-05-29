@@ -21,7 +21,7 @@ func TestOptionsAdd(t *testing.T) {
 			code:        OptionClientID,
 			byteser:     DUIDLLT([]byte{0, 1}),
 			options: Options{
-				OptionClientID: [][]byte{[]byte{0, 1}},
+				OptionClientID: [][]byte{{0, 1}},
 			},
 		},
 		{
@@ -29,7 +29,7 @@ func TestOptionsAdd(t *testing.T) {
 			code:        OptionServerID,
 			byteser:     DUIDEN([]byte{0, 2}),
 			options: Options{
-				OptionServerID: [][]byte{[]byte{0, 2}},
+				OptionServerID: [][]byte{{0, 2}},
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func TestOptionsAdd(t *testing.T) {
 			code:        OptionServerID,
 			byteser:     DUIDEN([]byte{0, 3}),
 			options: Options{
-				OptionServerID: [][]byte{[]byte{0, 3}},
+				OptionServerID: [][]byte{{0, 3}},
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func TestOptionsAdd(t *testing.T) {
 				iana: []byte{0, 1, 2, 3},
 			},
 			options: Options{
-				OptionIANA: [][]byte{[]byte{0, 1, 2, 3}},
+				OptionIANA: [][]byte{{0, 1, 2, 3}},
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func TestOptionsAddRaw(t *testing.T) {
 		{
 			description: "one key/value pair",
 			kv: []option{
-				option{
+				{
 					Code: 1,
 					Data: []byte("foo"),
 				},
@@ -86,11 +86,11 @@ func TestOptionsAddRaw(t *testing.T) {
 		{
 			description: "two key/value pairs",
 			kv: []option{
-				option{
+				{
 					Code: 1,
 					Data: []byte("foo"),
 				},
-				option{
+				{
 					Code: 2,
 					Data: []byte("bar"),
 				},
@@ -103,15 +103,15 @@ func TestOptionsAddRaw(t *testing.T) {
 		{
 			description: "three key/value pairs, two with same key",
 			kv: []option{
-				option{
+				{
 					Code: 1,
 					Data: []byte("foo"),
 				},
-				option{
+				{
 					Code: 1,
 					Data: []byte("baz"),
 				},
-				option{
+				{
 					Code: 2,
 					Data: []byte("bar"),
 				},
@@ -217,7 +217,7 @@ func TestOptionsClientID(t *testing.T) {
 		{
 			description: "OptionClientID present in Options map",
 			options: Options{
-				OptionClientID: [][]byte{[]byte{0, 1}},
+				OptionClientID: [][]byte{{0, 1}},
 			},
 			duid: DUIDLLT([]byte{0, 1}),
 			ok:   true,
@@ -259,7 +259,7 @@ func TestOptionsServerID(t *testing.T) {
 		{
 			description: "OptionServerID present in Options map",
 			options: Options{
-				OptionServerID: [][]byte{[]byte{0, 1}},
+				OptionServerID: [][]byte{{0, 1}},
 			},
 			duid: DUIDLLT([]byte{0, 1}),
 			ok:   true,
@@ -309,14 +309,14 @@ func TestOptionsIANA(t *testing.T) {
 		{
 			description: "one OptionIANA present in Options map",
 			options: Options{
-				OptionIANA: [][]byte{[]byte{
+				OptionIANA: [][]byte{{
 					1, 2, 3, 4,
 					0, 0, 1, 0,
 					0, 0, 2, 0,
 				}},
 			},
 			iana: []*IANA{
-				&IANA{
+				{
 					iana: []byte{
 						1, 2, 3, 4,
 						0, 0, 1, 0,
@@ -335,16 +335,16 @@ func TestOptionsIANA(t *testing.T) {
 				},
 			},
 			iana: []*IANA{
-				&IANA{
+				{
 					iana: bytes.Repeat([]byte{0}, 12),
 					options: Options{
-						OptionClientID: [][]byte{[]byte{1}},
+						OptionClientID: [][]byte{{1}},
 					},
 				},
-				&IANA{
+				{
 					iana: bytes.Repeat([]byte{1}, 12),
 					options: Options{
-						OptionServerID: [][]byte{[]byte{2}},
+						OptionServerID: [][]byte{{2}},
 					},
 				},
 			},
@@ -401,7 +401,7 @@ func TestOptionsIAAddr(t *testing.T) {
 		{
 			description: "one OptionIAAddr present in Options map",
 			options: Options{
-				OptionIAAddr: [][]byte{[]byte{
+				OptionIAAddr: [][]byte{{
 					0, 0, 0, 0,
 					1, 1, 1, 1,
 					2, 2, 2, 2,
@@ -411,7 +411,7 @@ func TestOptionsIAAddr(t *testing.T) {
 				}},
 			},
 			iaaddr: []*IAAddr{
-				&IAAddr{
+				{
 					iaaddr: []byte{
 						0, 0, 0, 0,
 						1, 1, 1, 1,
@@ -433,10 +433,10 @@ func TestOptionsIAAddr(t *testing.T) {
 				},
 			},
 			iaaddr: []*IAAddr{
-				&IAAddr{
+				{
 					iaaddr: bytes.Repeat([]byte{0}, 24),
 				},
-				&IAAddr{
+				{
 					iaaddr: bytes.Repeat([]byte{1}, 24),
 				},
 			},
@@ -486,14 +486,14 @@ func TestOptionsOptionRequest(t *testing.T) {
 		{
 			description: "OptionORO present in Options map, but not even length",
 			options: Options{
-				OptionORO: [][]byte{[]byte{0}},
+				OptionORO: [][]byte{{0}},
 			},
 			err: errInvalidOptionRequest,
 		},
 		{
 			description: "OptionORO present in Options map",
 			options: Options{
-				OptionORO: [][]byte{[]byte{0, 1}},
+				OptionORO: [][]byte{{0, 1}},
 			},
 			codes: []OptionCode{1},
 			ok:    true,
@@ -501,7 +501,7 @@ func TestOptionsOptionRequest(t *testing.T) {
 		{
 			description: "OptionORO present in Options map, with multiple values",
 			options: Options{
-				OptionORO: [][]byte{[]byte{0, 1, 0, 2, 0, 3}},
+				OptionORO: [][]byte{{0, 1, 0, 2, 0, 3}},
 			},
 			codes: []OptionCode{1, 2, 3},
 			ok:    true,
@@ -547,21 +547,21 @@ func TestOptionsPreference(t *testing.T) {
 		{
 			description: "OptionPreference present in Options map, but too short length",
 			options: Options{
-				OptionPreference: [][]byte{[]byte{}},
+				OptionPreference: [][]byte{{}},
 			},
 			err: errInvalidPreference,
 		},
 		{
 			description: "OptionPreference present in Options map, but too long length",
 			options: Options{
-				OptionPreference: [][]byte{[]byte{0, 1}},
+				OptionPreference: [][]byte{{0, 1}},
 			},
 			err: errInvalidPreference,
 		},
 		{
 			description: "OptionPreference present in Options map",
 			options: Options{
-				OptionPreference: [][]byte{[]byte{255}},
+				OptionPreference: [][]byte{{255}},
 			},
 			preference: 255,
 			ok:         true,
@@ -607,14 +607,14 @@ func TestOptionsStatusCode(t *testing.T) {
 		{
 			description: "OptionStatusCode present in Options map, but too short length",
 			options: Options{
-				OptionStatusCode: [][]byte{[]byte{}},
+				OptionStatusCode: [][]byte{{}},
 			},
 			err: errInvalidStatusCode,
 		},
 		{
 			description: "OptionStatusCode present in Options map, no message",
 			options: Options{
-				OptionStatusCode: [][]byte{[]byte{0, 0}},
+				OptionStatusCode: [][]byte{{0, 0}},
 			},
 			sc: StatusCode([]byte{0, 0}),
 			ok: true,
@@ -668,21 +668,21 @@ func TestOptionsElapsedTime(t *testing.T) {
 		{
 			description: "OptionElapsedTime present in Options map, but too short",
 			options: Options{
-				OptionElapsedTime: [][]byte{[]byte{1}},
+				OptionElapsedTime: [][]byte{{1}},
 			},
 			err: errInvalidElapsedTime,
 		},
 		{
 			description: "OptionElapsedTime present in Options map, but too long",
 			options: Options{
-				OptionElapsedTime: [][]byte{[]byte{1, 2, 3}},
+				OptionElapsedTime: [][]byte{{1, 2, 3}},
 			},
 			err: errInvalidElapsedTime,
 		},
 		{
 			description: "OptionElapsedTime present in Options map",
 			options: Options{
-				OptionElapsedTime: [][]byte{[]byte{1, 1}},
+				OptionElapsedTime: [][]byte{{1, 1}},
 			},
 			duration: 2570 * time.Millisecond,
 			ok:       true,
@@ -828,7 +828,7 @@ func Test_parseOptions(t *testing.T) {
 			description: "client ID, length 1, value [1]",
 			buf:         []byte{0, 1, 0, 1, 1},
 			options: Options{
-				OptionClientID: [][]byte{[]byte{1}},
+				OptionClientID: [][]byte{{1}},
 			},
 		},
 		{
@@ -838,8 +838,8 @@ func Test_parseOptions(t *testing.T) {
 				0, 2, 0, 3, 1, 2, 3,
 			},
 			options: Options{
-				OptionClientID: [][]byte{[]byte{1, 1}},
-				OptionServerID: [][]byte{[]byte{1, 2, 3}},
+				OptionClientID: [][]byte{{1, 1}},
+				OptionServerID: [][]byte{{1, 2, 3}},
 			},
 		},
 	}

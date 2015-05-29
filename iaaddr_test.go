@@ -73,7 +73,7 @@ func TestNewIAAddr(t *testing.T) {
 			preferred: 3600 * time.Second,
 			valid:     5400 * time.Second,
 			options: Options{
-				OptionClientID: [][]byte{[]byte{0, 1}},
+				OptionClientID: [][]byte{{0, 1}},
 			},
 			iaaddr: &IAAddr{
 				iaaddr: []byte{
@@ -85,7 +85,7 @@ func TestNewIAAddr(t *testing.T) {
 					0, 0, 21, 24,
 				},
 				options: Options{
-					OptionClientID: [][]byte{[]byte{0, 1}},
+					OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},
@@ -281,7 +281,7 @@ func TestIAAddrOptions(t *testing.T) {
 			description: "ok buffer, one OptionClientID option",
 			buf:         []byte{0, 1, 0, 2, 0, 1},
 			options: Options{
-				OptionClientID: [][]byte{[]byte{0, 1}},
+				OptionClientID: [][]byte{{0, 1}},
 			},
 		},
 		{
@@ -292,8 +292,8 @@ func TestIAAddrOptions(t *testing.T) {
 			},
 			options: Options{
 				OptionClientID: [][]byte{
-					[]byte{0, 1},
-					[]byte{0, 2},
+					{0, 1},
+					{0, 2},
 				},
 			},
 		},

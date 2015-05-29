@@ -52,7 +52,7 @@ func TestNewIANA(t *testing.T) {
 			t1:          3600 * time.Second,
 			t2:          5400 * time.Second,
 			options: Options{
-				OptionClientID: [][]byte{[]byte{0, 1}},
+				OptionClientID: [][]byte{{0, 1}},
 			},
 			iana: &IANA{
 				iana: []byte{
@@ -61,7 +61,7 @@ func TestNewIANA(t *testing.T) {
 					0, 0, 21, 24,
 				},
 				options: Options{
-					OptionClientID: [][]byte{[]byte{0, 1}},
+					OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},
@@ -234,7 +234,7 @@ func TestIANAOptions(t *testing.T) {
 			description: "ok buffer, one OptionClientID option",
 			buf:         []byte{0, 1, 0, 2, 0, 1},
 			options: Options{
-				OptionClientID: [][]byte{[]byte{0, 1}},
+				OptionClientID: [][]byte{{0, 1}},
 			},
 		},
 		{
@@ -245,8 +245,8 @@ func TestIANAOptions(t *testing.T) {
 			},
 			options: Options{
 				OptionClientID: [][]byte{
-					[]byte{0, 1},
-					[]byte{0, 2},
+					{0, 1},
+					{0, 2},
 				},
 			},
 		},
@@ -297,7 +297,7 @@ func Test_parseIANA(t *testing.T) {
 					0, 0, 2, 0,
 				},
 				options: Options{
-					OptionClientID: [][]byte{[]byte{0, 1}},
+					OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},

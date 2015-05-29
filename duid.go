@@ -111,7 +111,7 @@ func (d DUIDLLT) Time() time.Duration {
 // could represent any arbitrary interface on a system, and should not be
 // used as a client or server's communicating hardware address.
 func (d DUIDLLT) HardwareAddr() net.HardwareAddr {
-	return net.HardwareAddr(d[8:len(d)])
+	return net.HardwareAddr(d[8:])
 }
 
 // DUIDEN represents a DUID Assigned by Vendor Based on Enterprise Number
@@ -139,7 +139,7 @@ func (d DUIDEN) EnterpriseNumber() int {
 // Identifier returns a unique identifier which is assigned to a device
 // at the time it is manufactured.
 func (d DUIDEN) Identifier() []byte {
-	return d[6:len(d)]
+	return d[6:]
 }
 
 // DUIDLL represents a DUID Based on Link-layer Address [DUID-LL],
@@ -191,7 +191,7 @@ func (d DUIDLL) HardwareType() []byte {
 // could represent any arbitrary interface on a system, and should not be
 // used as a client or server's communicating hardware address.
 func (d DUIDLL) HardwareAddr() net.HardwareAddr {
-	return net.HardwareAddr(d[4:len(d)])
+	return net.HardwareAddr(d[4:])
 }
 
 // parseDUID returns the correct DUID type of the input byte slice as a
