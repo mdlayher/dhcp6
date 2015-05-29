@@ -315,7 +315,7 @@ func Test_parseIANA(t *testing.T) {
 		}
 
 		if want, got := tt.iana, iana; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] unexpected IANA for parseIANA(%v):\n- want: %v\n-  got: v",
+			t.Fatalf("[%02d] unexpected IANA for parseIANA(%v):\n- want: %v\n-  got: %v",
 				i, tt.buf, want, got)
 		}
 	}
