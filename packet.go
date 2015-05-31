@@ -5,9 +5,9 @@ import (
 )
 
 var (
-	// errInvalidTransactionID is returned when a transaction ID not exactly
+	// ErrInvalidTransactionID is returned when a transaction ID not exactly
 	// 3 bytes in length.
-	errInvalidTransactionID = errors.New("transaction ID must be exactly 3 bytes")
+	ErrInvalidTransactionID = errors.New("transaction ID must be exactly 3 bytes")
 )
 
 // Packet represents a raw DHCPv6 packet, using the format described in IETF
@@ -65,7 +65,7 @@ func (p Packet) Options() Options {
 func NewPacket(mt MessageType, txID []byte, options Options) (Packet, error) {
 	// Transaction ID must always be 3 bytes
 	if len(txID) != 3 {
-		return nil, errInvalidTransactionID
+		return nil, ErrInvalidTransactionID
 	}
 
 	// If no options, allocate only enough space for message type

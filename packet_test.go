@@ -132,7 +132,7 @@ func TestNewPacket(t *testing.T) {
 			mt:          MessageTypeSolicit,
 			txID:        []byte{1, 1},
 			options:     Options{},
-			err:         errInvalidTransactionID,
+			err:         ErrInvalidTransactionID,
 		},
 		{
 			description: "solicit, tx 111, no options",
