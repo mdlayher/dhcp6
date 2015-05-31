@@ -1,6 +1,7 @@
 package dhcp6
 
 import (
+	"errors"
 	"net"
 
 	"golang.org/x/net/ipv6"
@@ -23,6 +24,10 @@ var (
 	AllServersAddr = &net.IPAddr{
 		IP: net.ParseIP("ff05::1:3"),
 	}
+
+	// errClosing is a special value used to stop the server's read loop
+	// when a connection is closing.
+	errClosing = errors.New("use of closed network connection")
 )
 
 // PacketConn is an interface which types must implement in order to serve
@@ -160,6 +165,11 @@ func (s *Server) Serve(p PacketConn) error {
 	for {
 		n, cm, addr, err := p.ReadFrom(buf)
 		if err != nil {
+			// Stop serve loop gracefully when closing
+			if err == errClosing {
+				return nil
+			}
+
 			// BUG(mdlayher): determine if error can be temporary
 			return err
 		}
