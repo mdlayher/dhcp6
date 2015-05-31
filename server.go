@@ -218,7 +218,7 @@ func (s *Server) newConn(p PacketConn, addr *net.UDPAddr, n int, buf []byte) (*c
 }
 
 // response represents a DHCP response, and implements Responser so that
-// outbound packets can be appropriately created and sent to a client.
+// outbound Packets can be appropriately created and sent to a client.
 type response struct {
 	conn       PacketConn
 	remoteAddr *net.UDPAddr
@@ -235,10 +235,10 @@ func (r *response) Options() Options {
 }
 
 // Send uses the input message typ, the transaction ID sent by a client,
-// and the options set by Options, to create and send a packet to the
+// and the options set by Options, to create and send a Packet to the
 // client's address.
 func (r *response) Send(mt MessageType) (int, error) {
-	p, err := newPacket(mt, r.req.TransactionID, r.options)
+	p, err := NewPacket(mt, r.req.TransactionID, r.options)
 	if err != nil {
 		return 0, err
 	}
@@ -249,12 +249,12 @@ func (r *response) Send(mt MessageType) (int, error) {
 // serve handles serving an individual DHCP connection, and is invoked in a
 // goroutine.
 func (c *conn) serve() {
-	// Parse packet data from raw buffer
-	p := packet(c.buf)
+	// Parse Packet data from raw buffer
+	p := Packet(c.buf)
 
-	// Set up Request with information from a packet, providing a nicer
+	// Set up Request with information from a Packet, providing a nicer
 	// API for callers to implement their own DHCP request handlers
-	r := newServerRequest(p, c.remoteAddr)
+	r := ParseRequest(p, c.remoteAddr)
 
 	// Set up response to send responses back to the original requester
 	w := &response{

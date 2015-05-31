@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-// Test_packetMessageType verifies that packet.MessageType returns a correct
+// TestPacketMessageType verifies that Packet.MessageType returns a correct
 // message type value from a byte, and that it returns a zero value if the
 // message type byte is empty.
-func Test_packetMessageType(t *testing.T) {
+func TestPacketMessageType(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -53,17 +53,17 @@ func Test_packetMessageType(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.mt, packet(tt.buf).MessageType(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected packet(%v).MessageType(): %v != %v",
+		if want, got := tt.mt, Packet(tt.buf).MessageType(); want != got {
+			t.Fatalf("[%02d] test %q, unexpected Packet(%v).MessageType(): %v != %v",
 				i, tt.description, tt.buf, want, got)
 		}
 	}
 }
 
-// Test_packetTransactionID verifies that packet.TransactionID returns a correct
+// TestPacketTransactionID verifies that Packet.TransactionID returns a correct
 // transaction ID value from a slice of bytes, and that it returns nil if the
 // byte slice is too short to contain a transaction ID.
-func Test_packetTransactionID(t *testing.T) {
+func TestPacketTransactionID(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -109,17 +109,17 @@ func Test_packetTransactionID(t *testing.T) {
 	// Message type is not relevant in this test, so we automatically
 	// prepend an empty message type
 	for i, tt := range tests {
-		if want, got := tt.txID, packet(append([]byte{0}, tt.buf...)).TransactionID(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected packet(%v).TransactionID(): %v != %v",
+		if want, got := tt.txID, Packet(append([]byte{0}, tt.buf...)).TransactionID(); !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected Packet(%v).TransactionID(): %v != %v",
 				i, tt.description, tt.buf, want, got)
 		}
 	}
 }
 
-// Test_newPacket verifies that newPacket generates an appropriate output packet,
+// TestNewPacket verifies that NewPacket generates an appropriate output Packet,
 // when provided with a variety of message types, (possibly erroneous)
 // transaction IDs, and options.
-func Test_newPacket(t *testing.T) {
+func TestNewPacket(t *testing.T) {
 	var tests = []struct {
 		description string
 		mt          MessageType
@@ -160,7 +160,7 @@ func Test_newPacket(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		p, err := newPacket(tt.mt, tt.txID, tt.options)
+		p, err := NewPacket(tt.mt, tt.txID, tt.options)
 		if err != nil && tt.err == nil {
 			t.Fatal(err)
 		}
@@ -173,12 +173,12 @@ func Test_newPacket(t *testing.T) {
 		}
 
 		if want, got := tt.mt, p.MessageType(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected packet message type: %v != %v",
+			t.Fatalf("[%02d] test %q, unexpected Packet message type: %v != %v",
 				i, tt.description, want, got)
 		}
 
 		if want, got := tt.txID, p.TransactionID(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected packet transaction ID:\n- want: %v\n-  got: %v",
+			t.Fatalf("[%02d] test %q, unexpected Packet transaction ID:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}
 

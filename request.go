@@ -29,15 +29,15 @@ type Request struct {
 	// Network address which was used to contact the DHCP server.
 	RemoteAddr string
 
-	packet packet
+	packet Packet
 }
 
-// newServerRequest creates a new *Request from an input packet and UDP address.
+// ParseRequest creates a new *Request from an input Packet and UDP address.
 // It populates the basic struct members which can be used in a DHCP handler,
 // and also parses some well-known options into a simpler form.
 //
 // It is only intended to be used by the server component and tests.
-func newServerRequest(p packet, remoteAddr *net.UDPAddr) *Request {
+func ParseRequest(p Packet, remoteAddr *net.UDPAddr) *Request {
 	return &Request{
 		MessageType:   p.MessageType(),
 		TransactionID: p.TransactionID(),

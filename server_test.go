@@ -19,9 +19,9 @@ func TestServeIPv6ControlParameters(t *testing.T) {
 		},
 	}
 
-	// Send packet to avoid EOF, even though it does not matter
+	// Send Packet to avoid EOF, even though it does not matter
 	// for this test
-	p, err := newPacket(MessageTypeSolicit, []byte{0, 1, 2}, nil)
+	p, err := NewPacket(MessageTypeSolicit, []byte{0, 1, 2}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestServeIPv6ControlParameters(t *testing.T) {
 // TestServeWithSetServerID verifies that Serve uses the server ID provided
 // instead of generating its own, when a server ID is set.
 func TestServeWithSetServerID(t *testing.T) {
-	p, err := newPacket(MessageTypeSolicit, []byte{0, 1, 2}, nil)
+	p, err := NewPacket(MessageTypeSolicit, []byte{0, 1, 2}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func TestServeWithSetServerID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wp := packet(w.b.Bytes())
+	wp := Packet(w.b.Bytes())
 
 	if want, got := mt, wp.MessageType(); want != got {
 		t.Fatalf("unexpected message type: %v != %v", want, got)
@@ -117,7 +117,7 @@ func TestServeCreateResponserWithCorrectParameters(t *testing.T) {
 	txID := []byte{0, 1, 2}
 	duid := []byte{0, 1}
 
-	p, err := newPacket(MessageTypeSolicit, []byte{0, 1, 2}, Options{
+	p, err := NewPacket(MessageTypeSolicit, []byte{0, 1, 2}, Options{
 		OptionClientID: [][]byte{duid},
 	})
 	if err != nil {
@@ -154,7 +154,7 @@ func TestServeCreateResponserWithCorrectParameters(t *testing.T) {
 // TestServeIgnoreWrongCMIfIndex verifies that Serve will ignore incoming
 // connections with an incorrect IPv6 control message interface index.
 func TestServeIgnoreWrongCMIfIndex(t *testing.T) {
-	p, err := newPacket(MessageTypeSolicit, []byte{0, 1, 2}, nil)
+	p, err := NewPacket(MessageTypeSolicit, []byte{0, 1, 2}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +197,7 @@ func TestServeOK(t *testing.T) {
 	duid := []byte{0, 1}
 
 	// Perform an entire Solicit transaction
-	p, err := newPacket(MessageTypeSolicit, txID, Options{
+	p, err := NewPacket(MessageTypeSolicit, txID, Options{
 		OptionClientID: [][]byte{duid},
 	})
 	if err != nil {
@@ -237,7 +237,7 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected client address: %v != %v", want, got)
 	}
 
-	wp := packet(w.b.Bytes())
+	wp := Packet(w.b.Bytes())
 
 	if want, got := mt, wp.MessageType(); want != got {
 		t.Fatalf("unexpected message type: %v != %v", want, got)
