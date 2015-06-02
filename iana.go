@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	// ErrInvalidIANIAID is returned when an input IAID value is not
+	// ErrInvalidIANAIAID is returned when an input IAID value is not
 	// exactly 4 bytes in length.
 	ErrInvalidIANAIAID = errors.New("IAID must be exactly 4 bytes")
 
