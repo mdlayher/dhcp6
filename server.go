@@ -249,12 +249,14 @@ func (r *response) Send(mt MessageType) (int, error) {
 // serve handles serving an individual DHCP connection, and is invoked in a
 // goroutine.
 func (c *conn) serve() {
-	// Parse Packet data from raw buffer
-	p := Packet(c.buf)
-
 	// Set up Request with information from a Packet, providing a nicer
-	// API for callers to implement their own DHCP request handlers
-	r := ParseRequest(p, c.remoteAddr)
+	// API for callers to implement their own DHCP request handlers.
+	// ParseRequest does the same validations that would be performed by
+	// ParsePacket.
+	r, err := ParseRequest(Packet(c.buf), c.remoteAddr)
+	if err != nil {
+		return
+	}
 
 	// Set up response to send responses back to the original requester
 	w := &response{

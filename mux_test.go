@@ -19,7 +19,11 @@ func TestServeMuxHandleNoResponse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := dhcp6.ParseRequest(p, nil)
+	r, err := dhcp6.ParseRequest(p, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	w := dhcp6test.NewRecorder(r.TransactionID)
 	mux.ServeDHCP(w, r)
 
@@ -47,7 +51,11 @@ func TestServeMuxHandleOK(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := dhcp6.ParseRequest(p, nil)
+	r, err := dhcp6.ParseRequest(p, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	w := dhcp6test.NewRecorder(r.TransactionID)
 	mux.ServeDHCP(w, r)
 
@@ -70,7 +78,11 @@ func TestServeMuxHandleFuncOK(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := dhcp6.ParseRequest(p, nil)
+	r, err := dhcp6.ParseRequest(p, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	w := dhcp6test.NewRecorder(r.TransactionID)
 	mux.ServeDHCP(w, r)
 

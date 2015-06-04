@@ -5,6 +5,11 @@ import (
 )
 
 var (
+	// ErrMalformedPacket is returned when a byte slice does not contain enough
+	// data to create a valid Packet.  A Packet must have at least a message type
+	// and transaction ID.
+	ErrMalformedPacket = errors.New("malformed packet")
+
 	// ErrInvalidTransactionID is returned when a transaction ID not exactly
 	// 3 bytes in length.
 	ErrInvalidTransactionID = errors.New("transaction ID must be exactly 3 bytes")
@@ -19,25 +24,27 @@ var (
 type Packet []byte
 
 // MessageType returns the MessageType constant identified in this Packet.
-func (p Packet) MessageType() MessageType {
+// If the Packet is empty, ErrMalformedPacket is returned.
+func (p Packet) MessageType() (MessageType, error) {
 	// Empty Packet means no message type
 	if len(p) == 0 {
-		return 0
+		return 0, ErrMalformedPacket
 	}
 
-	return MessageType(p[0])
+	return MessageType(p[0]), nil
 }
 
 // TransactionID returns the transaction ID byte slice identified in this
-// Packet.
-func (p Packet) TransactionID() []byte {
+// Packet.  If the Packet is too short to contain a transaction ID,
+// ErrMalformedPacket is returned.
+func (p Packet) TransactionID() ([]byte, error) {
 	// If Packet is too short to contain a transaction ID,
 	// just return a nil ID
 	if len(p) < 4 {
-		return nil
+		return nil, ErrMalformedPacket
 	}
 
-	return p[1:4]
+	return p[1:4], nil
 }
 
 // option represents an individual DHCP Option, as defined in IETF RFC 3315,
@@ -49,9 +56,15 @@ type option struct {
 }
 
 // Options parses a Packet's options and returns them as an Options map.
-func (p Packet) Options() Options {
+// If the Packet is too short to contain any options, ErrMalformedPacket
+// is returned.
+func (p Packet) Options() (Options, error) {
+	if len(p) < 4 {
+		return nil, ErrMalformedPacket
+	}
+
 	// Skip message type and transaction ID
-	return parseOptions(p[4:])
+	return parseOptions(p[4:]), nil
 }
 
 // NewPacket creates a new Packet from an input message type, transaction ID,
@@ -95,4 +108,21 @@ func NewPacket(mt MessageType, txID []byte, options Options) (Packet, error) {
 	opts.write(p[4:])
 
 	return p, nil
+}
+
+// ParsePacket parses a raw byte slice into a Packet.  If the byte slice
+// does not contain enough data to form a valid Packet, ErrMalformedPacket
+// is returned.
+func ParsePacket(b []byte) (Packet, error) {
+	p := Packet(b)
+
+	if _, err := p.MessageType(); err != nil {
+		return nil, err
+	}
+
+	// If packet contains a transaction ID, it is long enough to contain
+	// options, even though options may be entirely empty.  Thus, we do
+	// not need to check for options.
+	_, err := p.TransactionID()
+	return p, err
 }

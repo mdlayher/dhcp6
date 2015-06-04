@@ -94,13 +94,20 @@ func TestServeWithSetServerID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wp := Packet(w.b.Bytes())
+	wp, err := ParsePacket(w.b.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	if want, got := mt, wp.MessageType(); want != got {
+	// ParsePacket already verified packet fields
+	gotMT, _ := wp.MessageType()
+	options, _ := wp.Options()
+
+	if want, got := mt, gotMT; want != got {
 		t.Fatalf("unexpected message type: %v != %v", want, got)
 	}
 
-	sID, ok, err := wp.Options().ServerID()
+	sID, ok, err := options.ServerID()
 	if !ok || err != nil {
 		t.Fatalf("server ID could not be parsed from reply: (%v, %v)", ok, err)
 	}
@@ -237,28 +244,36 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected client address: %v != %v", want, got)
 	}
 
-	wp := Packet(w.b.Bytes())
+	wp, err := ParsePacket(w.b.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	if want, got := mt, wp.MessageType(); want != got {
+	// ParsePacket already verified packet fields
+	gotMT, _ := wp.MessageType()
+	gotTxID, _ := wp.TransactionID()
+	options, _ := wp.Options()
+
+	if want, got := mt, gotMT; want != got {
 		t.Fatalf("unexpected message type: %v != %v", want, got)
 	}
 
-	if want, got := txID, wp.TransactionID(); !bytes.Equal(want, got) {
+	if want, got := txID, gotTxID; !bytes.Equal(want, got) {
 		t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 	}
 
-	cID, ok, err := wp.Options().ClientID()
+	cID, ok, err := options.ClientID()
 	if !ok || err != nil || cID == nil {
 		t.Fatal("response options did not contain client ID")
 	}
 	if want, got := duid, cID.Bytes(); !bytes.Equal(want, got) {
 		t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 	}
-	if sID, ok, err := wp.Options().ServerID(); !ok || err != nil || sID == nil {
+	if sID, ok, err := options.ServerID(); !ok || err != nil || sID == nil {
 		t.Fatal("Responser options did not contain server ID")
 	}
 
-	pr, ok, err := wp.Options().Preference()
+	pr, ok, err := options.Preference()
 	if !ok || err != nil {
 		t.Fatal("response Options did not contain preference")
 	}
@@ -266,7 +281,7 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected preference value: %v != %v", want, got)
 	}
 
-	st, ok, err := wp.Options().StatusCode()
+	st, ok, err := options.StatusCode()
 	if !ok || err != nil {
 		t.Fatal("response Options did not contain status code")
 	}

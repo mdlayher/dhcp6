@@ -25,9 +25,19 @@ func TestParseRequest(t *testing.T) {
 		Port: 546,
 	}
 
+	mt, err := p.MessageType()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txID, err := p.TransactionID()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	r := &Request{
-		MessageType:   p.MessageType(),
-		TransactionID: p.TransactionID(),
+		MessageType:   mt,
+		TransactionID: txID,
 		Options:       make(Options),
 		Length:        int64(len(p)),
 		RemoteAddr:    "[::1]:546",
@@ -36,8 +46,13 @@ func TestParseRequest(t *testing.T) {
 	}
 	r.Options.AddRaw(opt.Code, opt.Data)
 
-	if want, got := r, ParseRequest(p, addr); !reflect.DeepEqual(want, got) {
-		t.Fatalf("unexpected Request for newServerRequest(%v, %v)\n- want: %v\n-  got: %v",
+	gotR, err := ParseRequest(p, addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := r, gotR; !reflect.DeepEqual(want, got) {
+		t.Fatalf("unexpected Request for ParseRequest(%v, %v)\n- want: %v\n-  got: %v",
 			p, addr, want, got)
 	}
 }

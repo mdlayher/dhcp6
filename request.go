@@ -37,14 +37,29 @@ type Request struct {
 // and also parses some well-known options into a simpler form.
 //
 // It is only intended to be used by the server component and tests.
-func ParseRequest(p Packet, remoteAddr *net.UDPAddr) *Request {
+func ParseRequest(p Packet, remoteAddr *net.UDPAddr) (*Request, error) {
+	mt, err := p.MessageType()
+	if err != nil {
+		return nil, err
+	}
+
+	txID, err := p.TransactionID()
+	if err != nil {
+		return nil, err
+	}
+
+	options, err := p.Options()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Request{
-		MessageType:   p.MessageType(),
-		TransactionID: p.TransactionID(),
-		Options:       p.Options(),
+		MessageType:   mt,
+		TransactionID: txID,
+		Options:       options,
 		Length:        int64(len(p)),
 		RemoteAddr:    remoteAddr.String(),
 
 		packet: p,
-	}
+	}, nil
 }
