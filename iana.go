@@ -7,127 +7,85 @@ import (
 )
 
 var (
-	// ErrInvalidIANAIAID is returned when an input IAID value is not
-	// exactly 4 bytes in length.
-	ErrInvalidIANAIAID = errors.New("IAID must be exactly 4 bytes")
-
 	// errInvalidIANA is returned when a byte slice does not contain
 	// enough bytes to parse a valid IANA value.
-	errInvalidIANA = errors.New("not enough bytes for valid IA_NA")
+	errInvalidIANA = errors.New("not enough bytes for valid IANA")
 )
 
 // IANA represents an Identity Association for Non-temporary Addresses, as
-// defined in IETF RFC 3315, Section 10.
+// defined in RFC 3315, Section 22.4.
 //
-// DHCP clients and servers use identity assocations (IAs) to identify, group,
-// and manage a set of related IPv6 addresses.  Each IA must be associated
-// with exactly one network interface.
-//
-// Multiple IAs may be present in a single DHCP request.
+// Multiple IANAs may be present in a single DHCP request.
 type IANA struct {
-	// The raw byte slice containing the IANA, with options stripped
-	iana []byte
+	// IAID specifies a DHCP identity association identifier.  The IAID
+	// is a unique, client-generated identifier.
+	IAID [4]byte
 
-	// Options map which is marshaled to binary when Bytes is called
-	options Options
+	// T1 specifies how long a DHCP client will wait to contact this server,
+	// to extend the lifetimes of the addresses assigned to this IANA
+	// by this server.
+	T1 time.Duration
+
+	// T2 specifies how long a DHCP client will wait to contact any server,
+	// to extend the lifetimes of the addresses assigned to this IANA
+	// by this server.
+	T2 time.Duration
+
+	// Options specifies a map of DHCP options specific to this IANA.
+	// Its methods can be used to retrieve data from an incoming IANA, or send
+	// data with an outgoing IANA.
+	Options Options
 }
 
 // NewIANA creates a new IANA from an IAID, T1 and T2 durations, and an
-// optional Options map.
-//
-// The IAID must be exactly 4 bytes in length, and the same value must
-// always be produced across restarts of a client. If an Options map is not
-// specified, a new one will be allocated.
-func NewIANA(iaid []byte, t1 time.Duration, t2 time.Duration, options Options) (*IANA, error) {
-	// IANA is always 4 bytes
-	if len(iaid) != 4 {
-		return nil, ErrInvalidIANAIAID
-	}
-
-	iana := make([]byte, 12)
-	copy(iana[0:4], iaid)
-
-	// Convert durations to uint32 binary form
-	binary.BigEndian.PutUint32(iana[4:8], uint32(t1/time.Second))
-	binary.BigEndian.PutUint32(iana[8:12], uint32(t2/time.Second))
-
-	// If no options set, make empty map
+// Options map.  If an Options map is not specified, a new one will be
+// allocated.
+func NewIANA(iaid [4]byte, t1 time.Duration, t2 time.Duration, options Options) *IANA {
 	if options == nil {
 		options = make(Options)
 	}
 
 	return &IANA{
-		iana:    iana,
-		options: options,
-	}, nil
+		IAID:    iaid,
+		T1:      t1,
+		T2:      t2,
+		Options: options,
+	}
 }
 
 // Bytes implements Byteser, and returns the underlying byte slice for an IANA,
 // appended with a byte slice of all options which have been applied to the
 // Options map for this IANA.
 func (i *IANA) Bytes() []byte {
-	// Enumerate optslice and check byte count
-	opts := i.options.enumerate()
-	c := opts.count()
+	// 4 bytes: IAID
+	// 4 bytes: T1
+	// 4 bytes: T2
+	// N bytes: options slice byte count
+	opts := i.Options.enumerate()
+	b := make([]byte, 12+opts.count())
 
-	// Allocate correct number of bytes and write options
-	buf := make([]byte, c, c)
-	opts.write(buf)
+	copy(b[0:4], i.IAID[:])
+	binary.BigEndian.PutUint32(b[4:8], uint32(i.T1/time.Second))
+	binary.BigEndian.PutUint32(b[8:12], uint32(i.T2/time.Second))
+	opts.write(b[12:])
 
-	// Return IANA with options
-	return append(i.iana, buf...)
-}
-
-// IAID returns an identity association identifier, which is a value generated
-// by a client, chosen to be unique among other IAs for that client.
-func (i *IANA) IAID() []byte {
-	// Too short to contain IAID
-	if len(i.iana) < 4 {
-		return nil
-	}
-
-	return i.iana[0:4]
-}
-
-// T1 returns a duration which indicates how long a DHCP client will wait to
-// contact the server, to extend the lifetimes of the addresses assigned to
-// this IANA by this server.
-func (i *IANA) T1() time.Duration {
-	// Too short to contain T1
-	if len(i.iana) < 8 {
-		return 0
-	}
-
-	return time.Duration(binary.BigEndian.Uint32(i.iana[4:8])) * time.Second
-}
-
-// T2 returns a duration which indicates how long a DHCP client will wait to
-// contact any server, to extend the lifetimes of the addresses assigned to
-// this IANA by any server.
-func (i *IANA) T2() time.Duration {
-	// Too short to contain T2
-	if len(i.iana) < 12 {
-		return 0
-	}
-
-	return time.Duration(binary.BigEndian.Uint32(i.iana[8:12])) * time.Second
-}
-
-// Options parses the Options map associated with this IANA.  The Options
-// may contain additional information regarding this IANA.  Options can be
-// added, removed, or modified directly via this map.
-func (i *IANA) Options() Options {
-	return i.options
+	return b
 }
 
 // parseIANA attempts to parse an input byte slice as a IANA.
 func parseIANA(b []byte) (*IANA, error) {
+	// IANA must contain at least an IAID, T1, and T2.
 	if len(b) < 12 {
 		return nil, errInvalidIANA
 	}
 
+	iaid := [4]byte{}
+	copy(iaid[:], b[0:4])
+
 	return &IANA{
-		iana:    b[:12],
-		options: parseOptions(b[12:]),
+		IAID:    iaid,
+		T1:      time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second,
+		T2:      time.Duration(binary.BigEndian.Uint32(b[8:12])) * time.Second,
+		Options: parseOptions(b[12:]),
 	}, nil
 }

@@ -14,12 +14,7 @@ import (
 func TestServeMuxHandleNoResponse(t *testing.T) {
 	mux := dhcp6.NewServeMux()
 
-	p, err := dhcp6.NewPacket(dhcp6.MessageTypeSolicit, []byte{0, 1, 2}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r, err := dhcp6.ParseRequest(p, nil)
+	r, err := dhcp6.ParseRequest([]byte{1, 1, 2, 3}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,9 +22,6 @@ func TestServeMuxHandleNoResponse(t *testing.T) {
 	w := dhcp6test.NewRecorder(r.TransactionID)
 	mux.ServeDHCP(w, r)
 
-	if l := len(w.Packet); l > 0 {
-		t.Fatalf("reply packet should be empty, but got length: %d", l)
-	}
 	if mt := w.MessageType; mt != dhcp6.MessageType(0) {
 		t.Fatalf("reply packet empty, but got message type: %v", mt)
 	}
@@ -46,12 +38,7 @@ func TestServeMuxHandleOK(t *testing.T) {
 
 	mux.Handle(mt, &solicitHandler{})
 
-	p, err := dhcp6.NewPacket(mt, []byte{0, 1, 2}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r, err := dhcp6.ParseRequest(p, nil)
+	r, err := dhcp6.ParseRequest([]byte{byte(mt), 0, 1, 2}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,12 +60,7 @@ func TestServeMuxHandleFuncOK(t *testing.T) {
 
 	mux.HandleFunc(mt, solicit)
 
-	p, err := dhcp6.NewPacket(mt, []byte{0, 1, 2}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r, err := dhcp6.ParseRequest(p, nil)
+	r, err := dhcp6.ParseRequest([]byte{byte(mt), 0, 1, 2}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

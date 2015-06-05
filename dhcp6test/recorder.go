@@ -9,14 +9,13 @@ import (
 // options, for inspection during tests.
 type Recorder struct {
 	MessageType   dhcp6.MessageType
-	TransactionID []byte
+	TransactionID [3]byte
 	OptionsMap    dhcp6.Options
-
-	Packet dhcp6.Packet
+	Packet        *dhcp6.Packet
 }
 
 // NewRecorder creates a new Recorder which uses the input transaction ID.
-func NewRecorder(txID []byte) *Recorder {
+func NewRecorder(txID [3]byte) *Recorder {
 	return &Recorder{
 		TransactionID: txID,
 		OptionsMap:    make(dhcp6.Options),
@@ -32,11 +31,12 @@ func (r *Recorder) Options() dhcp6.Options {
 // it for later inspection.
 func (r *Recorder) Send(mt dhcp6.MessageType) (int, error) {
 	r.MessageType = mt
-	p, err := dhcp6.NewPacket(mt, r.TransactionID, r.OptionsMap)
-	if err != nil {
-		return 0, err
+	p := &dhcp6.Packet{
+		MessageType:   mt,
+		TransactionID: r.TransactionID,
+		Options:       r.OptionsMap,
 	}
-
 	r.Packet = p
-	return len(p), nil
+
+	return len(p.Bytes()), nil
 }

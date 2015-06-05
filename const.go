@@ -3,7 +3,7 @@ package dhcp6
 // MessageType represents a DHCP message type, as defined in IETF RFC 3315,
 // Section 5.3.  Different DHCP message types are used to perform different
 // actions between a client and server.
-type MessageType int
+type MessageType uint8
 
 // MessageType constants which indicate the message types described in IETF
 // RFC 3315, Section 5.3.  Additional message types are defined in IANA's

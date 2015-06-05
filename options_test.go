@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"bytes"
+	"net"
 	"reflect"
 	"testing"
 	"time"
@@ -44,10 +45,32 @@ func TestOptionsAdd(t *testing.T) {
 			description: "IA_NA",
 			code:        OptionIANA,
 			byteser: &IANA{
-				iana: []byte{0, 1, 2, 3},
+				IAID: [4]byte{0, 1, 2, 3},
+				T1:   30 * time.Second,
+				T2:   60 * time.Second,
 			},
 			options: Options{
-				OptionIANA: [][]byte{{0, 1, 2, 3}},
+				OptionIANA: [][]byte{{
+					0, 1, 2, 3,
+					0, 0, 0, 30,
+					0, 0, 0, 60,
+				}},
+			},
+		},
+		{
+			description: "IAAddr",
+			code:        OptionIAAddr,
+			byteser: &IAAddr{
+				IP:                net.IPv6loopback,
+				PreferredLifetime: 30 * time.Second,
+				ValidLifetime:     60 * time.Second,
+			},
+			options: Options{
+				OptionIAAddr: [][]byte{{
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+					0, 0, 0, 30,
+					0, 0, 0, 60,
+				}},
 			},
 		},
 	}
@@ -311,17 +334,15 @@ func TestOptionsIANA(t *testing.T) {
 			options: Options{
 				OptionIANA: [][]byte{{
 					1, 2, 3, 4,
-					0, 0, 1, 0,
-					0, 0, 2, 0,
+					0, 0, 0, 30,
+					0, 0, 0, 60,
 				}},
 			},
 			iana: []*IANA{
 				{
-					iana: []byte{
-						1, 2, 3, 4,
-						0, 0, 1, 0,
-						0, 0, 2, 0,
-					},
+					IAID: [4]byte{1, 2, 3, 4},
+					T1:   30 * time.Second,
+					T2:   60 * time.Second,
 				},
 			},
 			ok: true,
@@ -331,19 +352,17 @@ func TestOptionsIANA(t *testing.T) {
 			options: Options{
 				OptionIANA: [][]byte{
 					append(bytes.Repeat([]byte{0}, 12), []byte{0, 1, 0, 1, 1}...),
-					append(bytes.Repeat([]byte{1}, 12), []byte{0, 2, 0, 1, 2}...),
+					append(bytes.Repeat([]byte{0}, 12), []byte{0, 2, 0, 1, 2}...),
 				},
 			},
 			iana: []*IANA{
 				{
-					iana: bytes.Repeat([]byte{0}, 12),
-					options: Options{
+					Options: Options{
 						OptionClientID: [][]byte{{1}},
 					},
 				},
 				{
-					iana: bytes.Repeat([]byte{1}, 12),
-					options: Options{
+					Options: Options{
 						OptionServerID: [][]byte{{2}},
 					},
 				},
@@ -406,20 +425,20 @@ func TestOptionsIAAddr(t *testing.T) {
 					1, 1, 1, 1,
 					2, 2, 2, 2,
 					3, 3, 3, 3,
-					0, 0, 1, 0,
-					0, 0, 2, 0,
+					0, 0, 0, 30,
+					0, 0, 0, 60,
 				}},
 			},
 			iaaddr: []*IAAddr{
 				{
-					iaaddr: []byte{
+					IP: net.IP{
 						0, 0, 0, 0,
 						1, 1, 1, 1,
 						2, 2, 2, 2,
 						3, 3, 3, 3,
-						0, 0, 1, 0,
-						0, 0, 2, 0,
 					},
+					PreferredLifetime: 30 * time.Second,
+					ValidLifetime:     60 * time.Second,
 				},
 			},
 			ok: true,
@@ -429,15 +448,15 @@ func TestOptionsIAAddr(t *testing.T) {
 			options: Options{
 				OptionIAAddr: [][]byte{
 					bytes.Repeat([]byte{0}, 24),
-					bytes.Repeat([]byte{1}, 24),
+					bytes.Repeat([]byte{0}, 24),
 				},
 			},
 			iaaddr: []*IAAddr{
 				{
-					iaaddr: bytes.Repeat([]byte{0}, 24),
+					IP: net.IPv6zero,
 				},
 				{
-					iaaddr: bytes.Repeat([]byte{1}, 24),
+					IP: net.IPv6zero,
 				},
 			},
 			ok: true,

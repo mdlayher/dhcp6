@@ -290,6 +290,14 @@ func parseOptions(b []byte) Options {
 	return options
 }
 
+// option represents an individual DHCP Option, as defined in IETF RFC 3315,
+// Section 22.  An Option carries both an OptionCode and its raw Data.  The
+// format of option data varies depending on the option code.
+type option struct {
+	Code OptionCode
+	Data []byte
+}
+
 // optslice is a slice of option values, and is used to help marshal option
 // values into binary form.
 type optslice []option

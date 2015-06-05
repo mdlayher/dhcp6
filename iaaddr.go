@@ -10,7 +10,7 @@ import (
 var (
 	// ErrInvalidIAAddrIP is returned when an input net.IP value is not
 	// recognized as a valid IPv6 address.
-	ErrInvalidIAAddrIP = errors.New("IAAddr IP must be exactly 16 bytes (IPv6 address)")
+	ErrInvalidIAAddrIP = errors.New("IAAddr IP must be an IPv6 address")
 
 	// ErrInvalidIAAddrLifetimes is returned when an input preferred
 	// lifetime is shorter than a valid lifetime parameter.
@@ -30,14 +30,13 @@ var (
 // single DHCP request, but only enscapsulated within an IANA or IATA options
 // field.
 type IAAddr struct {
-	// The raw byte slice containing the IAAddr, with options stripped
-	iaaddr []byte
-
-	// Options map which is marshaled to binary when Bytes is called
-	options Options
+	IP                net.IP
+	PreferredLifetime time.Duration
+	ValidLifetime     time.Duration
+	Options           Options
 }
 
-// NewIAAddr creates a new IAAddr from an IPv6 IP, preferred and valid lifetime
+// NewIAAddr creates a new IAAddr from an IPv6 address, preferred and valid lifetime
 // durations, and an optional Options map.
 //
 // The IP must be exactly 16 bytes, the correct length for an IPv6 address.
@@ -45,22 +44,15 @@ type IAAddr struct {
 // duration.  Failure to meet either of these conditions will result in an error.
 // If an Options map is not specified, a new one will be allocated.
 func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options Options) (*IAAddr, error) {
-	// IP is always 16 bytes
-	if len(ip) != 16 || ip.To16() == nil {
+	// From documentation: If ip is not an IPv4 address, To4 returns nil.
+	if ip.To4() != nil {
 		return nil, ErrInvalidIAAddrIP
 	}
 
-	// Preferred lifetime must be less than valid lifetime
+	// Preferred lifetime must always be less than valid lifetime.
 	if preferred > valid {
 		return nil, ErrInvalidIAAddrLifetimes
 	}
-
-	iaaddr := make([]byte, 24)
-	copy(iaaddr[0:16], ip)
-
-	// Convert durations to uint32 binary form
-	binary.BigEndian.PutUint32(iaaddr[16:20], uint32(preferred/time.Second))
-	binary.BigEndian.PutUint32(iaaddr[20:24], uint32(valid/time.Second))
 
 	// If no options set, make empty map
 	if options == nil {
@@ -68,8 +60,10 @@ func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options 
 	}
 
 	return &IAAddr{
-		iaaddr:  iaaddr,
-		options: options,
+		IP:                ip,
+		PreferredLifetime: preferred,
+		ValidLifetime:     valid,
+		Options:           options,
 	}, nil
 }
 
@@ -77,66 +71,19 @@ func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options 
 // IAAddr, appended with a byte slice of all options which have been applied
 // to the Options map for this IAAddr.
 func (i *IAAddr) Bytes() []byte {
-	// Enumerate optslice and check byte count
-	opts := i.options.enumerate()
-	c := opts.count()
+	// 16 bytes: IPv6 address
+	//  4 bytes: preferred lifetime
+	//  4 bytes: valid lifetime
+	//  N bytes: options
+	opts := i.Options.enumerate()
+	b := make([]byte, 24+opts.count())
 
-	// Allocate correct number of bytes and write options
-	buf := make([]byte, c, c)
-	opts.write(buf)
+	copy(b[0:16], i.IP)
+	binary.BigEndian.PutUint32(b[16:20], uint32(i.PreferredLifetime/time.Second))
+	binary.BigEndian.PutUint32(b[20:24], uint32(i.ValidLifetime/time.Second))
+	opts.write(b[24:])
 
-	// Return IAAddr with options
-	return append(i.iaaddr, buf...)
-}
-
-// IP returns the IPv6 address stored within this IAAddr.
-func (i *IAAddr) IP() net.IP {
-	// Too short to contain IP
-	if len(i.iaaddr) < 16 {
-		return nil
-	}
-
-	return net.IP(i.iaaddr[0:16])
-}
-
-// PreferredLifetime returns the preferred lifetime of an IPv6 address,
-// in seconds, as described in RFC 2462, Section 5.5.4.
-//
-// When the preferred lifetime of an address expires, the address becomes
-// deprecated.  A deprecated address should be used as a source address in
-// existing communications, but should not be used in new communications if a
-// non-deprecated address is available.
-//
-// The preferred lifetime of an address must not be greater than its valid
-// lifetime.
-func (i *IAAddr) PreferredLifetime() time.Duration {
-	// Too short to contain preferred lifetime
-	if len(i.iaaddr) < 20 {
-		return 0
-	}
-
-	return time.Duration(binary.BigEndian.Uint32(i.iaaddr[16:20])) * time.Second
-}
-
-// ValidLifetime returns the valid lifetime of an IPv6 address in seconds, as
-// described in RFC 2462, Section 5.5.4.
-//
-// When the valid lifetime of an address expires, the address becomes invalid
-// and must not be used for further communication.
-func (i *IAAddr) ValidLifetime() time.Duration {
-	// Too short to contain valid lifetime
-	if len(i.iaaddr) < 24 {
-		return 0
-	}
-
-	return time.Duration(binary.BigEndian.Uint32(i.iaaddr[20:24])) * time.Second
-}
-
-// Options parses the Options map associated with this IAAddr.  The Options
-// may contain additional information regarding this IAAddr.  Options can be
-// added, removed, or modified directly via this map.
-func (i *IAAddr) Options() Options {
-	return i.options
+	return b
 }
 
 // parseIAAddr attempts to parse an input byte slice as an IAAddr.
@@ -145,8 +92,21 @@ func parseIAAddr(b []byte) (*IAAddr, error) {
 		return nil, errInvalidIAAddr
 	}
 
+	ip := make(net.IP, 16)
+	copy(ip, b[0:16])
+
+	preferred := time.Duration(binary.BigEndian.Uint32(b[16:20])) * time.Second
+	valid := time.Duration(binary.BigEndian.Uint32(b[20:24])) * time.Second
+
+	// Preferred lifetime must always be less than valid lifetime.
+	if preferred > valid {
+		return nil, ErrInvalidIAAddrLifetimes
+	}
+
 	return &IAAddr{
-		iaaddr:  b[:24],
-		options: parseOptions(b[24:]),
+		IP:                ip,
+		PreferredLifetime: preferred,
+		ValidLifetime:     valid,
+		Options:           parseOptions(b[24:]),
 	}, nil
 }

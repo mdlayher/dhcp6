@@ -238,23 +238,28 @@ func (r *response) Options() Options {
 // and the options set by Options, to create and send a Packet to the
 // client's address.
 func (r *response) Send(mt MessageType) (int, error) {
-	p, err := NewPacket(mt, r.req.TransactionID, r.options)
-	if err != nil {
-		return 0, err
+	p := &Packet{
+		MessageType:   mt,
+		TransactionID: r.req.TransactionID,
+		Options:       r.options,
 	}
 
-	return r.conn.WriteTo(p, nil, r.remoteAddr)
+	return r.conn.WriteTo(p.Bytes(), nil, r.remoteAddr)
 }
 
 // serve handles serving an individual DHCP connection, and is invoked in a
 // goroutine.
 func (c *conn) serve() {
-	// Set up Request with information from a Packet, providing a nicer
+	// Attempt to parse a Request from a raw packet, providing a nicer
 	// API for callers to implement their own DHCP request handlers.
-	// ParseRequest does the same validations that would be performed by
-	// ParsePacket.
-	r, err := ParseRequest(Packet(c.buf), c.remoteAddr)
+	r, err := ParseRequest(c.buf, c.remoteAddr)
 	if err != nil {
+		// Malformed packets get no response
+		if err == errInvalidPacket {
+			return
+		}
+
+		// BUG(mdlayher): decide to log or handle other request errors
 		return
 	}
 

@@ -6,18 +6,20 @@ import (
 	"testing"
 )
 
-// TestParseRequest verifies that newServerRequest returns a consistent
+// TestParseRequest verifies that ParseRequest returns a consistent
 // Request struct for use in Handler types.
 func TestParseRequest(t *testing.T) {
 	opt := option{
 		Code: OptionClientID,
 		Data: []byte{0, 1},
 	}
-	p, err := NewPacket(MessageTypeSolicit, []byte{1, 2, 3}, Options{
-		opt.Code: [][]byte{opt.Data},
-	})
-	if err != nil {
-		t.Fatal(err)
+
+	p := &Packet{
+		MessageType:   MessageTypeSolicit,
+		TransactionID: [3]byte{1, 2, 3},
+		Options: Options{
+			opt.Code: [][]byte{opt.Data},
+		},
 	}
 
 	addr := &net.UDPAddr{
@@ -25,28 +27,16 @@ func TestParseRequest(t *testing.T) {
 		Port: 546,
 	}
 
-	mt, err := p.MessageType()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	txID, err := p.TransactionID()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	r := &Request{
-		MessageType:   mt,
-		TransactionID: txID,
+		MessageType:   p.MessageType,
+		TransactionID: p.TransactionID,
 		Options:       make(Options),
-		Length:        int64(len(p)),
+		Length:        int64(len(p.Bytes())),
 		RemoteAddr:    "[::1]:546",
-
-		packet: p,
 	}
 	r.Options.AddRaw(opt.Code, opt.Data)
 
-	gotR, err := ParseRequest(p, addr)
+	gotR, err := ParseRequest(p.Bytes(), addr)
 	if err != nil {
 		t.Fatal(err)
 	}

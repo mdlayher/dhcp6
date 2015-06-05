@@ -15,7 +15,7 @@ type Request struct {
 	// multiple requests to the same DHCP server.  ServeDHCP
 	// implementations must manually verify that the same
 	// transaction ID is used.
-	TransactionID []byte
+	TransactionID [3]byte
 
 	// Map of options sent by client, carrying additional
 	// information or requesting additional information from
@@ -28,8 +28,6 @@ type Request struct {
 
 	// Network address which was used to contact the DHCP server.
 	RemoteAddr string
-
-	packet Packet
 }
 
 // ParseRequest creates a new *Request from an input Packet and UDP address.
@@ -37,29 +35,17 @@ type Request struct {
 // and also parses some well-known options into a simpler form.
 //
 // It is only intended to be used by the server component and tests.
-func ParseRequest(p Packet, remoteAddr *net.UDPAddr) (*Request, error) {
-	mt, err := p.MessageType()
-	if err != nil {
-		return nil, err
-	}
-
-	txID, err := p.TransactionID()
-	if err != nil {
-		return nil, err
-	}
-
-	options, err := p.Options()
+func ParseRequest(b []byte, remoteAddr *net.UDPAddr) (*Request, error) {
+	p, err := parsePacket(b)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Request{
-		MessageType:   mt,
-		TransactionID: txID,
-		Options:       options,
-		Length:        int64(len(p)),
+		MessageType:   p.MessageType,
+		TransactionID: p.TransactionID,
+		Options:       p.Options,
+		Length:        int64(len(b)),
 		RemoteAddr:    remoteAddr.String(),
-
-		packet: p,
 	}, nil
 }
