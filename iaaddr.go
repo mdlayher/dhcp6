@@ -30,10 +30,30 @@ var (
 // single DHCP request, but only enscapsulated within an IANA or IATA options
 // field.
 type IAAddr struct {
-	IP                net.IP
+	// IP specifies the IPv6 address to offer to a client.  The validity of the
+	// address is controlled by the PreferredLifetime and ValidLifetime fields.
+	IP net.IP
+
+	// PreferredLifetime specifies the preferred lifetime of an IPv6 address.
+	// When the preferred lifetime of an address expires, the address becomes
+	// deprecated, and should not be used in new communications.
+	//
+	// The preferred lifetime of an address must not be greater than its
+	// valid lifetime.
 	PreferredLifetime time.Duration
-	ValidLifetime     time.Duration
-	Options           Options
+
+	// ValidLifetime specifies the valid lifetime of an IPv6 address.  When the
+	// valid lifetime of an address expires, the address should not be used for
+	// any further communication.
+	//
+	// The valid lifetime of an address must be greater than its preferred
+	// lifetime.
+	ValidLifetime time.Duration
+
+	// Options specifies a map of DHCP options specific to this IAAddr.
+	// Its methods can be used to retrieve data from an incoming IAAddr, or
+	// send data with an outgoing IAAddr.
+	Options Options
 }
 
 // NewIAAddr creates a new IAAddr from an IPv6 address, preferred and valid lifetime
