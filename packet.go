@@ -1,16 +1,5 @@
 package dhcp6
 
-import (
-	"errors"
-)
-
-var (
-	// ErrInvalidPacket is returned when a byte slice does not contain enough
-	// data to create a valid Packet.  A Packet must have at least a message type
-	// and transaction ID.
-	ErrInvalidPacket = errors.New("not enough bytes for valid packet")
-)
-
 // Packet represents a raw DHCPv6 packet, using the format described in RFC 3315,
 // Section 6.
 //

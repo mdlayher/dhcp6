@@ -14,14 +14,6 @@ const (
 )
 
 var (
-	// ErrParseHardwareType is returned when a valid hardware type could
-	// not be found for a given interface.
-	ErrParseHardwareType = errors.New("could not parse hardware type for interface")
-
-	// ErrHardwareTypeNotImplemented is returned when HardwareType is not
-	// implemented on the current platform.
-	ErrHardwareTypeNotImplemented = errors.New("hardware type detection not implemented on this platform")
-
 	// errInvalidDUID is returned when not enough bytes are present
 	// to parse a valid DUID from a byte slice.
 	errInvalidDUID = errors.New("not enough bytes for valid DUID")

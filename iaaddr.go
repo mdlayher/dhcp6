@@ -8,14 +8,6 @@ import (
 )
 
 var (
-	// ErrInvalidIAAddrIP is returned when an input net.IP value is not
-	// recognized as a valid IPv6 address.
-	ErrInvalidIAAddrIP = errors.New("IAAddr IP must be an IPv6 address")
-
-	// ErrInvalidIAAddrLifetimes is returned when an input preferred
-	// lifetime is shorter than a valid lifetime parameter.
-	ErrInvalidIAAddrLifetimes = errors.New("IAAddr preferred lifetime must be less than valid lifetime")
-
 	// errInvalidIAAddr is returned when a byte slice does not contain
 	// enough bytes to parse a valid IAAddr value.
 	errInvalidIAAddr = errors.New("not enough bytes for valid IAAddr")

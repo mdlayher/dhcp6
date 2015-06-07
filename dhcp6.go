@@ -4,7 +4,32 @@
 // DHCPv6 only.
 package dhcp6
 
+import (
+	"errors"
+)
+
 //go:generate stringer -output=string.go -type=DUIDType,MessageType,Status,OptionCode
+
+// ErrHardwareTypeNotImplemented is returned when HardwareType is not
+// implemented on the current platform.
+var ErrHardwareTypeNotImplemented = errors.New("hardware type detection not implemented on this platform")
+
+// ErrInvalidIAAddrIP is returned when an input net.IP value is not
+// recognized as a valid IPv6 address.
+var ErrInvalidIAAddrIP = errors.New("IAAddr IP must be an IPv6 address")
+
+// ErrInvalidIAAddrLifetimes is returned when an input preferred
+// lifetime is shorter than a valid lifetime parameter.
+var ErrInvalidIAAddrLifetimes = errors.New("IAAddr preferred lifetime must be less than valid lifetime")
+
+// ErrInvalidPacket is returned when a byte slice does not contain enough
+// data to create a valid Packet.  A Packet must have at least a message type
+// and transaction ID.
+var ErrInvalidPacket = errors.New("not enough bytes for valid packet")
+
+// ErrParseHardwareType is returned when a valid hardware type could
+// not be found for a given interface.
+var ErrParseHardwareType = errors.New("could not parse hardware type for interface")
 
 // Handler provides an interface which allows structs to act as DHCPv6 server
 // handlers.  ServeDHCP implementations receive a copy of the incoming DHCP
