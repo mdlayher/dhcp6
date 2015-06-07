@@ -30,11 +30,11 @@ type Request struct {
 	RemoteAddr string
 }
 
-// ParseRequest creates a new *Request from an input Packet and UDP address.
-// It populates the basic struct members which can be used in a DHCP handler,
-// and also parses some well-known options into a simpler form.
+// ParseRequest creates a new Request from an input byte slice and UDP address.
+// It populates the basic struct members which can be used in a DHCP handler.
 //
-// It is only intended to be used by the server component and tests.
+// If the input byte slice is not a valid DHCP packet, ErrInvalidPacket is
+// returned.
 func ParseRequest(b []byte, remoteAddr *net.UDPAddr) (*Request, error) {
 	p, err := parsePacket(b)
 	if err != nil {

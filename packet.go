@@ -5,10 +5,10 @@ import (
 )
 
 var (
-	// errInvalidPacket is returned when a byte slice does not contain enough
+	// ErrInvalidPacket is returned when a byte slice does not contain enough
 	// data to create a valid Packet.  A Packet must have at least a message type
 	// and transaction ID.
-	errInvalidPacket = errors.New("not enough bytes for valid packet")
+	ErrInvalidPacket = errors.New("not enough bytes for valid packet")
 )
 
 // Packet represents a raw DHCPv6 packet, using the format described in RFC 3315,
@@ -48,12 +48,12 @@ func (p *Packet) Bytes() []byte {
 }
 
 // parsePacket parses a raw byte slice into a Packet.  If the byte slice
-// does not contain enough data to form a valid Packet, errInvalidPacket
+// does not contain enough data to form a valid Packet, ErrInvalidPacket
 // is returned.
 func parsePacket(b []byte) (*Packet, error) {
 	// Packet must contain at least a message type and transaction ID
 	if len(b) < 4 {
-		return nil, errInvalidPacket
+		return nil, ErrInvalidPacket
 	}
 
 	txID := [3]byte{}

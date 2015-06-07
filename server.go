@@ -255,7 +255,7 @@ func (c *conn) serve() {
 	r, err := ParseRequest(c.buf, c.remoteAddr)
 	if err != nil {
 		// Malformed packets get no response
-		if err == errInvalidPacket {
+		if err == ErrInvalidPacket {
 			return
 		}
 

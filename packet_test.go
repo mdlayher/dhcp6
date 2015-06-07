@@ -66,22 +66,22 @@ func Test_parsePacket(t *testing.T) {
 	}{
 		{
 			description: "nil buffer, malformed packet",
-			err:         errInvalidPacket,
+			err:         ErrInvalidPacket,
 		},
 		{
 			description: "empty buffer, malformed packet",
 			buf:         []byte{},
-			err:         errInvalidPacket,
+			err:         ErrInvalidPacket,
 		},
 		{
 			description: "length 1 buffer, malformed packet",
 			buf:         []byte{0},
-			err:         errInvalidPacket,
+			err:         ErrInvalidPacket,
 		},
 		{
 			description: "length 3 buffer, malformed packet",
 			buf:         []byte{0, 0, 0},
-			err:         errInvalidPacket,
+			err:         ErrInvalidPacket,
 		},
 		{
 			description: "length 4 buffer, OK",
