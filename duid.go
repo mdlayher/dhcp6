@@ -93,9 +93,22 @@ type DUID Byteser
 // persistent storage.  It is the recommended DUID type for all general
 // purpose computing devices.
 type DUIDLLT struct {
-	Type         DUIDType
+	// Type specifies the DUID type.  For a DUIDLLT, this should always be
+	// DUIDTypeLLT.
+	Type DUIDType
+
+	// HardwareType specifies an IANA-assigned hardware type, as described
+	// in IETF RFC 826.
 	HardwareType uint16
-	Time         time.Duration
+
+	// Time specifies the duration of the time this DUID was generated, minus
+	// midnight (UTC), January 1, 2000.
+	Time time.Duration
+
+	// HardwareAddr specifies the hardware address for an arbitrary link-layer
+	// interface on a device, used in generating the DUIDLLT.  This value
+	// could represent any arbitrary interface on a system, and should not be
+	// treated as a client or server's communicating hardware address.
 	HardwareAddr net.HardwareAddr
 }
 
@@ -164,9 +177,17 @@ func parseDUIDLLT(b []byte) (*DUIDLLT, error) {
 // [DUID-EN], as defined in IETF RFC 3315, Section 9.3.  This DUID type
 // uses an IANA-assigned Private Enterprise Number for a given vendor.
 type DUIDEN struct {
-	Type             DUIDType
+	// Type specifies the DUID type.  For a DUIDLLT, this should always be
+	// DUIDTypeLLT.
+	Type DUIDType
+
+	// EnterpriseNumber specifies an IANA-assigned vendor Private Enterprise
+	// Number.
 	EnterpriseNumber uint32
-	Identifier       []byte
+
+	// Identifier specifies a unique identifier of arbitrary length.  This
+	// value is typically assigned when a device is manufactured.
+	Identifier []byte
 }
 
 // NewDUIDEN generates a new DUIDEN from an input IANA-assigned Private
@@ -231,8 +252,18 @@ func parseDUIDEN(b []byte) (*DUIDEN, error) {
 // created with a ServerID, using the hardware type found by HardwareType
 // and the hardware address of the listening network interface.
 type DUIDLL struct {
-	Type         DUIDType
+	// Type specifies the DUID type.  For a DUIDLL, this should always be
+	// DUIDTypeLL.
+	Type DUIDType
+
+	// HardwareType specifies an IANA-assigned hardware type, as described
+	// in IETF RFC 826.
 	HardwareType uint16
+
+	// HardwareAddr specifies the hardware address for an arbitrary link-layer
+	// interface on a device, used in generating the DUIDLL.  This value
+	// could represent any arbitrary interface on a system, and should not be
+	// treated as a client or server's communicating hardware address.
 	HardwareAddr net.HardwareAddr
 }
 
