@@ -5,7 +5,7 @@ import (
 	"github.com/mdlayher/dhcp6"
 )
 
-// Recorder is a dhcp6.Responser which captures a response's message type and
+// Recorder is a dhcp6.ResponseSender which captures a response's message type and
 // options, for inspection during tests.
 type Recorder struct {
 	MessageType   dhcp6.MessageType

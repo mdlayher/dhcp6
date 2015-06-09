@@ -29,7 +29,7 @@ func NewServeMux() *ServeMux {
 // the appropriate handler for an input Request's MessageType.  If the
 // MessageType does not match a valid Handler, ServeDHCP does not invoke any
 // handlers, ignoring a client's request.
-func (mux *ServeMux) ServeDHCP(w Responser, r *Request) {
+func (mux *ServeMux) ServeDHCP(w ResponseSender, r *Request) {
 	mux.mu.RLock()
 	defer mux.mu.RUnlock()
 	h, ok := mux.m[r.MessageType]
@@ -57,13 +57,13 @@ func Handle(mt MessageType, handler Handler) {
 // HandleFunc registers a MessageType and function as a HandlerFunc with a
 // ServeMux, so that future requests with that MessageType will invoke the
 // HandlerFunc.
-func (mux *ServeMux) HandleFunc(mt MessageType, handler func(Responser, *Request)) {
+func (mux *ServeMux) HandleFunc(mt MessageType, handler func(ResponseSender, *Request)) {
 	mux.Handle(mt, HandlerFunc(handler))
 }
 
 // HandleFunc registers a MessageType and function as a HandlerFunc with the
 // DefaultServeMux, so that future requests with that MessageType will invoke
 // the HandlerFunc.
-func HandleFunc(mt MessageType, handler func(Responser, *Request)) {
+func HandleFunc(mt MessageType, handler func(ResponseSender, *Request)) {
 	DefaultServeMux.HandleFunc(mt, handler)
 }

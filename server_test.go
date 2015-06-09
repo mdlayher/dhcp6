@@ -26,7 +26,7 @@ func TestServeIPv6ControlParameters(t *testing.T) {
 	r.b.Write((&Packet{}).Bytes())
 
 	// Don't expect a reply, don't handle a request
-	_, ip6, err := testServe(r, s, false, func(w Responser, r *Request) {})
+	_, ip6, err := testServe(r, s, false, func(w ResponseSender, r *Request) {})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +83,7 @@ func TestServeWithSetServerID(t *testing.T) {
 
 	// Expect a reply with type advertise
 	mt := MessageTypeAdvertise
-	w, _, err := testServe(r, s, true, func(w Responser, r *Request) {
+	w, _, err := testServe(r, s, true, func(w ResponseSender, r *Request) {
 		w.Send(mt)
 	})
 	if err != nil {
@@ -109,10 +109,10 @@ func TestServeWithSetServerID(t *testing.T) {
 	}
 }
 
-// TestServeCreateResponserWithCorrectParameters verifies that a new Responser
+// TestServeCreateResponseSenderWithCorrectParameters verifies that a new ResponseSender
 // gets appropriate transaction ID, client ID, and server ID values copied into
 // it before a Handler is invoked.
-func TestServeCreateResponserWithCorrectParameters(t *testing.T) {
+func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
 	duid := NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
@@ -127,22 +127,22 @@ func TestServeCreateResponserWithCorrectParameters(t *testing.T) {
 	r.b.Write(p.Bytes())
 
 	// Do not expect a reply, but do some validation to ensure that Serve
-	// sets up appropriate Request and Responser values from an input request
-	_, _, err := testServe(r, nil, false, func(w Responser, r *Request) {
+	// sets up appropriate Request and ResponseSender values from an input request
+	_, _, err := testServe(r, nil, false, func(w ResponseSender, r *Request) {
 		if want, got := txID[:], r.TransactionID[:]; !bytes.Equal(want, got) {
 			t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 		}
 
 		cID, ok, err := w.Options().ClientID()
 		if !ok || err != nil || cID == nil {
-			t.Fatal("Responser options did not contain client ID")
+			t.Fatal("ResponseSender options did not contain client ID")
 		}
 		if want, got := duid.Bytes(), cID.Bytes(); !bytes.Equal(want, got) {
 			t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 		}
 
 		if sID, ok, err := w.Options().ServerID(); !ok || err != nil || sID == nil {
-			t.Fatal("Responser options did not contain server ID")
+			t.Fatal("ResponseSender options did not contain server ID")
 		}
 	})
 	if err != nil {
@@ -168,7 +168,7 @@ func TestServeIgnoreWrongCMIfIndex(t *testing.T) {
 	}
 
 	// Expect no reply at all
-	w, _, err := testServe(r, s, false, func(w Responser, r *Request) {})
+	w, _, err := testServe(r, s, false, func(w ResponseSender, r *Request) {})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,7 +192,7 @@ func TestServeIgnoreInvalidPacket(t *testing.T) {
 	r.b.Write([]byte{0, 0, 0})
 
 	// Expect no reply at all
-	w, _, err := testServe(r, nil, false, func(w Responser, r *Request) {})
+	w, _, err := testServe(r, nil, false, func(w ResponseSender, r *Request) {})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +237,7 @@ func TestServeOK(t *testing.T) {
 
 	// Expect Advertise reply with several options added by server
 	mt := MessageTypeAdvertise
-	w, _, err := testServe(r, nil, true, func(w Responser, r *Request) {
+	w, _, err := testServe(r, nil, true, func(w ResponseSender, r *Request) {
 		w.Options().AddRaw(OptionPreference, []byte{byte(preference)})
 		w.Options().Add(OptionStatusCode, NewStatusCode(sCode, sMsg))
 
@@ -276,7 +276,7 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 	}
 	if sID, ok, err := wp.Options.ServerID(); !ok || err != nil || sID == nil {
-		t.Fatal("Responser options did not contain server ID")
+		t.Fatal("ResponseSender options did not contain server ID")
 	}
 
 	pr, ok, err := wp.Options.Preference()
@@ -302,7 +302,7 @@ func TestServeOK(t *testing.T) {
 // testServe performs a single transaction using the input message, server
 // configuration, whether or not a reply is expected, and a closure which
 // acts as a HandlerFunc.
-func testServe(r *testMessage, s *Server, expectReply bool, fn func(w Responser, r *Request)) (*testMessage, *recordIPv6PacketConn, error) {
+func testServe(r *testMessage, s *Server, expectReply bool, fn func(w ResponseSender, r *Request)) (*testMessage, *recordIPv6PacketConn, error) {
 	// If caller doesn't specify a testMessage or client address
 	// for it, configure it for them
 	if r == nil {

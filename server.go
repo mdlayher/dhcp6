@@ -124,7 +124,7 @@ func (s *Server) ListenAndServe() error {
 // the appropriate multicast groups, and begins listening for incoming connections.
 //
 // The service goroutine reads requests, generate the appropriate Request and
-// Responser values, then calls s.Handler to handle the request.
+// ResponseSender values, then calls s.Handler to handle the request.
 func (s *Server) Serve(p PacketConn) error {
 	// If no DUID was set for server previously, generate a DUID-LL
 	// now using the interface's hardware type and address
@@ -217,7 +217,7 @@ func (s *Server) newConn(p PacketConn, addr *net.UDPAddr, n int, buf []byte) (*c
 	return c, nil
 }
 
-// response represents a DHCP response, and implements Responser so that
+// response represents a DHCP response, and implements ResponseSender so that
 // outbound Packets can be appropriately created and sent to a client.
 type response struct {
 	conn       PacketConn

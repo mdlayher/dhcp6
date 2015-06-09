@@ -38,23 +38,23 @@ var ErrParseHardwareType = errors.New("could not parse hardware type for interfa
 // Handler provides an interface which allows structs to act as DHCPv6 server
 // handlers.  ServeDHCP implementations receive a copy of the incoming DHCP
 // request via the Request parameter, and allow outgoing communication via
-// the Responser.
+// the ResponseSender.
 //
 // ServeDHCP implementations can choose to write a response packet using the
-// Responser interface, or choose to not write anything at all.  If no packet
+// ResponseSender interface, or choose to not write anything at all.  If no packet
 // is sent back to the client, it may choose to back off and retry, or attempt
 // to pursue communication with other DHCP servers.
 type Handler interface {
-	ServeDHCP(Responser, *Request)
+	ServeDHCP(ResponseSender, *Request)
 }
 
 // HandlerFunc is an adapter type which allows the use of normal functions as
 // DHCP handlers.  If f is a function with the appropriate signature,
 // HandlerFunc(f) is a Handler struct that calls f.
-type HandlerFunc func(Responser, *Request)
+type HandlerFunc func(ResponseSender, *Request)
 
 // ServeDHCP calls f(w, r), allowing regular functions to implement Handler.
-func (f HandlerFunc) ServeDHCP(w Responser, r *Request) {
+func (f HandlerFunc) ServeDHCP(w ResponseSender, r *Request) {
 	f(w, r)
 }
 
@@ -65,19 +65,18 @@ type Byteser interface {
 	Bytes() []byte
 }
 
-// Responser provides an interface which allows a DHCP handler to construct
-// and write a DHCP packet.  In addition, the server automatically handles
-// copying certain parameters from a client Request to a Responser's Options
-// and outbound packet, including:
-//   - Transaction ID
+// ResponseSender provides an interface which allows a DHCP handler to construct
+// and send a DHCP response packet.  In addition, the server automatically handles
+// copying certain options from a client Request to a ResponseSender's Options,
+// including:
 //   - Client ID (OptionClientID)
 //   - Server ID (OptionServerID)
 //
-// BUG(mdlayher): the interface for Responser will most likely change.
-type Responser interface {
+// ResponseSender implementations should use the same transaction ID sent in a
+// client Request.
+type ResponseSender interface {
 	// Options returns the Options map that will be sent to a client
-	// after a call to Send.  Changing options after a call to Send
-	// has no effect.
+	// after a call to Send.
 	Options() Options
 
 	// Send generates a DHCP response packet using the input message type

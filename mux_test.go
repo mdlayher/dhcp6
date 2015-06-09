@@ -77,11 +77,11 @@ func TestServeMuxHandleFuncOK(t *testing.T) {
 // to a Solicit request.
 type solicitHandler struct{}
 
-func (h *solicitHandler) ServeDHCP(w dhcp6.Responser, r *dhcp6.Request) {
+func (h *solicitHandler) ServeDHCP(w dhcp6.ResponseSender, r *dhcp6.Request) {
 	solicit(w, r)
 }
 
 // solicit is a function which can be adapted as a HandlerFunc.
-func solicit(w dhcp6.Responser, r *dhcp6.Request) {
+func solicit(w dhcp6.ResponseSender, r *dhcp6.Request) {
 	w.Send(dhcp6.MessageTypeAdvertise)
 }
