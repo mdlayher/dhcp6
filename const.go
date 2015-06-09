@@ -6,10 +6,12 @@ package dhcp6
 type MessageType uint8
 
 // MessageType constants which indicate the message types described in
-// RFC 3315, Section 5.3.  Additional message types are defined in IANA's
-// DHCPv6 parameters registry:
+// RFCs 3315, 5007, 5460, 6977, and 7341.
+//
+// These message types are taken from IANA's DHCPv6 parameters registry:
 // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml.
 const (
+	// RFC 3315
 	MessageTypeSolicit            MessageType = 1
 	MessageTypeAdvertise          MessageType = 2
 	MessageTypeRequest            MessageType = 3
@@ -21,10 +23,24 @@ const (
 	MessageTypeDecline            MessageType = 9
 	MessageTypeReconfigure        MessageType = 10
 	MessageTypeInformationRequest MessageType = 11
-	MessageTypeRelayForward       MessageType = 12
-	MessageTypeRelayReply         MessageType = 13
+	MessageTypeRelayForw          MessageType = 12
+	MessageTypeRelayRepl          MessageType = 13
 
-	// BUG(mdlayher): add additional message types defined by IANA
+	// RFC 5007
+	MessageTypeLeasequery      MessageType = 14
+	MessageTypeLeasequeryReply MessageType = 15
+
+	// RFC 5460
+	MessageTypeLeasequeryDone MessageType = 16
+	MessageTypeLeasequeryData MessageType = 17
+
+	// RFC 6977
+	MessageTypeReconfigureRequest MessageType = 18
+	MessageTypeReconfigureReply   MessageType = 19
+
+	// RFC 7341
+	MessageTypeDHCPv4Query    MessageType = 20
+	MessageTypeDHCPv4Response MessageType = 21
 )
 
 // Status represesents a DHCP status code, as defined in RFC 3315,
