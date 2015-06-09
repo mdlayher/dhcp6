@@ -79,9 +79,8 @@ func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options 
 	}, nil
 }
 
-// Bytes implements Byteser, and returns the underlying byte slice for an
-// IAAddr, appended with a byte slice of all options which have been applied
-// to the Options map for this IAAddr.
+// Bytes implements Byteser, and allocates a byte slice containing the data
+// from a IAAddr.
 func (i *IAAddr) Bytes() []byte {
 	// 16 bytes: IPv6 address
 	//  4 bytes: preferred lifetime

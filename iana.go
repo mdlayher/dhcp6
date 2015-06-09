@@ -53,9 +53,8 @@ func NewIANA(iaid [4]byte, t1 time.Duration, t2 time.Duration, options Options) 
 	}
 }
 
-// Bytes implements Byteser, and returns the underlying byte slice for an IANA,
-// appended with a byte slice of all options which have been applied to the
-// Options map for this IANA.
+// Bytes implements Byteser, and allocates a byte slice containing the data
+// from a IANA.
 func (i *IANA) Bytes() []byte {
 	// 4 bytes: IAID
 	// 4 bytes: T1
