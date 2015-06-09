@@ -77,11 +77,11 @@ const (
 // If further introspection of the DUID is needed, a type switch is
 // recommended:
 //	switch d := duid.(type) {
-//	case dhcp6.DUIDLLT:
+//	case *dhcp6.DUIDLLT:
 //		fmt.Println(d.Time)
-//	case dhcp6.DUIDEN:
+//	case *dhcp6.DUIDEN:
 //		fmt.Println(d.EnterpriseNumber)
-//	case dhcp6.DUIDLL:
+//	case *dhcp6.DUIDLL:
 //		fmt.Println(d.HardwareAddr)
 //	}
 type DUID Byteser
