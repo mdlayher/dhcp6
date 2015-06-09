@@ -10,7 +10,7 @@ var _DUIDType_index = [...]uint8{0, 11, 21, 31}
 
 func (i DUIDType) String() string {
 	i -= 1
-	if i < 0 || i+1 >= DUIDType(len(_DUIDType_index)) {
+	if i >= DUIDType(len(_DUIDType_index)-1) {
 		return fmt.Sprintf("DUIDType(%d)", i+1)
 	}
 	return _DUIDType_name[_DUIDType_index[i]:_DUIDType_index[i+1]]
@@ -22,7 +22,7 @@ var _MessageType_index = [...]uint8{0, 18, 38, 56, 74, 90, 107, 123, 141, 159, 1
 
 func (i MessageType) String() string {
 	i -= 1
-	if i < 0 || i+1 >= MessageType(len(_MessageType_index)) {
+	if i >= MessageType(len(_MessageType_index)-1) {
 		return fmt.Sprintf("MessageType(%d)", i+1)
 	}
 	return _MessageType_name[_MessageType_index[i]:_MessageType_index[i+1]]
@@ -33,7 +33,7 @@ const _Status_name = "StatusSuccessStatusUnspecFailStatusNoAddrsAvailStatusNoBin
 var _Status_index = [...]uint8{0, 13, 29, 47, 62, 77, 95}
 
 func (i Status) String() string {
-	if i < 0 || i+1 >= Status(len(_Status_index)) {
+	if i >= Status(len(_Status_index)-1) {
 		return fmt.Sprintf("Status(%d)", i)
 	}
 	return _Status_name[_Status_index[i]:_Status_index[i+1]]
