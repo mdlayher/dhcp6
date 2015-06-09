@@ -1,11 +1,11 @@
 package dhcp6
 
-// MessageType represents a DHCP message type, as defined in IETF RFC 3315,
+// MessageType represents a DHCP message type, as defined in RFC 3315,
 // Section 5.3.  Different DHCP message types are used to perform different
 // actions between a client and server.
 type MessageType uint8
 
-// MessageType constants which indicate the message types described in IETF
+// MessageType constants which indicate the message types described in
 // RFC 3315, Section 5.3.  Additional message types are defined in IANA's
 // DHCPv6 parameters registry:
 // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml.
@@ -27,12 +27,12 @@ const (
 	// BUG(mdlayher): add additional message types defined by IANA
 )
 
-// Status represesents a DHCP status code, as defined in IETF RFC 3315,
+// Status represesents a DHCP status code, as defined in RFC 3315,
 // Section 5.4.  Status codes are used to communicate success or failure
 // between client and server.
 type Status uint16
 
-// Status constants which indicate the status codes described in IETF
+// Status constants which indicate the status codes described in
 // RFC 3315, Section 24.4.  Additional status are defined in IANA's
 // DHCPv6 parameters registry:
 // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml.
@@ -47,12 +47,12 @@ const (
 	// BUG(mdlayher): add additional status codes defined by IANA
 )
 
-// OptionCode represents a DHCP option, as defined in IETF RFC 3315,
+// OptionCode represents a DHCP option, as defined in RFC 3315,
 // Section 22.  Options are used to carry additional information and
 // parameters in DHCP messages between client and server.
 type OptionCode uint16
 
-// Status constants which indicate the option codes described in IETF
+// Status constants which indicate the option codes described in
 // RFC 3315, Section 24.3.  Additional option codes are defined in IANA's
 // DHCPv6 parameters registry:
 // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml.

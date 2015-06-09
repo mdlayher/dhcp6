@@ -39,14 +39,14 @@ var (
 )
 
 var (
-	// duidLLTTime is the date specified in IETF RFC 3315, Section 9.2, for use
+	// duidLLTTime is the date specified in RFC 3315, Section 9.2, for use
 	// with DUIT-LLT generation.  It is used to calculate a duration from an
 	// input time after this date.  Dates before this time are not valid for
 	// creation of DUIDLLT values.
 	duidLLTTime = time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
 )
 
-// DUIDType is a type of DHCP Unique Identifier, as defined in IETF RFC
+// DUIDType is a type of DHCP Unique Identifier, as defined in RFC
 // 3315, Section 9.  DUIDs are used to uniquely identify a client to a
 // server, or vice-versa.
 type DUIDType uint16
@@ -62,7 +62,7 @@ const (
 	// BUG(mdlayher): add additional DUID types defined by IANA
 )
 
-// DUID represents a DHCP Unique Identifier, as defined in IETF RFC
+// DUID represents a DHCP Unique Identifier, as defined in RFC
 // 3315, Section 9.  A DUID is used by a DHCP server to identify
 // unique clients.  A DUID can also be used by a DHCP client to identify
 // a unique server, when needed.
@@ -87,7 +87,7 @@ const (
 type DUID Byteser
 
 // DUIDLLT represents a DUID Based on Link-layer Address Plus Time [DUID-LLT],
-// as defined in IETF RFC 3315, Section 9.2.
+// as defined in RFC 3315, Section 9.2.
 //
 // This DUID type must only be used with clients and servers with stable,
 // persistent storage.  It is the recommended DUID type for all general
@@ -98,7 +98,7 @@ type DUIDLLT struct {
 	Type DUIDType
 
 	// HardwareType specifies an IANA-assigned hardware type, as described
-	// in IETF RFC 826.
+	// in RFC 826.
 	HardwareType uint16
 
 	// Time specifies the duration of the time this DUID was generated, minus
@@ -174,7 +174,7 @@ func parseDUIDLLT(b []byte) (*DUIDLLT, error) {
 }
 
 // DUIDEN represents a DUID Assigned by Vendor Based on Enterprise Number
-// [DUID-EN], as defined in IETF RFC 3315, Section 9.3.  This DUID type
+// [DUID-EN], as defined in RFC 3315, Section 9.3.  This DUID type
 // uses an IANA-assigned Private Enterprise Number for a given vendor.
 type DUIDEN struct {
 	// Type specifies the DUID type.  For a DUIDLLT, this should always be
@@ -241,7 +241,7 @@ func parseDUIDEN(b []byte) (*DUIDEN, error) {
 }
 
 // DUIDLL represents a DUID Based on Link-layer Address [DUID-LL],
-// as defined in IETF RFC 3315, Section 9.4.
+// as defined in RFC 3315, Section 9.4.
 //
 // This DUID type is recommended for devices with a
 // permanently-connected network interface, but without stable,
@@ -256,7 +256,7 @@ type DUIDLL struct {
 	Type DUIDType
 
 	// HardwareType specifies an IANA-assigned hardware type, as described
-	// in IETF RFC 826.
+	// in RFC 826.
 	HardwareType uint16
 
 	// HardwareAddr specifies the hardware address for an arbitrary link-layer

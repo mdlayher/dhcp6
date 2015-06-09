@@ -10,7 +10,7 @@ import (
 var (
 	// AllRelayAgentsAndServersAddr is the multicast address group which is
 	// used to communicate with neighboring (on-link) DHCP servers and relay
-	// agents, as defined in IETF RFC 3315, Section 5.1.  All DHCP servers
+	// agents, as defined in RFC 3315, Section 5.1.  All DHCP servers
 	// and relay agents are members of this multicast group.
 	AllRelayAgentsAndServersAddr = &net.IPAddr{
 		IP: net.ParseIP("ff02::1:2"),
@@ -53,7 +53,7 @@ type Server struct {
 	Iface *net.Interface
 
 	// Addr is the network address which this server should bind to.  The
-	// default value is [::]:547, as specified in IETF RFC 3315, Section 5.2.
+	// default value is [::]:547, as specified in RFC 3315, Section 5.2.
 	Addr string
 
 	// Handler is the handler to use while serving DHCP requests.  If this
@@ -84,8 +84,8 @@ type Server struct {
 // network interface, will be filtered out and ignored.
 //
 // In this configuration, the server acts as a DHCP server, but NOT as a
-// DHCP relay agent.  For more information on DHCP relay agents, see
-// IETF RFC 3315, Section 20.
+// DHCP relay agent.  For more information on DHCP relay agents, see RFC 3315,
+// Section 20.
 func ListenAndServe(iface string, handler Handler) error {
 	// Verify network interface exists
 	ifi, err := net.InterfaceByName(iface)
