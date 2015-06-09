@@ -8,6 +8,6 @@ import (
 
 // HardwareType returns ErrNotImplemented, because it is not implemented on
 // non-Linux platforms.
-func HardwareType(ifi *net.Interface) (int, error) {
+func HardwareType(ifi *net.Interface) (uint16, error) {
 	return 0, ErrNotImplemented
 }

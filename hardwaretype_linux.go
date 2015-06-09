@@ -21,7 +21,7 @@ import (
 //
 // If an error occurs, a syscall error is returned.  If no hardware type
 // is found, ErrParseHardwareType is returned.
-func HardwareType(ifi *net.Interface) (int, error) {
+func HardwareType(ifi *net.Interface) (uint16, error) {
 	// Get link information from netlink
 	tab, err := syscall.NetlinkRIB(syscall.RTM_GETLINK, syscall.AF_UNSPEC)
 	if err != nil {
@@ -44,7 +44,7 @@ func HardwareType(ifi *net.Interface) (int, error) {
 		case syscall.RTM_NEWLINK:
 			ifim := (*syscall.IfInfomsg)(unsafe.Pointer(&m.Data[0]))
 			if ifi.Index == int(ifim.Index) {
-				return int(ifim.Type), nil
+				return ifim.Type, nil
 			}
 		}
 	}

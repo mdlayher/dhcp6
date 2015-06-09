@@ -25,7 +25,7 @@ func TestHardwareTypeLinux(t *testing.T) {
 	var tests = []struct {
 		description string
 		ifi         *net.Interface
-		htype       int
+		htype       uint16
 		err         error
 	}{
 		{

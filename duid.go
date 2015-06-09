@@ -10,7 +10,7 @@ import (
 const (
 	// ethernet10Mb is the default IANA hardware type used in DUID generation,
 	// if a hardware type cannot be parsed from a network interface.
-	ethernet10Mb = 1
+	ethernet10Mb uint16 = 1
 )
 
 var (
@@ -357,5 +357,5 @@ func interfaceDUID(ifi *net.Interface) (DUID, error) {
 		htype = ethernet10Mb
 	}
 
-	return NewDUIDLL(uint16(htype), ifi.HardwareAddr), nil
+	return NewDUIDLL(htype, ifi.HardwareAddr), nil
 }
