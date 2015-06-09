@@ -99,6 +99,20 @@ func TestOptionsAdd(t *testing.T) {
 				}},
 			},
 		},
+		{
+			description: "StatusCode",
+			code:        OptionStatusCode,
+			byteser: &StatusCode{
+				Code:    StatusSuccess,
+				Message: "hello world",
+			},
+			options: Options{
+				OptionStatusCode: [][]byte{{
+					0, 0,
+					'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd',
+				}},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -658,7 +672,7 @@ func TestOptionsStatusCode(t *testing.T) {
 	var tests = []struct {
 		description string
 		options     Options
-		sc          StatusCode
+		sc          *StatusCode
 		ok          bool
 		err         error
 	}{
@@ -677,7 +691,9 @@ func TestOptionsStatusCode(t *testing.T) {
 			options: Options{
 				OptionStatusCode: [][]byte{{0, 0}},
 			},
-			sc: StatusCode([]byte{0, 0}),
+			sc: &StatusCode{
+				Code: StatusSuccess,
+			},
 			ok: true,
 		},
 		{
@@ -685,7 +701,10 @@ func TestOptionsStatusCode(t *testing.T) {
 			options: Options{
 				OptionStatusCode: [][]byte{append([]byte{0, 0}, []byte("deadbeef")...)},
 			},
-			sc: StatusCode(append([]byte{0, 0}, []byte("deadbeef")...)),
+			sc: &StatusCode{
+				Code:    StatusSuccess,
+				Message: "deadbeef",
+			},
 			ok: true,
 		},
 	}
@@ -701,7 +720,7 @@ func TestOptionsStatusCode(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.sc, sc; !bytes.Equal(want, got) {
+		if want, got := tt.sc, sc; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.StatusCode():\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}

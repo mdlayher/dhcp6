@@ -291,10 +291,10 @@ func TestServeOK(t *testing.T) {
 	if !ok || err != nil {
 		t.Fatal("response Options did not contain status code")
 	}
-	if want, got := sCode, st.Code(); want != got {
+	if want, got := sCode, st.Code; want != got {
 		t.Fatalf("unexpected status code value: %v != %v", want, got)
 	}
-	if want, got := sMsg, st.Message(); want != got {
+	if want, got := sMsg, st.Message; want != got {
 		t.Fatalf("unexpected status code meesage: %q != %q", want, got)
 	}
 }

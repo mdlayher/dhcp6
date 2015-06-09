@@ -218,7 +218,7 @@ func (o Options) ElapsedTime() (time.Duration, bool, error) {
 // indicates if OptionStatusCode was present in the Options map.  The error
 // return value indicates if a valid StatusCode could not be parsed from
 // the option.
-func (o Options) StatusCode() (StatusCode, bool, error) {
+func (o Options) StatusCode() (*StatusCode, bool, error) {
 	v, ok := o.Get(OptionStatusCode)
 	if !ok {
 		return nil, false, nil

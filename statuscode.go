@@ -15,46 +15,49 @@ var (
 // DHCP clients and servers can use status codes to communicate successes
 // or failures, and provide additional information using a message to describe
 // specific failures.
-type StatusCode []byte
+type StatusCode struct {
+	// Code specifies the Status value stored within this StatusCode, such as
+	// StatusSuccess, StatusUnspecFail, etc.
+	Code Status
+
+	// Message specifies a human-readable message within this StatusCode, useful
+	// for providing information about successes or failures.
+	Message string
+}
 
 // NewStatusCode creates a new StatusCode from an input Status value and a
 // string message.
-func NewStatusCode(code Status, message string) StatusCode {
-	msg := []byte(message)
-	status := make(StatusCode, 2+len(msg), 2+len(msg))
-
-	binary.BigEndian.PutUint16(status[0:2], uint16(code))
-	copy(status[2:], msg)
-
-	return status
-}
-
-// Bytes returns the underlying byte slice for a StatusCode.
-func (s StatusCode) Bytes() []byte {
-	return []byte(s)
-}
-
-// Code returns the Status value stored within this StatusCode.
-func (s StatusCode) Code() Status {
-	// Too short to contain Status
-	if len(s) < 2 {
-		return Status(-1)
+func NewStatusCode(code Status, message string) *StatusCode {
+	return &StatusCode{
+		Code:    code,
+		Message: message,
 	}
-
-	return Status(binary.BigEndian.Uint16(s[0:2]))
 }
 
-// Message returns a string message containing more information regarding
-// successes or failures.
-func (s StatusCode) Message() string {
-	return string(s[2:])
+// Bytes implements Byteser, and allocates a byte slice containing the data
+// from a StatusCode.
+func (s *StatusCode) Bytes() []byte {
+	// 2 bytes: status code
+	// N bytes: message
+	b := make([]byte, 2+len(s.Message))
+
+	binary.BigEndian.PutUint16(b[0:2], uint16(s.Code))
+	copy(b[2:], []byte(s.Message))
+
+	return b
 }
 
-// parseStatusCode attempts to parse an input byte slice as a StatusCode.
-func parseStatusCode(s []byte) (StatusCode, error) {
-	if len(s) < 2 {
+// parseStatusCode parses an input byte slice into a StatusCode.  If the byte
+// slice does not contain enough data to form a valid StatusCode,
+// errInvalidStatusCode is returned.
+func parseStatusCode(b []byte) (*StatusCode, error) {
+	// Too short to contain valid StatusCode
+	if len(b) < 2 {
 		return nil, errInvalidStatusCode
 	}
 
-	return StatusCode(s), nil
+	return &StatusCode{
+		Code:    Status(binary.BigEndian.Uint16(b[0:2])),
+		Message: string(b[2:]),
+	}, nil
 }
