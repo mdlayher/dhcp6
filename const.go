@@ -30,7 +30,7 @@ const (
 // Status represesents a DHCP status code, as defined in IETF RFC 3315,
 // Section 5.4.  Status codes are used to communicate success or failure
 // between client and server.
-type Status int
+type Status uint16
 
 // Status constants which indicate the status codes described in IETF
 // RFC 3315, Section 24.4.  Additional status are defined in IANA's
@@ -50,7 +50,7 @@ const (
 // OptionCode represents a DHCP option, as defined in IETF RFC 3315,
 // Section 22.  Options are used to carry additional information and
 // parameters in DHCP messages between client and server.
-type OptionCode int
+type OptionCode uint16
 
 // Status constants which indicate the option codes described in IETF
 // RFC 3315, Section 24.3.  Additional option codes are defined in IANA's
