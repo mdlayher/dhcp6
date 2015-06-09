@@ -192,7 +192,6 @@ type DUIDEN struct {
 
 // NewDUIDEN generates a new DUIDEN from an input IANA-assigned Private
 // Enterprise Number and a variable length unique identifier byte slice.
-// type and a hardware address.
 func NewDUIDEN(enterpriseNumber uint32, identifier []byte) *DUIDEN {
 	return &DUIDEN{
 		Type:             DUIDTypeEN,
