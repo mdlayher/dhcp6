@@ -12,10 +12,10 @@ import (
 func TestRecorder(t *testing.T) {
 	mt := dhcp6.MessageTypeAdvertise
 	txID := [3]byte{0, 1, 2}
-	clientID := []byte{0, 1}
+	clientID := dhcp6.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
 	r := NewRecorder(txID)
-	r.Options().AddRaw(dhcp6.OptionClientID, clientID)
+	r.Options().Add(dhcp6.OptionClientID, clientID)
 
 	if _, err := r.Send(mt); err != nil {
 		t.Fatal(err)
@@ -32,7 +32,7 @@ func TestRecorder(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatal("empty or invalid client ID option")
 	}
-	if want, got := clientID, duid.Bytes(); !bytes.Equal(want, got) {
+	if want, got := clientID.Bytes(), duid.Bytes(); !bytes.Equal(want, got) {
 		t.Fatalf("unexpected client ID: %v != %v", want, got)
 	}
 }

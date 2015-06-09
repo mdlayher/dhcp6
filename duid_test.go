@@ -8,254 +8,76 @@ import (
 	"time"
 )
 
-// TestDUIDLLT verifies that a DUIDLLT can be properly created from raw DUID
-// data, and that each of its fields can be correctly parsed.
-func TestDUIDLLT(t *testing.T) {
+// TestNewDUIDLLT verifies that NewDUIDLLT generates a proper DUIDLLT or error
+// from an input hardware type, time value, and hardware address.
+func TestNewDUIDLLT(t *testing.T) {
 	var tests = []struct {
 		description  string
-		buf          []byte
-		hardwareType []byte
-		time         time.Duration
+		hardwareType uint16
+		time         time.Time
 		hardwareAddr net.HardwareAddr
+		duid         *DUIDLLT
+		err          error
 	}{
 		{
-			description: "zero hardware type, time, and hardware address",
-			buf: []byte{
-				0, 1,
-				0, 0,
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0,
-			},
-			hardwareType: []byte{0, 0},
-			time:         0 * time.Second,
-			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
+			description: "date too early",
+			time:        duidLLTTime.Add(-1 * time.Minute),
+			err:         ErrInvalidDUIDLLTTime,
 		},
 		{
-			description: "non-zero hardware type, zero time and hardware address",
-			buf: []byte{
-				0, 1,
-				10, 11,
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0,
+			description:  "OK",
+			hardwareType: 1,
+			time:         duidLLTTime.Add(1 * time.Minute),
+			hardwareAddr: net.HardwareAddr([]byte{0, 1, 0, 1, 0, 1}),
+			duid: &DUIDLLT{
+				Type:         DUIDTypeLLT,
+				HardwareType: 1,
+				Time:         duidLLTTime.Add(1 * time.Minute).Sub(duidLLTTime),
+				HardwareAddr: net.HardwareAddr([]byte{0, 1, 0, 1, 0, 1}),
 			},
-			hardwareType: []byte{10, 11},
-			time:         0 * time.Second,
-			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
-		},
-		{
-			description: "non-zero time, zero hardware type and hardware address",
-			buf: []byte{
-				0, 1,
-				0, 0,
-				0, 0, 1, 1,
-				0, 0, 0, 0, 0, 0,
-			},
-			hardwareType: []byte{0, 0},
-			time:         (4 * time.Minute) + 17*time.Second,
-			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
-		},
-		{
-			description: "non-zero hardware address, zero hardware type and time",
-			buf: []byte{
-				0, 1,
-				0, 0,
-				0, 0, 0, 0,
-				222, 173, 190, 239, 222, 173,
-			},
-			hardwareType: []byte{0, 0},
-			time:         0 * time.Second,
-			hardwareAddr: net.HardwareAddr([]byte{222, 173, 190, 239, 222, 173}),
-		},
-		{
-			description: "non-zero hardware type, time, and hardware address",
-			buf: []byte{
-				0, 1,
-				13, 14,
-				0, 0, 2, 1,
-				190, 239, 222, 173, 190, 239,
-			},
-			hardwareType: []byte{13, 14},
-			time:         (8 * time.Minute) + 33*time.Second,
-			hardwareAddr: net.HardwareAddr([]byte{190, 239, 222, 173, 190, 239}),
 		},
 	}
 
 	for i, tt := range tests {
-		duid := DUIDLLT(tt.buf)
-		if want, got := DUIDTypeLLT, duid.Type(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLLT.Type():\n- test: want %v, got %v",
-				i, tt.description, want, got)
+		duid, err := NewDUIDLLT(tt.hardwareType, tt.time, tt.hardwareAddr)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
 		}
 
-		if want, got := tt.hardwareType, duid.HardwareType(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLLT.HardwareType():\n- buffer: %v\n- test: want %v, got %v",
-				i, tt.description, tt.buf, want, got)
-		}
-
-		if want, got := tt.time, duid.Time(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLLT.Time():\n- buffer: %v\n- test: want %v, got %v",
-				i, tt.description, tt.buf, want, got)
-		}
-
-		if want, got := tt.hardwareAddr, duid.HardwareAddr(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLLT.HardwareAddr():\n- buffer: %v\n- test: want %v, got %v",
-				i, tt.description, tt.buf, want, got)
-		}
-
-		if want, got := tt.buf, duid.Bytes(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLLT.Bytes():\n- want %v\n-  got %v",
+		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected DUIDLLT:\n- want %v\n-  got %v",
 				i, tt.description, want, got)
 		}
 	}
 }
 
-// TestDUIDEN verifies that a DUIDEN can be properly created from raw DUID
-// data, and that each of its fields can be correctly parsed.
-func TestDUIDEN(t *testing.T) {
+// TestNewDUIDEN verifies that NewDUIDEN generates a proper DUIDEN from
+// an input enterprise number and identifier.
+func TestNewDUIDEN(t *testing.T) {
 	var tests = []struct {
-		description      string
-		buf              []byte
-		enterpriseNumber int
+		enterpriseNumber uint32
 		identifier       []byte
+		duid             *DUIDEN
 	}{
 		{
-			description: "zero enterprise number and identifier",
-			buf: []byte{
-				0, 2,
-				0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
+			enterpriseNumber: 100,
+			identifier:       []byte{0, 1, 2, 3, 4},
+			duid: &DUIDEN{
+				Type:             DUIDTypeEN,
+				EnterpriseNumber: 100,
+				Identifier:       []byte{0, 1, 2, 3, 4},
 			},
-			enterpriseNumber: 0,
-			identifier:       []byte{0, 0, 0, 0, 0, 0, 0, 0},
-		},
-		{
-			description: "non-zero enterprise number, zero identifier",
-			buf: []byte{
-				0, 2,
-				0, 0, 10, 11,
-				0, 0, 0, 0, 0, 0, 0, 0,
-			},
-			enterpriseNumber: 2571,
-			identifier:       []byte{0, 0, 0, 0, 0, 0, 0, 0},
-		},
-		{
-			description: "non-zero identifer, zero enterprise number",
-			buf: []byte{
-				0, 2,
-				0, 0, 0, 0,
-				10, 11, 12, 13, 14, 15, 1, 2,
-			},
-			enterpriseNumber: 0,
-			identifier:       []byte{10, 11, 12, 13, 14, 15, 1, 2},
-		},
-		{
-			// Example from: https://tools.ietf.org/html/rfc3315#section-9.3
-			description: "non-zero enterprise number and identifier",
-			buf: []byte{
-				0, 2,
-				0, 0, 0, 9,
-				12, 192, 132, 221, 3, 0, 9, 18,
-			},
-			enterpriseNumber: 9,
-			identifier:       []byte{12, 192, 132, 221, 3, 0, 9, 18},
 		},
 	}
 
 	for i, tt := range tests {
-		duid := DUIDEN(tt.buf)
-		if want, got := DUIDTypeEN, duid.Type(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected DUIDEN.Type():\n- test: want %v, got %v",
-				i, tt.description, want, got)
-		}
-
-		if want, got := tt.enterpriseNumber, duid.EnterpriseNumber(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected DUIDEN.EnterpriseNumber():\n- buffer: %v\n- test: want %v, got %v",
-				i, tt.description, tt.buf, want, got)
-		}
-
-		if want, got := tt.identifier, duid.Identifier(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected DUIDEN.Identifier():\n- buffer: %v\n- test: want %v, got %v",
-				i, tt.description, tt.buf, want, got)
-		}
-
-		if want, got := tt.buf, duid.Bytes(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected DUIDEN.Bytes():\n- want %v\n-  got %v",
-				i, tt.description, want, got)
-		}
-	}
-}
-
-// TestDUIDLL verifies that a DUIDLL can be properly created from raw DUID
-// data, and that each of its fields can be correctly parsed.
-func TestDUIDLL(t *testing.T) {
-	var tests = []struct {
-		description  string
-		buf          []byte
-		hardwareType []byte
-		hardwareAddr net.HardwareAddr
-	}{
-		{
-			description: "zero hardware type and hardware address",
-			buf: []byte{
-				0, 3,
-				0, 0,
-				0, 0, 0, 0, 0, 0,
-			},
-			hardwareType: []byte{0, 0},
-			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
-		},
-		{
-			description: "non-zero hardware type, zero hardware address",
-			buf: []byte{
-				0, 3,
-				10, 11,
-				0, 0, 0, 0, 0, 0,
-			},
-			hardwareType: []byte{10, 11},
-			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
-		},
-		{
-			description: "non-zero hardware address, zero hardware type",
-			buf: []byte{
-				0, 3,
-				0, 0,
-				222, 173, 190, 239, 222, 173,
-			},
-			hardwareType: []byte{0, 0},
-			hardwareAddr: net.HardwareAddr([]byte{222, 173, 190, 239, 222, 173}),
-		},
-		{
-			description: "non-zero hardware type and hardware address",
-			buf: []byte{
-				0, 3,
-				13, 14,
-				190, 239, 222, 173, 190, 239,
-			},
-			hardwareType: []byte{13, 14},
-			hardwareAddr: net.HardwareAddr([]byte{190, 239, 222, 173, 190, 239}),
-		},
-	}
-
-	for i, tt := range tests {
-		duid := DUIDLL(tt.buf)
-		if want, got := DUIDTypeLL, duid.Type(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLL.Type():\n- test: want %v, got %v",
-				i, tt.description, want, got)
-		}
-
-		if want, got := tt.hardwareType, duid.HardwareType(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLL.HardwareType():\n- buffer: %v\n- test: want %v, got %v",
-				i, tt.description, tt.buf, want, got)
-		}
-
-		if want, got := tt.hardwareAddr, duid.HardwareAddr(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLL.HardwareAddr():\n- buffer: %v\n- test: want %v, got %v",
-				i, tt.description, tt.buf, want, got)
-		}
-
-		if want, got := tt.buf, duid.Bytes(); !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected DUIDLL.Bytes():\n- want %v\n-  got %v",
-				i, tt.description, want, got)
+		if want, got := tt.duid, NewDUIDEN(tt.enterpriseNumber, tt.identifier); !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] unexpected DUIDEN:\n- want %v\n-  got %v", i, want, got)
 		}
 	}
 }
@@ -266,39 +88,21 @@ func TestNewDUIDLL(t *testing.T) {
 	var tests = []struct {
 		hardwareType uint16
 		hardwareAddr net.HardwareAddr
-		duid         DUIDLL
+		duid         *DUIDLL
 	}{
 		{
 			hardwareType: 1,
 			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
-			duid: DUIDLL([]byte{
-				0, 3,
-				0, 1,
-				0, 0, 0, 0, 0, 0,
-			}),
-		},
-		{
-			hardwareType: 10,
-			hardwareAddr: net.HardwareAddr([]byte{1, 2, 3, 4, 5, 6}),
-			duid: DUIDLL([]byte{
-				0, 3,
-				0, 10,
-				1, 2, 3, 4, 5, 6,
-			}),
-		},
-		{
-			hardwareType: 256,
-			hardwareAddr: net.HardwareAddr([]byte{6, 7, 8, 9, 10, 11}),
-			duid: DUIDLL([]byte{
-				0, 3,
-				1, 0,
-				6, 7, 8, 9, 10, 11,
-			}),
+			duid: &DUIDLL{
+				Type:         DUIDTypeLL,
+				HardwareType: 1,
+				HardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
+			},
 		},
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.duid, NewDUIDLL(tt.hardwareType, tt.hardwareAddr); !bytes.Equal(want, got) {
+		if want, got := tt.duid, NewDUIDLL(tt.hardwareType, tt.hardwareAddr); !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] unexpected DUIDLL:\n- want %v\n-  got %v", i, want, got)
 		}
 	}
@@ -320,17 +124,18 @@ func Test_parseDUID(t *testing.T) {
 			buf: []byte{0, 0},
 			err: errUnknownDUID,
 		},
+		// Known types padded out to be just long enough to not error
 		{
-			buf:    []byte{0, 1},
-			result: reflect.TypeOf(DUIDLLT{}),
+			buf:    []byte{0, 1, 0, 0, 0, 0, 0, 0},
+			result: reflect.TypeOf(&DUIDLLT{}),
 		},
 		{
-			buf:    []byte{0, 2},
-			result: reflect.TypeOf(DUIDEN{}),
+			buf:    []byte{0, 2, 0, 0, 0, 0},
+			result: reflect.TypeOf(&DUIDEN{}),
 		},
 		{
-			buf:    []byte{0, 3},
-			result: reflect.TypeOf(DUIDLL{}),
+			buf:    []byte{0, 3, 0, 0},
+			result: reflect.TypeOf(&DUIDLL{}),
 		},
 		{
 			buf: []byte{0, 4},
@@ -352,6 +157,204 @@ func Test_parseDUID(t *testing.T) {
 		if want, got := tt.result, reflect.TypeOf(d); want != got {
 			t.Fatalf("[%02d] unexpected type for parseDUID(%v): %v != %v",
 				i, tt.buf, want, got)
+		}
+	}
+}
+
+// Test_parseDUIDLLT verifies that parseDUIDLLT returns appropriate DUIDLLTs and
+// errors for various input byte slices.
+func Test_parseDUIDLLT(t *testing.T) {
+	var tests = []struct {
+		description string
+		buf         []byte
+		duid        *DUIDLLT
+		err         error
+	}{
+		{
+			description: "nil buffer, invalid DUID-LLT",
+			err:         errInvalidDUIDLLT,
+		},
+		{
+			description: "empty buffer, invalid DUID-LLT",
+			buf:         []byte{},
+			err:         errInvalidDUIDLLT,
+		},
+		{
+			description: "length 7 buffer, invalid DUID-LLT",
+			buf:         bytes.Repeat([]byte{0}, 7),
+			err:         errInvalidDUIDLLT,
+		},
+		{
+			description: "wrong DUID type",
+			buf: []byte{
+				0, 2,
+				0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0,
+			},
+			err: errInvalidDUIDLLT,
+		},
+		{
+			description: "OK DUIDLLT",
+			buf: []byte{
+				0, 1,
+				0, 1,
+				0, 0, 0, 60,
+				0, 1, 0, 1, 0, 1,
+			},
+			duid: &DUIDLLT{
+				Type:         DUIDTypeLLT,
+				HardwareType: 1,
+				Time:         1 * time.Minute,
+				HardwareAddr: []byte{0, 1, 0, 1, 0, 1},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		duid, err := parseDUIDLLT(tt.buf)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected DUID-LLT:\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// Test_parseDUIDEN verifies that parseDUIDEN returns appropriate DUIDENs and
+// errors for various input byte slices.
+func Test_parseDUIDEN(t *testing.T) {
+	var tests = []struct {
+		description string
+		buf         []byte
+		duid        *DUIDEN
+		err         error
+	}{
+		{
+			description: "nil buffer, invalid DUID-EN",
+			err:         errInvalidDUIDEN,
+		},
+		{
+			description: "empty buffer, invalid DUID-EN",
+			buf:         []byte{},
+			err:         errInvalidDUIDEN,
+		},
+		{
+			description: "length 5 buffer, invalid DUID-EN",
+			buf:         bytes.Repeat([]byte{0}, 5),
+			err:         errInvalidDUIDEN,
+		},
+		{
+			description: "wrong DUID type",
+			buf: []byte{
+				0, 3,
+				0, 0, 0, 0,
+			},
+			err: errInvalidDUIDEN,
+		},
+		{
+			description: "OK DUIDEN",
+			buf: []byte{
+				0, 2,
+				0, 0, 0, 100,
+				0, 1, 2, 3, 4, 5,
+			},
+			duid: &DUIDEN{
+				Type:             DUIDTypeEN,
+				EnterpriseNumber: 100,
+				Identifier:       []byte{0, 1, 2, 3, 4, 5},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		duid, err := parseDUIDEN(tt.buf)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected DUID-EN:\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// Test_parseDUIDLL verifies that parseDUIDLL returns appropriate DUIDLLs and
+// errors for various input byte slices.
+func Test_parseDUIDLL(t *testing.T) {
+	var tests = []struct {
+		description string
+		buf         []byte
+		duid        *DUIDLL
+		err         error
+	}{
+		{
+			description: "nil buffer, invalid DUID-LL",
+			err:         errInvalidDUIDLL,
+		},
+		{
+			description: "empty buffer, invalid DUID-LL",
+			buf:         []byte{},
+			err:         errInvalidDUIDLL,
+		},
+		{
+			description: "length 7 buffer, invalid DUID-LL",
+			buf:         bytes.Repeat([]byte{0}, 7),
+			err:         errInvalidDUIDLL,
+		},
+		{
+			description: "wrong DUID type",
+			buf: []byte{
+				0, 1,
+				0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0,
+			},
+			err: errInvalidDUIDLL,
+		},
+		{
+			description: "OK DUIDLL",
+			buf: []byte{
+				0, 3,
+				0, 1,
+				0, 1, 0, 1, 0, 1,
+			},
+			duid: &DUIDLL{
+				Type:         DUIDTypeLL,
+				HardwareType: 1,
+				HardwareAddr: []byte{0, 1, 0, 1, 0, 1},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		duid, err := parseDUIDLL(tt.buf)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected DUID-LL:\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
 		}
 	}
 }

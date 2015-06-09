@@ -14,6 +14,10 @@ import (
 // implemented on the current platform.
 var ErrHardwareTypeNotImplemented = errors.New("hardware type detection not implemented on this platform")
 
+// ErrInvalidDUIDLLTTime is returned when a time before midnight (UTC),
+// January 1, 2000 is used in NewDUIDLLT.
+var ErrInvalidDUIDLLTTime = errors.New("DUID-LLT time must be after midnight (UTC), January 1, 2000")
+
 // ErrInvalidIAAddrIP is returned when an input net.IP value is not
 // recognized as a valid IPv6 address.
 var ErrInvalidIAAddrIP = errors.New("IAAddr IP must be an IPv6 address")

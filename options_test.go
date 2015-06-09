@@ -20,25 +20,51 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "DUID-LLT",
 			code:        OptionClientID,
-			byteser:     DUIDLLT([]byte{0, 1}),
+			byteser: &DUIDLLT{
+				Type:         DUIDTypeLLT,
+				HardwareType: 1,
+				Time:         duidLLTTime.Add(1 * time.Minute).Sub(duidLLTTime),
+				HardwareAddr: net.HardwareAddr([]byte{0, 1, 0, 1, 0, 1}),
+			},
 			options: Options{
-				OptionClientID: [][]byte{{0, 1}},
+				OptionClientID: [][]byte{{
+					0, 1,
+					0, 1,
+					0, 0, 0, 60,
+					0, 1, 0, 1, 0, 1,
+				}},
 			},
 		},
 		{
 			description: "DUID-EN",
-			code:        OptionServerID,
-			byteser:     DUIDEN([]byte{0, 2}),
+			code:        OptionClientID,
+			byteser: &DUIDEN{
+				Type:             DUIDTypeEN,
+				EnterpriseNumber: 100,
+				Identifier:       []byte{0, 1, 2, 3, 4},
+			},
 			options: Options{
-				OptionServerID: [][]byte{{0, 2}},
+				OptionClientID: [][]byte{{
+					0, 2,
+					0, 0, 0, 100,
+					0, 1, 2, 3, 4,
+				}},
 			},
 		},
 		{
 			description: "DUID-LL",
-			code:        OptionServerID,
-			byteser:     DUIDEN([]byte{0, 3}),
+			code:        OptionClientID,
+			byteser: &DUIDLL{
+				Type:         DUIDTypeLL,
+				HardwareType: 1,
+				HardwareAddr: net.HardwareAddr([]byte{0, 1, 0, 1, 0, 1}),
+			},
 			options: Options{
-				OptionServerID: [][]byte{{0, 3}},
+				OptionClientID: [][]byte{{
+					0, 3,
+					0, 1,
+					0, 1, 0, 1, 0, 1,
+				}},
 			},
 		},
 		{
@@ -240,10 +266,18 @@ func TestOptionsClientID(t *testing.T) {
 		{
 			description: "OptionClientID present in Options map",
 			options: Options{
-				OptionClientID: [][]byte{{0, 1}},
+				OptionClientID: [][]byte{{
+					0, 3,
+					0, 1,
+					0, 1, 0, 1, 0, 1,
+				}},
 			},
-			duid: DUIDLLT([]byte{0, 1}),
-			ok:   true,
+			duid: &DUIDLL{
+				Type:         DUIDTypeLL,
+				HardwareType: 1,
+				HardwareAddr: []byte{0, 1, 0, 1, 0, 1},
+			},
+			ok: true,
 		},
 	}
 
@@ -282,10 +316,18 @@ func TestOptionsServerID(t *testing.T) {
 		{
 			description: "OptionServerID present in Options map",
 			options: Options{
-				OptionServerID: [][]byte{{0, 1}},
+				OptionServerID: [][]byte{{
+					0, 3,
+					0, 1,
+					0, 1, 0, 1, 0, 1,
+				}},
 			},
-			duid: DUIDLLT([]byte{0, 1}),
-			ok:   true,
+			duid: &DUIDLL{
+				Type:         DUIDTypeLL,
+				HardwareType: 1,
+				HardwareAddr: []byte{0, 1, 0, 1, 0, 1},
+			},
+			ok: true,
 		},
 	}
 

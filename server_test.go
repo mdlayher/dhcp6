@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net"
 	"testing"
+	"time"
 
 	"golang.org/x/net/ipv6"
 )
@@ -75,7 +76,7 @@ func TestServeWithSetServerID(t *testing.T) {
 	r := &testMessage{}
 	r.b.Write(p.Bytes())
 
-	duid := DUIDLLT([]byte{0, 1})
+	duid, err := NewDUIDLLT(1, time.Now(), []byte{0, 1, 0, 1, 0, 1})
 	s := &Server{
 		ServerID: duid,
 	}
@@ -113,15 +114,14 @@ func TestServeWithSetServerID(t *testing.T) {
 // it before a Handler is invoked.
 func TestServeCreateResponserWithCorrectParameters(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
-	duid := []byte{0, 1}
+	duid := NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
 	p := &Packet{
 		MessageType:   MessageTypeSolicit,
 		TransactionID: txID,
-		Options: Options{
-			OptionClientID: [][]byte{duid},
-		},
+		Options:       make(Options),
 	}
+	p.Options.Add(OptionClientID, duid)
 
 	r := &testMessage{}
 	r.b.Write(p.Bytes())
@@ -137,7 +137,7 @@ func TestServeCreateResponserWithCorrectParameters(t *testing.T) {
 		if !ok || err != nil || cID == nil {
 			t.Fatal("Responser options did not contain client ID")
 		}
-		if want, got := duid, cID.Bytes(); !bytes.Equal(want, got) {
+		if want, got := duid.Bytes(), cID.Bytes(); !bytes.Equal(want, got) {
 			t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 		}
 
@@ -212,16 +212,15 @@ func TestServeIgnoreInvalidPacket(t *testing.T) {
 // all of its options, and replies with expected values.
 func TestServeOK(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
-	duid := []byte{0, 1}
+	duid := NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
 	// Perform an entire Solicit transaction
 	p := &Packet{
 		MessageType:   MessageTypeSolicit,
 		TransactionID: txID,
-		Options: Options{
-			OptionClientID: [][]byte{duid},
-		},
+		Options:       make(Options),
 	}
+	p.Options.Add(OptionClientID, duid)
 
 	// Send from a different mock IP
 	r := &testMessage{
@@ -273,7 +272,7 @@ func TestServeOK(t *testing.T) {
 	if !ok || err != nil || cID == nil {
 		t.Fatal("response options did not contain client ID")
 	}
-	if want, got := duid, cID.Bytes(); !bytes.Equal(want, got) {
+	if want, got := duid.Bytes(), cID.Bytes(); !bytes.Equal(want, got) {
 		t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 	}
 	if sID, ok, err := wp.Options.ServerID(); !ok || err != nil || sID == nil {

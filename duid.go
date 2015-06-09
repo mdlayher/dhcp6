@@ -18,15 +18,38 @@ var (
 	// to parse a valid DUID from a byte slice.
 	errInvalidDUID = errors.New("not enough bytes for valid DUID")
 
+	// errInvalidDUIDLLT is returned when not enough bytes are present
+	// to parse a valid DUIDLLT from a byte slice, or when the DUID type
+	// found in the byte slice is incorrect.
+	errInvalidDUIDLLT = errors.New("invalid DUID-LLT")
+
+	// errInvalidDUIDEN is returned when not enough bytes are present
+	// to parse a valid DUIDEN from a byte slice, or when the DUID type
+	// found in the byte slice is incorrect.
+	errInvalidDUIDEN = errors.New("invalid DUID-EN")
+
+	// errInvalidDUIDLL is returned when not enough bytes are present
+	// to parse a valid DUIDLL from a byte slice, or when the DUID type
+	// found in the byte slice is incorrect.
+	errInvalidDUIDLL = errors.New("invalid DUID-LL")
+
 	// errUnknownDUID is returned when an unknown DUID type is
 	// encountered, and thus, a DUID cannot be parsed.
 	errUnknownDUID = errors.New("unknown DUID type")
 )
 
+var (
+	// duidLLTTime is the date specified in IETF RFC 3315, Section 9.2, for use
+	// with DUIT-LLT generation.  It is used to calculate a duration from an
+	// input time after this date.  Dates before this time are not valid for
+	// creation of DUIDLLT values.
+	duidLLTTime = time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
+)
+
 // DUIDType is a type of DHCP Unique Identifier, as defined in IETF RFC
 // 3315, Section 9.  DUIDs are used to uniquely identify a client to a
 // server, or vice-versa.
-type DUIDType int
+type DUIDType uint16
 
 // DUIDType constants which indicate DUID-LLT, DUID-EN, or DUID-LL.
 // Additional DUID types are defined in IANA's DHCPv6 parameters registry:
@@ -51,21 +74,17 @@ const (
 //   -  DUIDEN - DUID Assigned by Vendor Based on Enterprise Number
 //   -  DUIDLL - DUID Based on Link-layer Address
 //
-// The specific type of a DUID can be identified using its Type method.
 // If further introspection of the DUID is needed, a type switch is
 // recommended:
 //	switch d := duid.(type) {
 //	case dhcp6.DUIDLLT:
-//		fmt.Println(d.Time())
+//		fmt.Println(d.Time)
 //	case dhcp6.DUIDEN:
-//		fmt.Println(d.EnterpriseNumber())
+//		fmt.Println(d.EnterpriseNumber)
 //	case dhcp6.DUIDLL:
-//		fmt.Println(d.HardwareAddr())
+//		fmt.Println(d.HardwareAddr)
 //	}
-type DUID interface {
-	Byteser
-	Type() DUIDType
-}
+type DUID Byteser
 
 // DUIDLLT represents a DUID Based on Link-layer Address Plus Time [DUID-LLT],
 // as defined in IETF RFC 3315, Section 9.2.
@@ -73,65 +92,132 @@ type DUID interface {
 // This DUID type must only be used with clients and servers with stable,
 // persistent storage.  It is the recommended DUID type for all general
 // purpose computing devices.
-type DUIDLLT []byte
-
-// Bytes implements DUID and Byteser, and returns the entire underlying byte
-// slice for a DUIDLLT.
-func (d DUIDLLT) Bytes() []byte {
-	return []byte(d)
+type DUIDLLT struct {
+	Type         DUIDType
+	HardwareType uint16
+	Time         time.Duration
+	HardwareAddr net.HardwareAddr
 }
 
-// Type implements DUID, and always returns DUIDTypeLLT.
-func (d DUIDLLT) Type() DUIDType {
-	return DUIDTypeLLT
+// NewDUIDLLT generates a new DUIDLLT from an input IANA-assigned hardware
+// type, time value, and a hardware address.
+//
+// The time value must be greater than midnight (UTC), January 1, 2000.
+func NewDUIDLLT(hardwareType uint16, time time.Time, hardwareAddr net.HardwareAddr) (*DUIDLLT, error) {
+	// Do not accept dates before duidLLTTime.
+	if time.Before(duidLLTTime) {
+		return nil, ErrInvalidDUIDLLTTime
+	}
+
+	return &DUIDLLT{
+		Type:         DUIDTypeLLT,
+		HardwareType: hardwareType,
+		Time:         time.Sub(duidLLTTime),
+		HardwareAddr: hardwareAddr,
+	}, nil
 }
 
-// HardwareType returns an IANA-assigned hardware type, as described in
-// IETF RFC 826.
-func (d DUIDLLT) HardwareType() []byte {
-	return d[2:4]
+// Bytes implements DUID, and allocates a byte slice containing the data
+// from a DUIDLLT.
+func (d *DUIDLLT) Bytes() []byte {
+	// 2 bytes: DUID type
+	// 2 bytes: hardware type
+	// 4 bytes: time duration
+	// N bytes: hardware address
+	b := make([]byte, 8+len(d.HardwareAddr))
+
+	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type))
+	binary.BigEndian.PutUint16(b[2:4], d.HardwareType)
+	binary.BigEndian.PutUint32(b[4:8], uint32(d.Time/time.Second))
+	copy(b[8:], d.HardwareAddr)
+
+	return b
 }
 
-// Time returns the time the DUID was generated in seconds since midnight
-// (UTC), January 1, 2000, modulo 2^32.
-func (d DUIDLLT) Time() time.Duration {
-	return time.Duration(binary.BigEndian.Uint32(d[4:8])) * time.Second
-}
+// parseDUIDLLT parses a raw byte slice into a DUIDLLT.  If the byte slice
+// does not contain enough data to form a valid DUIDLLT, or another DUID type
+// is indicated, errInvalidDUIDLLT is returned.
+func parseDUIDLLT(b []byte) (*DUIDLLT, error) {
+	// Too short to be valid DUIDLLT
+	if len(b) < 8 {
+		return nil, errInvalidDUIDLLT
+	}
 
-// HardwareAddr returns the hardware address for an arbitrary link-layer
-// interface on a device, used in generating the DUID-LLT.  This value
-// could represent any arbitrary interface on a system, and should not be
-// used as a client or server's communicating hardware address.
-func (d DUIDLLT) HardwareAddr() net.HardwareAddr {
-	return net.HardwareAddr(d[8:])
+	// Verify DUID type
+	dType := DUIDType(binary.BigEndian.Uint16(b[0:2]))
+	if dType != DUIDTypeLLT {
+		return nil, errInvalidDUIDLLT
+	}
+
+	mac := make(net.HardwareAddr, len(b[8:]))
+	copy(mac, b[8:])
+
+	return &DUIDLLT{
+		Type:         dType,
+		HardwareType: binary.BigEndian.Uint16(b[2:4]),
+		Time:         time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second,
+		HardwareAddr: mac,
+	}, nil
 }
 
 // DUIDEN represents a DUID Assigned by Vendor Based on Enterprise Number
 // [DUID-EN], as defined in IETF RFC 3315, Section 9.3.  This DUID type
 // uses an IANA-assigned Private Enterprise Number for a given vendor.
-type DUIDEN []byte
-
-// Bytes implements DUID and Byteser, and returns the entire underlying byte
-// slice for a DUIDEN.
-func (d DUIDEN) Bytes() []byte {
-	return []byte(d)
+type DUIDEN struct {
+	Type             DUIDType
+	EnterpriseNumber uint32
+	Identifier       []byte
 }
 
-// Type implements DUID, and always returns DUIDTypeEN.
-func (d DUIDEN) Type() DUIDType {
-	return DUIDTypeEN
+// NewDUIDEN generates a new DUIDEN from an input IANA-assigned Private
+// Enterprise Number and a variable length unique identifier byte slice.
+// type and a hardware address.
+func NewDUIDEN(enterpriseNumber uint32, identifier []byte) *DUIDEN {
+	return &DUIDEN{
+		Type:             DUIDTypeEN,
+		EnterpriseNumber: enterpriseNumber,
+		Identifier:       identifier,
+	}
 }
 
-// EnterpriseNumber returns a vendor's registerered Private Enterprise
-// Number, as assigned by the IANA.
-func (d DUIDEN) EnterpriseNumber() int {
-	return int(binary.BigEndian.Uint32(d[2:6]))
+// Bytes implements DUID, and allocates a byte slice containing the data
+// from a DUIDEN.
+func (d *DUIDEN) Bytes() []byte {
+	// 2 bytes: DUID type
+	// 4 bytes: enterprise number
+	// N bytes: identifier
+	b := make([]byte, 6+len(d.Identifier))
+
+	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type))
+	binary.BigEndian.PutUint32(b[2:6], d.EnterpriseNumber)
+	copy(b[6:], d.Identifier)
+
+	return b
 }
 
-// Identifier returns a unique identifier which is assigned to a device
-// at the time it is manufactured.
-func (d DUIDEN) Identifier() []byte {
-	return d[6:]
+// parseDUIDEN parses a raw byte slice into a DUIDEN.  If the byte slice
+// does not contain enough data to form a valid DUIDEN, or another DUID type
+// is indicated, errInvalidDUIDEN is returned.
+func parseDUIDEN(b []byte) (*DUIDEN, error) {
+	// Too short to be valid DUIDEN
+	if len(b) < 6 {
+		return nil, errInvalidDUIDEN
+	}
+
+	// Verify DUID type
+	dType := DUIDType(binary.BigEndian.Uint16(b[0:2]))
+	if dType != DUIDTypeEN {
+		return nil, errInvalidDUIDEN
+	}
+
+	id := make([]byte, len(b[6:]))
+	copy(id, b[6:])
+
+	return &DUIDEN{
+		Type:             dType,
+		EnterpriseNumber: binary.BigEndian.Uint32(b[2:6]),
+		Identifier:       id,
+	}, nil
 }
 
 // DUIDLL represents a DUID Based on Link-layer Address [DUID-LL],
@@ -144,46 +230,60 @@ func (d DUIDEN) Identifier() []byte {
 // DUIDLL values are generated automatically for Servers which are not
 // created with a ServerID, using the hardware type found by HardwareType
 // and the hardware address of the listening network interface.
-type DUIDLL []byte
+type DUIDLL struct {
+	Type         DUIDType
+	HardwareType uint16
+	HardwareAddr net.HardwareAddr
+}
 
 // NewDUIDLL generates a new DUIDLL from an input IANA-assigned hardware
 // type and a hardware address.
-func NewDUIDLL(hardwareType uint16, hardwareAddr net.HardwareAddr) DUIDLL {
-	d := make(DUIDLL, 4+len(hardwareAddr))
+func NewDUIDLL(hardwareType uint16, hardwareAddr net.HardwareAddr) *DUIDLL {
+	return &DUIDLL{
+		Type:         DUIDTypeLL,
+		HardwareType: hardwareType,
+		HardwareAddr: hardwareAddr,
+	}
+}
 
-	// 2 bytes: DUID type (DUID-LL in this case)
-	binary.BigEndian.PutUint16(d[0:2], uint16(DUIDTypeLL))
+// Bytes implements DUID, and allocates a byte slice containing the data
+// from a DUIDLL.
+func (d *DUIDLL) Bytes() []byte {
+	// 2 bytes: DUID type
 	// 2 bytes: hardware type
-	binary.BigEndian.PutUint16(d[2:4], hardwareType)
 	// N bytes: hardware address
-	copy(d[4:], hardwareAddr)
+	b := make([]byte, 4+len(d.HardwareAddr))
 
-	return d
+	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type))
+	binary.BigEndian.PutUint16(b[2:4], d.HardwareType)
+	copy(b[4:], d.HardwareAddr)
+
+	return b
 }
 
-// Bytes implements DUID and Byteser, and returns the entire underlying byte
-// slice for a DUIDLL.
-func (d DUIDLL) Bytes() []byte {
-	return []byte(d)
-}
+// parseDUIDLL parses a raw byte slice into a DUIDLL.  If the byte slice
+// does not contain enough data to form a valid DUIDLL, or another DUID type
+// is indicated, errInvalidDUIDLL is returned.
+func parseDUIDLL(b []byte) (*DUIDLL, error) {
+	// Too short to be DUIDLL
+	if len(b) < 4 {
+		return nil, errInvalidDUIDLL
+	}
 
-// Type implements DUID and always returns DUIDTypeLL.
-func (d DUIDLL) Type() DUIDType {
-	return DUIDTypeLL
-}
+	// Verify DUID type
+	dType := DUIDType(binary.BigEndian.Uint16(b[0:2]))
+	if dType != DUIDTypeLL {
+		return nil, errInvalidDUIDLL
+	}
 
-// HardwareType returns an IANA-assigned hardware type, as described in
-// IETF RFC 826.
-func (d DUIDLL) HardwareType() []byte {
-	return d[2:4]
-}
+	mac := make(net.HardwareAddr, len(b[4:]))
+	copy(mac, b[4:])
 
-// HardwareAddr returns the hardware address for an arbitrary link-layer
-// interface on a device, used in generating the DUID-LL.  This value
-// could represent any arbitrary interface on a system, and should not be
-// used as a client or server's communicating hardware address.
-func (d DUIDLL) HardwareAddr() net.HardwareAddr {
-	return net.HardwareAddr(d[4:])
+	return &DUIDLL{
+		Type:         dType,
+		HardwareType: binary.BigEndian.Uint16(b[2:4]),
+		HardwareAddr: mac,
+	}, nil
 }
 
 // parseDUID returns the correct DUID type of the input byte slice as a
@@ -197,11 +297,11 @@ func parseDUID(d []byte) (DUID, error) {
 	// BUG(mdlayher): add DUID-UUID to this in the future.
 	switch DUIDType(binary.BigEndian.Uint16(d[0:2])) {
 	case DUIDTypeLLT:
-		return DUIDLLT(d), nil
+		return parseDUIDLLT(d)
 	case DUIDTypeEN:
-		return DUIDEN(d), nil
+		return parseDUIDEN(d)
 	case DUIDTypeLL:
-		return DUIDLL(d), nil
+		return parseDUIDLL(d)
 	}
 
 	return nil, errUnknownDUID
