@@ -231,7 +231,7 @@ func TestServeOK(t *testing.T) {
 	r.b.Write(p.Bytes())
 
 	// Expect these option values set by server
-	preference := 255
+	var preference uint8 = 255
 	sCode := StatusSuccess
 	sMsg := "success"
 

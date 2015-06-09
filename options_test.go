@@ -598,7 +598,7 @@ func TestOptionsPreference(t *testing.T) {
 	var tests = []struct {
 		description string
 		options     Options
-		preference  int
+		preference  uint8
 		ok          bool
 		err         error
 	}{

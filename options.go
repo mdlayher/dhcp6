@@ -177,7 +177,7 @@ func (o Options) OptionRequest() ([]OptionCode, bool, error) {
 // indicates if OptionPreference was present in the Options map.  The error
 // return value indicates if a valid integer value could not be parsed from
 // the option.
-func (o Options) Preference() (int, bool, error) {
+func (o Options) Preference() (uint8, bool, error) {
 	v, ok := o.Get(OptionPreference)
 	if !ok {
 		return 0, false, nil
@@ -188,7 +188,7 @@ func (o Options) Preference() (int, bool, error) {
 		return 0, false, errInvalidPreference
 	}
 
-	return int(v[0]), true, nil
+	return uint8(v[0]), true, nil
 }
 
 // ElapsedTime returns the Elapsed Time Option value, described in RFC 3315,
