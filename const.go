@@ -49,10 +49,12 @@ const (
 type Status uint16
 
 // Status constants which indicate the status codes described in
-// RFC 3315, Section 24.4.  Additional status are defined in IANA's
-// DHCPv6 parameters registry:
+// RFCs 3315, 3633, 5007, and 5460.
+//
+// These status codes are taken from IANA's DHCPv6 parameters registry:
 // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml.
 const (
+	// RFC 3315
 	StatusSuccess      Status = 0
 	StatusUnspecFail   Status = 1
 	StatusNoAddrsAvail Status = 2
@@ -60,7 +62,17 @@ const (
 	StatusNotOnLink    Status = 4
 	StatusUseMulticast Status = 5
 
-	// BUG(mdlayher): add additional status codes defined by IANA
+	// RFC 3633
+	StatusNoPrefixAvail Status = 6
+
+	// RFC 5007
+	StatusUnknownQueryType Status = 7
+	StatusMalformedQuery   Status = 8
+	StatusNotConfigured    Status = 9
+	StatusNotAllowed       Status = 10
+
+	// RFC 5460
+	StatusQueryTerminated Status = 11
 )
 
 // OptionCode represents a DHCP option, as defined in RFC 3315,
