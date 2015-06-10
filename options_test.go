@@ -106,6 +106,18 @@ func TestOptionsAdd(t *testing.T) {
 			},
 		},
 		{
+			description: "IA_TA",
+			code:        OptionIATA,
+			byteser: &IATA{
+				IAID: [4]byte{0, 1, 2, 3},
+			},
+			options: Options{
+				OptionIATA: [][]byte{{
+					0, 1, 2, 3,
+				}},
+			},
+		},
+		{
 			description: "IAAddr",
 			code:        OptionIAAddr,
 			byteser: &IAAddr{
@@ -470,6 +482,91 @@ func TestOptionsIANA(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.IANA(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsIATA verifies that Options.IATA properly parses and
+// returns multiple IATA values, if one or more are available with OptionIATA.
+func TestOptionsIATA(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		iata        []*IATA
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionIATA not present in Options map",
+		},
+		{
+			description: "OptionIATA present in Options map, but too short",
+			options: Options{
+				OptionIATA: [][]byte{{0, 0, 0}},
+			},
+			err: errInvalidIATA,
+		},
+		{
+			description: "one OptionIATA present in Options map",
+			options: Options{
+				OptionIATA: [][]byte{{
+					1, 2, 3, 4,
+				}},
+			},
+			iata: []*IATA{
+				{
+					IAID: [4]byte{1, 2, 3, 4},
+				},
+			},
+			ok: true,
+		},
+		{
+			description: "two OptionIATA present in Options map",
+			options: Options{
+				OptionIATA: [][]byte{
+					[]byte{0, 1, 2, 3, 0, 1, 0, 1, 1},
+					[]byte{4, 5, 6, 7, 0, 2, 0, 1, 2},
+				},
+			},
+			iata: []*IATA{
+				{
+					IAID: [4]byte{0, 1, 2, 3},
+					Options: Options{
+						OptionClientID: [][]byte{{1}},
+					},
+				},
+				{
+					IAID: [4]byte{4, 5, 6, 7},
+					Options: Options{
+						OptionServerID: [][]byte{{2}},
+					},
+				},
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		iata, ok, err := tt.options.IATA()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.IATA: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		for j := range tt.iata {
+			if want, got := tt.iata[j].Bytes(), iata[j].Bytes(); !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IATA():\n- want: %v\n-  got: %v",
+					i, j, tt.description, want, got)
+			}
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.IATA(): %v != %v",
 				i, tt.description, want, got)
 		}
 	}

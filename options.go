@@ -105,7 +105,7 @@ func (o Options) ServerID() (DUID, bool, error) {
 	return d, true, err
 }
 
-// IANA returns the Identity Association for Non-temporary Address Option
+// IANA returns the Identity Association for Non-temporary Addresses Option
 // value, described in RFC 3315, Section 22.4.  Multiple IANA values may
 // be present in a single DHCP request.  The boolean return value indicates if
 // OptionIANA was present in the Options map.  The error return value
@@ -130,6 +130,33 @@ func (o Options) IANA() ([]*IANA, bool, error) {
 	}
 
 	return iana, true, nil
+}
+
+// IATA returns the Identity Association for Temporary Addresses Option
+// value, described in RFC 3315, Section 22.5.  Multiple IATA values may
+// be present in a single DHCP request.  The boolean return value indicates if
+// OptionIATA was present in the Options map.  The error return value
+// indicates if one or more valid IATAs could not be parsed from the option.
+func (o Options) IATA() ([]*IATA, bool, error) {
+	// Client may send multiple IATA option requests, so we must
+	// access the map directly
+	vv, ok := o[OptionIATA]
+	if !ok {
+		return nil, false, nil
+	}
+
+	// Parse each IA_NA value
+	iata := make([]*IATA, len(vv), len(vv))
+	for i := range vv {
+		ia, err := parseIATA(vv[i])
+		if err != nil {
+			return nil, true, err
+		}
+
+		iata[i] = ia
+	}
+
+	return iata, true, nil
 }
 
 // IAAddr returns the Identity Association Address Option value, described in
