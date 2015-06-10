@@ -68,6 +68,28 @@ func TestOptionsAdd(t *testing.T) {
 			},
 		},
 		{
+			description: "DUID-UUID",
+			code:        OptionClientID,
+			byteser: &DUIDUUID{
+				Type: DUIDTypeUUID,
+				UUID: [16]byte{
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					4, 4, 4, 4,
+				},
+			},
+			options: Options{
+				OptionClientID: [][]byte{{
+					0, 4,
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					4, 4, 4, 4,
+				}},
+			},
+		},
+		{
 			description: "IA_NA",
 			code:        OptionIANA,
 			byteser: &IANA{

@@ -33,6 +33,11 @@ var (
 	// found in the byte slice is incorrect.
 	errInvalidDUIDLL = errors.New("invalid DUID-LL")
 
+	// errInvalidDUIDUUID is returned when not enough bytes are present
+	// to parse a valid DUIDUUID from a byte slice, or when the DUID type
+	// found in the byte slice is incorrect.
+	errInvalidDUIDUUID = errors.New("invalid DUID-UUID")
+
 	// errUnknownDUID is returned when an unknown DUID type is
 	// encountered, and thus, a DUID cannot be parsed.
 	errUnknownDUID = errors.New("unknown DUID type")
@@ -51,15 +56,18 @@ var (
 // server, or vice-versa.
 type DUIDType uint16
 
-// DUIDType constants which indicate DUID-LLT, DUID-EN, or DUID-LL.
-// Additional DUID types are defined in IANA's DHCPv6 parameters registry:
+// DUIDType constants which indicate DUID types described in RFCs 3315 and 6355.
+//
+// These DUID types are taken from IANA's DHCPv6 parameters registry:
 // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml.
 const (
+	// RFC 3315
 	DUIDTypeLLT DUIDType = 1
 	DUIDTypeEN  DUIDType = 2
 	DUIDTypeLL  DUIDType = 3
 
-	// BUG(mdlayher): add additional DUID types defined by IANA
+	// RFC 6355
+	DUIDTypeUUID DUIDType = 4
 )
 
 // DUID represents a DHCP Unique Identifier, as defined in RFC
@@ -68,11 +76,12 @@ const (
 // a unique server, when needed.
 //
 // The DUID interface represents a generic DUID, but DUIDs can be
-// type-asserted to one of three specific types outlined in RFC 3315,
-// Section 9.2, 9.3, and 9.4:
-//   - DUIDLLT - DUID Based on Link-layer Address Plus Time
-//   -  DUIDEN - DUID Assigned by Vendor Based on Enterprise Number
-//   -  DUIDLL - DUID Based on Link-layer Address
+// type-asserted to one of four specific types outlined in RFC 3315
+// and RFC 6355:
+//   -  DUIDLLT - DUID Based on Link-layer Address Plus Time
+//   -   DUIDEN - DUID Assigned by Vendor Based on Enterprise Number
+//   -   DUIDLL - DUID Based on Link-layer Address
+//   - DUIDUUID - DUID Based on Universally Unique Identifier
 //
 // If further introspection of the DUID is needed, a type switch is
 // recommended:
@@ -83,6 +92,8 @@ const (
 //		fmt.Println(d.EnterpriseNumber)
 //	case *dhcp6.DUIDLL:
 //		fmt.Println(d.HardwareAddr)
+//	case *dhcp6.DUIDUUID:
+//		fmt.Println(d.UUID)
 //	}
 type DUID Byteser
 
@@ -316,6 +327,63 @@ func parseDUIDLL(b []byte) (*DUIDLL, error) {
 	}, nil
 }
 
+// DUIDUUID represents a DUID based on Universally Unique Identifier
+// [DUID-UUID], as defined in RFC 6355.  This DUID type uses a UUID to
+// identify clients or servers.
+type DUIDUUID struct {
+	// Type specifies the DUID type.  For a DUIDUUID, this should always be
+	// DUIDTypeUUID.
+	Type DUIDType
+
+	// UUID specifies a Universally Unique Identifier, as described in RFC 4578.
+	UUID [16]byte
+}
+
+// NewDUIDUUID generates a new DUIDUUID using an input UUID.
+func NewDUIDUUID(uuid [16]byte) *DUIDUUID {
+	return &DUIDUUID{
+		Type: DUIDTypeUUID,
+		UUID: uuid,
+	}
+}
+
+// Bytes implements DUID, and allocates a byte slice containing the data
+// from a DUIDUUID.
+func (d *DUIDUUID) Bytes() []byte {
+	//  2 bytes: DUID type
+	// 16 bytes: UUID
+	b := make([]byte, 18)
+
+	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type))
+	copy(b[2:18], d.UUID[:])
+
+	return b
+}
+
+// parseDUIDUUID parses a raw byte slice into a DUIDUUID.  If the byte slice
+// does not contain the exact number of bytes needed to form a valid DUIDUUID,
+// or another DUID type is indicated, errInvalidDUIDUUID is returned.
+func parseDUIDUUID(b []byte) (*DUIDUUID, error) {
+	// DUIDUUIDs are fixed-length structures
+	if len(b) != 18 {
+		return nil, errInvalidDUIDUUID
+	}
+
+	// Verify DUID type
+	dType := DUIDType(binary.BigEndian.Uint16(b[0:2]))
+	if dType != DUIDTypeUUID {
+		return nil, errInvalidDUIDUUID
+	}
+
+	uuid := [16]byte{}
+	copy(uuid[:], b[2:])
+
+	return &DUIDUUID{
+		Type: dType,
+		UUID: uuid,
+	}, nil
+}
+
 // parseDUID returns the correct DUID type of the input byte slice as a
 // DUID interface type.
 func parseDUID(d []byte) (DUID, error) {
@@ -324,7 +392,6 @@ func parseDUID(d []byte) (DUID, error) {
 		return nil, errInvalidDUID
 	}
 
-	// BUG(mdlayher): add DUID-UUID to this in the future.
 	switch DUIDType(binary.BigEndian.Uint16(d[0:2])) {
 	case DUIDTypeLLT:
 		return parseDUIDLLT(d)
@@ -332,6 +399,8 @@ func parseDUID(d []byte) (DUID, error) {
 		return parseDUIDEN(d)
 	case DUIDTypeLL:
 		return parseDUIDLL(d)
+	case DUIDTypeUUID:
+		return parseDUIDUUID(d)
 	}
 
 	return nil, errUnknownDUID

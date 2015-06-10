@@ -108,6 +108,39 @@ func TestNewDUIDLL(t *testing.T) {
 	}
 }
 
+// TestNewDUIDUUID verifies that NewDUIDUUID generates a proper DUIDUUID from
+// an input UUID.
+func TestNewDUIDUUID(t *testing.T) {
+	var tests = []struct {
+		uuid [16]byte
+		duid *DUIDUUID
+	}{
+		{
+			uuid: [16]byte{
+				1, 1, 1, 1,
+				2, 2, 2, 2,
+				3, 3, 3, 3,
+				4, 4, 4, 4,
+			},
+			duid: &DUIDUUID{
+				Type: DUIDTypeUUID,
+				UUID: [16]byte{
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					4, 4, 4, 4,
+				},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		if want, got := tt.duid, NewDUIDUUID(tt.uuid); !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] unexpected DUIDUUID:\n- want %v\n-  got %v", i, want, got)
+		}
+	}
+}
+
 // Test_parseDUID verifies that parseDUID detects the correct DUID type for a
 // variety of input data.
 func Test_parseDUID(t *testing.T) {
@@ -138,7 +171,11 @@ func Test_parseDUID(t *testing.T) {
 			result: reflect.TypeOf(&DUIDLL{}),
 		},
 		{
-			buf: []byte{0, 4},
+			buf:    append([]byte{0, 4}, bytes.Repeat([]byte{0}, 16)...),
+			result: reflect.TypeOf(&DUIDUUID{}),
+		},
+		{
+			buf: []byte{0, 5},
 			err: errUnknownDUID,
 		},
 	}
@@ -354,6 +391,84 @@ func Test_parseDUIDLL(t *testing.T) {
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected DUID-LL:\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// Test_parseDUIDUUID verifies that parseDUIDUUID returns appropriate DUIDUUIDs
+// and errors for various input byte slices.
+func Test_parseDUIDUUID(t *testing.T) {
+	var tests = []struct {
+		description string
+		buf         []byte
+		duid        *DUIDUUID
+		err         error
+	}{
+		{
+			description: "nil buffer, invalid DUID-UUID",
+			err:         errInvalidDUIDUUID,
+		},
+		{
+			description: "empty buffer, invalid DUID-UUID",
+			buf:         []byte{},
+			err:         errInvalidDUIDUUID,
+		},
+		{
+			description: "length 17 buffer, invalid DUID-UUID",
+			buf:         bytes.Repeat([]byte{0}, 17),
+			err:         errInvalidDUIDUUID,
+		},
+		{
+			description: "length 19 buffer, invalid DUID-UUID",
+			buf:         bytes.Repeat([]byte{0}, 19),
+			err:         errInvalidDUIDUUID,
+		},
+		{
+			description: "wrong DUID type",
+			buf: []byte{
+				0, 2,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+			},
+			err: errInvalidDUIDUUID,
+		},
+		{
+			description: "OK DUIDUUID",
+			buf: []byte{
+				0, 4,
+				1, 1, 1, 1,
+				2, 2, 2, 2,
+				3, 3, 3, 3,
+				4, 4, 4, 4,
+			},
+			duid: &DUIDUUID{
+				Type: DUIDTypeUUID,
+				UUID: [16]byte{
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					4, 4, 4, 4,
+				},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		duid, err := parseDUIDUUID(tt.buf)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected DUID-UUID:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}
 	}
