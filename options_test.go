@@ -689,6 +689,73 @@ func TestOptionsPreference(t *testing.T) {
 	}
 }
 
+// TestOptionsUnicast verifies that Options.Unicast properly parses
+// and returns an IPv6 address or an error, if available with OptionUnicast.
+func TestOptionsUnicast(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		ip          net.IP
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionUnicast not present in Options map",
+		},
+		{
+			description: "OptionUnicast present in Options map, but too short length",
+			options: Options{
+				OptionUnicast: [][]byte{bytes.Repeat([]byte{0}, 15)},
+			},
+			err: errInvalidUnicast,
+		},
+		{
+			description: "OptionUnicast present in Options map, but too long length",
+			options: Options{
+				OptionUnicast: [][]byte{bytes.Repeat([]byte{0}, 17)},
+			},
+			err: errInvalidUnicast,
+		},
+		{
+			description: "OptionUnicast present in Options map with IPv4 address",
+			options: Options{
+				OptionUnicast: [][]byte{net.IPv4(192, 168, 1, 1)},
+			},
+			err: errInvalidUnicast,
+		},
+		{
+			description: "OptionUnicast present in Options map with IPv6 address",
+			options: Options{
+				OptionUnicast: [][]byte{net.IPv6loopback},
+			},
+			ip: net.IPv6loopback,
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		ip, ok, err := tt.options.Unicast()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.Unicast(): %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.ip, ip; !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.Unicast():\n- want: %v\n-  got: %v",
+				i, tt.description, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.Unicast(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
 // TestOptionsStatusCode verifies that Options.StatusCode properly parses
 // and returns a StatusCode value, if it is available with OptionStatusCode.
 func TestOptionsStatusCode(t *testing.T) {

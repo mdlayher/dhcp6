@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"net"
 	"sort"
 	"time"
 )
@@ -24,6 +25,11 @@ var (
 	// errInvalidRapidCommit is returned when OptionRapidCommit contains any
 	// amount of additional data, since it should be completely empty.
 	errInvalidRapidCommit = errors.New("invalid option value for OptionRapidCommit")
+
+	// errInvalidUnicast is returned when a valid IPv6 address cannot be
+	// parsed from OptionUnicast, because more or less than 16 bytes are present,
+	// or the IP address indicated is an IPv4 address.
+	errInvalidUnicast = errors.New("invalid option value for OptionUnicast")
 )
 
 // Options is a map of OptionCode keys with a slice of byte slice values.
@@ -220,6 +226,32 @@ func (o Options) ElapsedTime() (time.Duration, bool, error) {
 	// Time is reported in hundredths of seconds, so we convert
 	// it to a more manageable milliseconds
 	return time.Duration(binary.BigEndian.Uint16(v)) * 10 * time.Millisecond, true, nil
+}
+
+// Unicast returns the IP from a Unicast Option value, described in RFC 3315,
+// Section 22.12.  The IP return value indicates a server's IPv6 addresss,
+// which a client may use to contact the server via unicast.  The boolean return
+// value indicates if OptionUnicast was present in the Options map.  The error
+// return value indicates if a valid IPv6 address could not be parsed from the
+// option.
+func (o Options) Unicast() (net.IP, bool, error) {
+	v, ok := o.Get(OptionUnicast)
+	if !ok {
+		return nil, false, nil
+	}
+
+	// IP must be be exactly 16 bytes
+	if len(v) != 16 {
+		return nil, false, errInvalidUnicast
+	}
+
+	// IP must not be IPv4 address
+	ip := net.IP(v)
+	if ip.To4() != nil {
+		return nil, false, errInvalidUnicast
+	}
+
+	return ip, true, nil
 }
 
 // StatusCode returns the Status Code Option value, described in RFC 3315,
