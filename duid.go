@@ -177,8 +177,8 @@ func parseDUIDLLT(b []byte) (*DUIDLLT, error) {
 // [DUID-EN], as defined in RFC 3315, Section 9.3.  This DUID type
 // uses an IANA-assigned Private Enterprise Number for a given vendor.
 type DUIDEN struct {
-	// Type specifies the DUID type.  For a DUIDLLT, this should always be
-	// DUIDTypeLLT.
+	// Type specifies the DUID type.  For a DUIDEN, this should always be
+	// DUIDTypeEN.
 	Type DUIDType
 
 	// EnterpriseNumber specifies an IANA-assigned vendor Private Enterprise
