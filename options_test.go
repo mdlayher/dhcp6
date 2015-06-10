@@ -251,6 +251,7 @@ func TestOptionsGet(t *testing.T) {
 				1: [][]byte{},
 			},
 			key: 1,
+			ok:  true,
 		},
 		{
 			description: "value present in Options map",
@@ -809,6 +810,52 @@ func TestOptionsElapsedTime(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.ElapsedTime(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsRapidCommit verifies that Options.RapidCommit properly indicates
+// if OptionRapidCommit was present in Options.
+func TestOptionsRapidCommit(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionRapidCommit not present in Options map",
+		},
+		{
+			description: "OptionRapidCommit present in Options map, but non-empty",
+			options: Options{
+				OptionRapidCommit: [][]byte{{1}},
+			},
+			err: errInvalidRapidCommit,
+		},
+		{
+			description: "OptionRapidCommit present in Options map, empty",
+			options: Options{
+				OptionRapidCommit: [][]byte{},
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		ok, err := tt.options.RapidCommit()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.RapidCommit: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.RapidCommit(): %v != %v",
 				i, tt.description, want, got)
 		}
 	}

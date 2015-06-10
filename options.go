@@ -20,6 +20,10 @@ var (
 	// errInvalidPreference is returned when a valid integer cannot be parsed
 	// from OptionPreference, because more or less than one byte are present.
 	errInvalidPreference = errors.New("invalid option value for OptionPreference")
+
+	// errInvalidRapidCommit is returned when OptionRapidCommit contains any
+	// amount of additional data, since it should be completely empty.
+	errInvalidRapidCommit = errors.New("invalid option value for OptionRapidCommit")
 )
 
 // Options is a map of OptionCode keys with a slice of byte slice values.
@@ -52,8 +56,14 @@ func (o Options) Get(key OptionCode) ([]byte, bool) {
 
 	// Check for value by key
 	v, ok := o[key]
-	if !ok || len(v) == 0 {
+	if !ok {
 		return nil, false
+	}
+
+	// Some options can actually have zero length (OptionRapidCommit),
+	// so just return an empty byte slice if this is the case
+	if len(v) == 0 {
+		return []byte{}, true
 	}
 
 	return v[0], true
@@ -226,6 +236,26 @@ func (o Options) StatusCode() (*StatusCode, bool, error) {
 
 	status, err := parseStatusCode(v)
 	return status, true, err
+}
+
+// RapidCommit returns the Rapid Commit Option value, described in RFC 3315,
+// Section 22.14.  The boolean return value indicates if OptionRapidCommit
+// was present in the Options map, and thus, if Rapid Commit should be used.
+// The error return value indicates if a valid Rapid Commit Option could not
+// be parsed.
+func (o Options) RapidCommit() (bool, error) {
+	v, ok := o.Get(OptionRapidCommit)
+	if !ok {
+		return false, nil
+	}
+
+	// Data must be completely empty; presence of the Rapid Commit option
+	// indicates it is requested.
+	if len(v) != 0 {
+		return false, errInvalidRapidCommit
+	}
+
+	return true, nil
 }
 
 // byOptionCode implements sort.Interface for optslice.
