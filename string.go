@@ -4,9 +4,9 @@ package dhcp6
 
 import "fmt"
 
-const _DUIDType_name = "DUIDTypeLLTDUIDTypeENDUIDTypeLL"
+const _DUIDType_name = "DUIDTypeLLTDUIDTypeENDUIDTypeLLDUIDTypeUUID"
 
-var _DUIDType_index = [...]uint8{0, 11, 21, 31}
+var _DUIDType_index = [...]uint8{0, 11, 21, 31, 43}
 
 func (i DUIDType) String() string {
 	i -= 1
@@ -16,9 +16,9 @@ func (i DUIDType) String() string {
 	return _DUIDType_name[_DUIDType_index[i]:_DUIDType_index[i+1]]
 }
 
-const _MessageType_name = "MessageTypeSolicitMessageTypeAdvertiseMessageTypeRequestMessageTypeConfirmMessageTypeRenewMessageTypeRebindMessageTypeReplyMessageTypeReleaseMessageTypeDeclineMessageTypeReconfigureMessageTypeInformationRequestMessageTypeRelayForwardMessageTypeRelayReply"
+const _MessageType_name = "MessageTypeSolicitMessageTypeAdvertiseMessageTypeRequestMessageTypeConfirmMessageTypeRenewMessageTypeRebindMessageTypeReplyMessageTypeReleaseMessageTypeDeclineMessageTypeReconfigureMessageTypeInformationRequestMessageTypeRelayForwMessageTypeRelayReplMessageTypeLeasequeryMessageTypeLeasequeryReplyMessageTypeLeasequeryDoneMessageTypeLeasequeryDataMessageTypeReconfigureRequestMessageTypeReconfigureReplyMessageTypeDHCPv4QueryMessageTypeDHCPv4Response"
 
-var _MessageType_index = [...]uint8{0, 18, 38, 56, 74, 90, 107, 123, 141, 159, 181, 210, 233, 254}
+var _MessageType_index = [...]uint16{0, 18, 38, 56, 74, 90, 107, 123, 141, 159, 181, 210, 230, 250, 271, 297, 322, 347, 376, 403, 425, 450}
 
 func (i MessageType) String() string {
 	i -= 1
@@ -28,9 +28,9 @@ func (i MessageType) String() string {
 	return _MessageType_name[_MessageType_index[i]:_MessageType_index[i+1]]
 }
 
-const _Status_name = "StatusSuccessStatusUnspecFailStatusNoAddrsAvailStatusNoBindingStatusNotOnLinkStatusUseMulticast"
+const _Status_name = "StatusSuccessStatusUnspecFailStatusNoAddrsAvailStatusNoBindingStatusNotOnLinkStatusUseMulticastStatusNoPrefixAvailStatusUnknownQueryTypeStatusMalformedQueryStatusNotConfiguredStatusNotAllowedStatusQueryTerminated"
 
-var _Status_index = [...]uint8{0, 13, 29, 47, 62, 77, 95}
+var _Status_index = [...]uint8{0, 13, 29, 47, 62, 77, 95, 114, 136, 156, 175, 191, 212}
 
 func (i Status) String() string {
 	if i >= Status(len(_Status_index)-1) {
