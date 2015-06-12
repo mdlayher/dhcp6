@@ -56,8 +56,7 @@ func (o Options) AddRaw(key OptionCode, value []byte) {
 
 // Get attempts to retrieve the first value specified by an OptionCode
 // key.  If a value is found, get returns the value and boolean true.
-// If it is not found, or the value slice is entirely empty, Get
-// returns nil and boolean false.
+// If it is not found, Get returns nil and boolean false.
 func (o Options) Get(key OptionCode) ([]byte, bool) {
 	// Empty map has no key/value pairs
 	if len(o) == 0 {
