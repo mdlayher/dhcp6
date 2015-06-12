@@ -48,9 +48,15 @@ func parsePacket(b []byte) (*Packet, error) {
 	txID := [3]byte{}
 	copy(txID[:], b[1:4])
 
+	options, err := parseOptions(b[4:])
+	if err != nil {
+		// Invalid options means an invalid packet
+		return nil, ErrInvalidPacket
+	}
+
 	return &Packet{
 		MessageType:   MessageType(b[0]),
 		TransactionID: txID,
-		Options:       parseOptions(b[4:]),
+		Options:       options,
 	}, nil
 }

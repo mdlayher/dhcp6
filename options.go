@@ -10,6 +10,11 @@ import (
 )
 
 var (
+	// errInvalidOptions is returned when invalid options data is encountered
+	// during parsing.  The data could report an incorrect length or have
+	// trailing bytes which are not part of the option.
+	errInvalidOptions = errors.New("invalid options data")
+
 	// errInvalidElapsedTime is returned when a valid duration cannot be parsed
 	// from OptionElapsedTime, because too many or too few bytes are present.
 	errInvalidElapsedTime = errors.New("invalid option value for OptionElapsedTime")
@@ -403,14 +408,15 @@ func (o Options) enumerate() optslice {
 
 // parseOptions returns a slice of option code and values from an input byte
 // slice.  It is used with various different types to enable parsing of both
-// top-level options, and options embedded within other options.
-func parseOptions(b []byte) Options {
+// top-level options, and options embedded within other options.  If options
+// data is malformed, it returns errInvalidOptions.
+func parseOptions(b []byte) (Options, error) {
 	var length int
 	options := make(Options)
 
 	buf := bytes.NewBuffer(b)
 
-	for buf.Len() > 4 {
+	for buf.Len() > 3 {
 		// 2 bytes: option code
 		o := option{}
 		o.Code = OptionCode(binary.BigEndian.Uint16(buf.Next(2)))
@@ -427,15 +433,20 @@ func parseOptions(b []byte) Options {
 		o.Data = buf.Next(length)
 
 		// If option data has less bytes than indicated by length,
-		// discard the option
+		// return an error
 		if len(o.Data) < length {
-			continue
+			return nil, errInvalidOptions
 		}
 
 		options.AddRaw(o.Code, o.Data)
 	}
 
-	return options
+	// Report error for any trailing bytes
+	if buf.Len() != 0 {
+		return nil, errInvalidOptions
+	}
+
+	return options, nil
 }
 
 // option represents an individual DHCP Option, as defined in RFC 3315,

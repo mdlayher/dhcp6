@@ -169,6 +169,15 @@ func Test_parseIAAddr(t *testing.T) {
 			err: ErrInvalidIAAddrLifetimes,
 		},
 		{
+			description: "invalid options (length mismatch)",
+			buf: append(net.IPv6zero, []byte{
+				0, 0, 0, 1,
+				0, 0, 0, 2,
+				0, 1, 0, 1,
+			}...),
+			err: errInvalidOptions,
+		},
+		{
 			description: "IPv6 loopback, 1s preferred, 2s valid, no options",
 			buf: append(net.IPv6loopback, []byte{
 				0, 0, 0, 1,

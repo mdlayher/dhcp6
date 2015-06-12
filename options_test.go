@@ -1294,10 +1294,10 @@ func Test_parseOptions(t *testing.T) {
 		description string
 		buf         []byte
 		options     Options
+		err         error
 	}{
 		{
 			description: "nil options bytes",
-			buf:         nil,
 			options:     Options{},
 		},
 		{
@@ -1308,7 +1308,7 @@ func Test_parseOptions(t *testing.T) {
 		{
 			description: "too short options bytes",
 			buf:         []byte{0},
-			options:     Options{},
+			err:         errInvalidOptions,
 		},
 		{
 			description: "zero code, zero length option bytes",
@@ -1318,12 +1318,12 @@ func Test_parseOptions(t *testing.T) {
 		{
 			description: "zero code, zero length option bytes with trailing byte",
 			buf:         []byte{0, 0, 0, 0, 1},
-			options:     Options{},
+			err:         errInvalidOptions,
 		},
 		{
 			description: "zero code, length 3, incorrect length for data",
 			buf:         []byte{0, 0, 0, 3, 1, 2},
-			options:     Options{},
+			err:         errInvalidOptions,
 		},
 		{
 			description: "client ID, length 1, value [1]",
@@ -1346,7 +1346,16 @@ func Test_parseOptions(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.options, parseOptions(tt.buf); !reflect.DeepEqual(want, got) {
+		options, err := parseOptions(tt.buf)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for parseOptions(%v): %v != %v",
+					i, tt.description, tt.buf, want, got)
+			}
+
+			continue
+		}
+		if want, got := tt.options, options; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected Options map for parseOptions(%v):\n- want: %v\n-  got: %v",
 				i, tt.description, tt.buf, want, got)
 		}

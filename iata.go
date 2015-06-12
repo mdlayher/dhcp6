@@ -62,8 +62,13 @@ func parseIATA(b []byte) (*IATA, error) {
 	iaid := [4]byte{}
 	copy(iaid[:], b[0:4])
 
+	options, err := parseOptions(b[4:])
+	if err != nil {
+		return nil, err
+	}
+
 	return &IATA{
 		IAID:    iaid,
-		Options: parseOptions(b[4:]),
+		Options: options,
 	}, nil
 }

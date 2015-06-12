@@ -84,6 +84,11 @@ func Test_parsePacket(t *testing.T) {
 			err:         ErrInvalidPacket,
 		},
 		{
+			description: "invalid options in packet",
+			buf:         []byte{0, 0, 0, 0, 0, 1, 0, 1},
+			err:         ErrInvalidPacket,
+		},
+		{
 			description: "length 4 buffer, OK",
 			buf:         []byte{0, 0, 0, 0},
 			packet: &Packet{

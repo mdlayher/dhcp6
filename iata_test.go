@@ -64,6 +64,13 @@ func Test_parseIATA(t *testing.T) {
 		{
 			buf: []byte{
 				1, 2, 3, 4,
+				0, 1, 0, 1,
+			},
+			err: errInvalidOptions,
+		},
+		{
+			buf: []byte{
+				1, 2, 3, 4,
 				0, 1, 0, 2, 0, 1,
 			},
 			iata: &IATA{

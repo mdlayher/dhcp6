@@ -114,10 +114,15 @@ func parseIAAddr(b []byte) (*IAAddr, error) {
 		return nil, ErrInvalidIAAddrLifetimes
 	}
 
+	options, err := parseOptions(b[24:])
+	if err != nil {
+		return nil, err
+	}
+
 	return &IAAddr{
 		IP:                ip,
 		PreferredLifetime: preferred,
 		ValidLifetime:     valid,
-		Options:           parseOptions(b[24:]),
+		Options:           options,
 	}, nil
 }

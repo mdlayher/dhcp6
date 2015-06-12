@@ -81,10 +81,15 @@ func parseIANA(b []byte) (*IANA, error) {
 	iaid := [4]byte{}
 	copy(iaid[:], b[0:4])
 
+	options, err := parseOptions(b[12:])
+	if err != nil {
+		return nil, err
+	}
+
 	return &IANA{
 		IAID:    iaid,
 		T1:      time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second,
 		T2:      time.Duration(binary.BigEndian.Uint32(b[8:12])) * time.Second,
-		Options: parseOptions(b[12:]),
+		Options: options,
 	}, nil
 }
