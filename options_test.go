@@ -1025,6 +1025,194 @@ func TestOptionsRapidCommit(t *testing.T) {
 	}
 }
 
+// TestOptionsUserClass verifies that Options.UserClass properly parses
+// and returns raw user class data, if it is available with OptionUserClass.
+func TestOptionsUserClass(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		classes     [][]byte
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionUserClass not present in Options map",
+		},
+		{
+			description: "OptionUserClass present in Options map, but empty",
+			options: Options{
+				OptionUserClass: [][]byte{{}},
+			},
+			err: errInvalidClass,
+		},
+		{
+			description: "OptionUserClass present in Options map, one item, zero length",
+			options: Options{
+				OptionUserClass: [][]byte{{
+					0, 0,
+				}},
+			},
+			classes: [][]byte{{}},
+			ok:      true,
+		},
+		{
+			description: "OptionUserClass present in Options map, one item, extra byte",
+			options: Options{
+				OptionUserClass: [][]byte{{
+					0, 1, 1, 255,
+				}},
+			},
+			err: errInvalidClass,
+		},
+		{
+			description: "OptionUserClass present in Options map, one item",
+			options: Options{
+				OptionUserClass: [][]byte{{
+					0, 1, 1,
+				}},
+			},
+			classes: [][]byte{{1}},
+			ok:      true,
+		},
+		{
+			description: "OptionUserClass present in Options map, three items",
+			options: Options{
+				OptionUserClass: [][]byte{{
+					0, 1, 1,
+					0, 2, 2, 2,
+					0, 3, 3, 3, 3,
+				}},
+			},
+			classes: [][]byte{{1}, {2, 2}, {3, 3, 3}},
+			ok:      true,
+		},
+	}
+
+	for i, tt := range tests {
+		classes, ok, err := tt.options.UserClass()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.UserClass: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := len(tt.classes), len(classes); want != got {
+			t.Fatalf("[%02d] test %q, unexpected classes slice length: %v != %v",
+				i, tt.description, want, got)
+
+		}
+
+		for j := range classes {
+			if want, got := tt.classes[j], classes[j]; !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.UserClass()\n- want: %v\n-  got: %v",
+					i, j, tt.description, want, got)
+			}
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.UserClass(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsVendorClass verifies that Options.VendorClass properly parses
+// and returns raw vendor class data, if it is available with OptionVendorClass.
+func TestOptionsVendorClass(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		classes     [][]byte
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionVendorClass not present in Options map",
+		},
+		{
+			description: "OptionVendorClass present in Options map, but empty",
+			options: Options{
+				OptionVendorClass: [][]byte{{}},
+			},
+			err: errInvalidClass,
+		},
+		{
+			description: "OptionVendorClass present in Options map, one item, zero length",
+			options: Options{
+				OptionVendorClass: [][]byte{{
+					0, 0,
+				}},
+			},
+			classes: [][]byte{{}},
+			ok:      true,
+		},
+		{
+			description: "OptionVendorClass present in Options map, one item, extra byte",
+			options: Options{
+				OptionVendorClass: [][]byte{{
+					0, 1, 1, 255,
+				}},
+			},
+			err: errInvalidClass,
+		},
+		{
+			description: "OptionVendorClass present in Options map, one item",
+			options: Options{
+				OptionVendorClass: [][]byte{{
+					0, 1, 1,
+				}},
+			},
+			classes: [][]byte{{1}},
+			ok:      true,
+		},
+		{
+			description: "OptionVendorClass present in Options map, three items",
+			options: Options{
+				OptionVendorClass: [][]byte{{
+					0, 1, 1,
+					0, 2, 2, 2,
+					0, 3, 3, 3, 3,
+				}},
+			},
+			classes: [][]byte{{1}, {2, 2}, {3, 3, 3}},
+			ok:      true,
+		},
+	}
+
+	for i, tt := range tests {
+		classes, ok, err := tt.options.VendorClass()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.VendorClass: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := len(tt.classes), len(classes); want != got {
+			t.Fatalf("[%02d] test %q, unexpected classes slice length: %v != %v",
+				i, tt.description, want, got)
+
+		}
+
+		for j := range classes {
+			if want, got := tt.classes[j], classes[j]; !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.VendorClass()\n- want: %v\n-  got: %v",
+					i, j, tt.description, want, got)
+			}
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.VendorClass(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
 // TestOptions_enumerate verifies that Options.enumerate correctly enumerates
 // and sorts an Options map into key/value option pairs.
 func TestOptions_enumerate(t *testing.T) {

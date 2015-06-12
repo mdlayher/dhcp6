@@ -30,6 +30,10 @@ var (
 	// parsed from OptionUnicast, because more or less than 16 bytes are present,
 	// or the IP address indicated is an IPv4 address.
 	errInvalidUnicast = errors.New("invalid option value for OptionUnicast")
+
+	// errInvalidClass is returned when OptionUserClass or OptionVendorClass
+	// contain extra, invalid data.
+	errInvalidClass = errors.New("invalid option value for OptionUserClass or OptionVendorClass")
 )
 
 // Options is a map of OptionCode keys with a slice of byte slice values.
@@ -315,6 +319,62 @@ func (o Options) RapidCommit() (bool, error) {
 	}
 
 	return true, nil
+}
+
+// UserClass returns the User Class Option value, described in RFC 3315,
+// Section 22.15.  The slice of byte slices returned contains any raw class
+// data present in the option.  The boolean return value indicates if
+// OptionUserClass was present in the Options map.  The error return value
+// indicates if any errors were present in the class data.
+func (o Options) UserClass() ([][]byte, bool, error) {
+	v, ok := o.Get(OptionUserClass)
+	if !ok {
+		return nil, false, nil
+	}
+
+	c, err := parseClasses(v)
+	return c, true, err
+}
+
+// VendorClass returns the Vendor Class Option value, described in RFC 3315,
+// Section 22.15.  The slice of byte slices returned contains any raw class
+// data present in the option.  The boolean return value indicates if
+// OptionVendorClass was present in the Options map.  The error return value
+// indicates if any errors were present in the class data.
+func (o Options) VendorClass() ([][]byte, bool, error) {
+	v, ok := o.Get(OptionVendorClass)
+	if !ok {
+		return nil, false, nil
+	}
+
+	c, err := parseClasses(v)
+	return c, true, err
+}
+
+// parseClasses parses multiple contiguous byte slices contained in
+// OptionUserClass or OptionVendorClass, of the form:
+//   - 2 bytes: length
+//   - N bytes: class data
+func parseClasses(v []byte) ([][]byte, error) {
+	classes := make([][]byte, 0)
+	buf := bytes.NewBuffer(v)
+
+	// Iterate until not enough bytes remain to parse another length value
+	for buf.Len() > 1 {
+		classes = append(classes, buf.Next(int(binary.BigEndian.Uint16(buf.Next(2)))))
+	}
+
+	// At least one instance of class data must be present
+	if len(classes) == 0 {
+		return nil, errInvalidClass
+	}
+
+	// If we encounter any trailing bytes, report an error
+	if buf.Len() != 0 {
+		return nil, errInvalidClass
+	}
+
+	return classes, nil
 }
 
 // byOptionCode implements sort.Interface for optslice.
