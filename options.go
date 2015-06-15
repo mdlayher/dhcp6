@@ -83,11 +83,14 @@ func (o Options) Get(key OptionCode) ([]byte, bool) {
 	return v[0], true
 }
 
-// ClientID returns the Client Identifier Option value, described in RFC 3315,
-// Section 22.2.  The DUID returned allows unique identification of a client
-// to a server.  The boolean return value indicates if OptionClientID was
-// present in the Options map.  The error return value indicates if a known,
-// valid DUID type could be parsed from the option.
+// ClientID returns the Client Identifier Option value, as described in RFC
+// 3315, Section 22.2.
+//
+// The DUID returned allows unique identification of a client to a server.
+//
+// The boolean return value indicates if OptionClientID was present in the
+// Options map.  The error return value indicates if a known, valid DUID type
+// could be parsed from the option.
 func (o Options) ClientID() (DUID, bool, error) {
 	v, ok := o.Get(OptionClientID)
 	if !ok {
@@ -98,11 +101,14 @@ func (o Options) ClientID() (DUID, bool, error) {
 	return d, true, err
 }
 
-// ServerID returns the Server Identifier Option value, described in RFC 3315,
-// Section 22.3.  The DUID returned allows unique identification of a server
-// to a client.  The boolean return value indicates if OptionServerID was
-// present in the Options map.  The error return value indicates if a known,
-// valid DUID type could be parsed from the option.
+// ServerID returns the Server Identifier Option value, as described in RFC
+// 3315, Section 22.3.
+//
+// The DUID returned allows unique identification of a server to a client.
+//
+// The boolean return value indicates if OptionServerID was present in the
+// Options map.  The error return value indicates if a known, valid DUID type
+// could be parsed from the option.
 func (o Options) ServerID() (DUID, bool, error) {
 	v, ok := o.Get(OptionServerID)
 	if !ok {
@@ -114,10 +120,13 @@ func (o Options) ServerID() (DUID, bool, error) {
 }
 
 // IANA returns the Identity Association for Non-temporary Addresses Option
-// value, described in RFC 3315, Section 22.4.  Multiple IANA values may
-// be present in a single DHCP request.  The boolean return value indicates if
-// OptionIANA was present in the Options map.  The error return value
-// indicates if one or more valid IANAs could not be parsed from the option.
+// value, as described in RFC 3315, Section 22.4.
+//
+// Multiple IANA values may be present in a single DHCP request.
+//
+// The boolean return value indicates if OptionIANA was present in the Options
+// map.  The error return value indicates if one or more valid IANAs could not
+// be parsed from the option.
 func (o Options) IANA() ([]*IANA, bool, error) {
 	// Client may send multiple IANA option requests, so we must
 	// access the map directly
@@ -141,10 +150,13 @@ func (o Options) IANA() ([]*IANA, bool, error) {
 }
 
 // IATA returns the Identity Association for Temporary Addresses Option
-// value, described in RFC 3315, Section 22.5.  Multiple IATA values may
-// be present in a single DHCP request.  The boolean return value indicates if
-// OptionIATA was present in the Options map.  The error return value
-// indicates if one or more valid IATAs could not be parsed from the option.
+// value, as described in RFC 3315, Section 22.5.
+//
+// Multiple IATA values may be present in a single DHCP request.
+//
+// The boolean return value indicates if OptionIATA was present in the Options
+// map.  The error return value indicates if one or more valid IATAs could not
+// be parsed from the option.
 func (o Options) IATA() ([]*IATA, bool, error) {
 	// Client may send multiple IATA option requests, so we must
 	// access the map directly
@@ -167,12 +179,16 @@ func (o Options) IATA() ([]*IATA, bool, error) {
 	return iata, true, nil
 }
 
-// IAAddr returns the Identity Association Address Option value, described in
-// RFC 3315, Section 22.6.  The IAAddr option must always appear enscapsulated
-// in the Options map of a IANA or IATA option.  Multiple IAAddr values may be
-// present in a single DHCP request.  The boolean return value indicates if
-// OptionIAAddr was present in the Options map.  The error return value
-// indicates if one or more valid IAAddrs could be be parsed from the option.
+// IAAddr returns the Identity Association Address Option value, as described
+// in RFC 3315, Section 22.6.
+//
+// The IAAddr option must always appear encapsulated in the Options map of a
+// IANA or IATA option.  Multiple IAAddr values may be
+// present in a single DHCP request.
+//
+// The boolean return value indicates if OptionIAAddr was present in the Options
+// map.  The error return value indicates if one or more valid IAAddrs could not
+// be parsed from the option.
 func (o Options) IAAddr() ([]*IAAddr, bool, error) {
 	// Client may send multiple IAAddr option requests, so we must
 	// access the map directly
@@ -195,11 +211,15 @@ func (o Options) IAAddr() ([]*IAAddr, bool, error) {
 	return iaaddr, true, nil
 }
 
-// OptionRequest returns the Option Request Option value, described in RFC 3315,
-// Section 22.7.  The slice of OptionCode values indicates the options a DHCP
-// client is interested in receiving from a server.  The boolean return value
-// indicates if OptionORO was present in the Options map.  The error return
-// value indicates if a valid OptionCode slice could be parsed from the option.
+// OptionRequest returns the Option Request Option value, as described in RFC
+// 3315, Section 22.7.
+//
+// The slice of OptionCode values indicates the options a DHCP client is
+// interested in receiving from a server.
+//
+// The boolean return value indicates if OptionORO was present in the Options
+// map.  The error return value indicates if a valid OptionCode slice could be
+// parsed from the option.
 func (o Options) OptionRequest() ([]OptionCode, bool, error) {
 	v, ok := o.Get(OptionORO)
 	if !ok {
@@ -222,12 +242,15 @@ func (o Options) OptionRequest() ([]OptionCode, bool, error) {
 	return opts, true, nil
 }
 
-// Preference returns the Preference Option value, described in RFC 3315,
-// Section 22.8.  The integer value is sent by a server to a client to
-// affect the selection of a server by the client.  The boolean return value
-// indicates if OptionPreference was present in the Options map.  The error
-// return value indicates if a valid integer value could not be parsed from
-// the option.
+// Preference returns the Preference Option value, as described in RFC 3315,
+// Section 22.8.
+//
+// The integer preference value is sent by a server to a client to affect the
+// selection of a server by the client.
+//
+// The boolean return value indicates if OptionPreference was present in the
+// Options map.  The error return value indicates if a valid integer value
+// could not be parsed from the option.
 func (o Options) Preference() (uint8, bool, error) {
 	v, ok := o.Get(OptionPreference)
 	if !ok {
@@ -242,11 +265,15 @@ func (o Options) Preference() (uint8, bool, error) {
 	return uint8(v[0]), true, nil
 }
 
-// ElapsedTime returns the Elapsed Time Option value, described in RFC 3315,
-// Section 22.9.  The time.Duration returned reports the time elapsed during
-// a DHCP transaction, as reported by a client.  The boolean return value
-// indicates if OptionElapsedTime was present in the Options map.  The error
-// return value indicates if a valid duration could be parsed from the option.
+// ElapsedTime returns the Elapsed Time Option value, as described in RFC 3315,
+// Section 22.9.
+//
+// The time.Duration returned reports the time elapsed during a DHCP
+// transaction, as reported by a client.
+//
+// The boolean return value indicates if OptionElapsedTime was present in the
+// Options map.  The error return value indicates if a valid duration could be
+// parsed from the option.
 func (o Options) ElapsedTime() (time.Duration, bool, error) {
 	v, ok := o.Get(OptionElapsedTime)
 	if !ok {
@@ -264,11 +291,14 @@ func (o Options) ElapsedTime() (time.Duration, bool, error) {
 }
 
 // Unicast returns the IP from a Unicast Option value, described in RFC 3315,
-// Section 22.12.  The IP return value indicates a server's IPv6 addresss,
-// which a client may use to contact the server via unicast.  The boolean return
-// value indicates if OptionUnicast was present in the Options map.  The error
-// return value indicates if a valid IPv6 address could not be parsed from the
-// option.
+// Section 22.12.
+//
+// The IP return value indicates a server's IPv6 address, which a client may
+// use to contact the server via unicast.
+//
+// The boolean return value indicates if OptionUnicast was present in the
+// Options map.  The error return value indicates if a valid IPv6 address
+// could not be parsed from the option.
 func (o Options) Unicast() (net.IP, bool, error) {
 	v, ok := o.Get(OptionUnicast)
 	if !ok {
@@ -290,11 +320,14 @@ func (o Options) Unicast() (net.IP, bool, error) {
 }
 
 // StatusCode returns the Status Code Option value, described in RFC 3315,
-// Section 22.13.  The StatusCode struct's methods may be used to determine
-// a code and an explanation for the status.  The boolean return value
-// indicates if OptionStatusCode was present in the Options map.  The error
-// return value indicates if a valid StatusCode could not be parsed from
-// the option.
+// Section 22.13.
+//
+// The StatusCode return value may be used to determine a code and an
+// explanation for the status.
+//
+// The boolean return value indicates if OptionStatusCode was present in the
+// Options map.  The error return value indicates if a valid StatusCode could
+// not be parsed from the option.
 func (o Options) StatusCode() (*StatusCode, bool, error) {
 	v, ok := o.Get(OptionStatusCode)
 	if !ok {
@@ -306,8 +339,11 @@ func (o Options) StatusCode() (*StatusCode, bool, error) {
 }
 
 // RapidCommit returns the Rapid Commit Option value, described in RFC 3315,
-// Section 22.14.  The boolean return value indicates if OptionRapidCommit
-// was present in the Options map, and thus, if Rapid Commit should be used.
+// Section 22.14.
+//
+// The boolean return value indicates if OptionRapidCommit was present in the
+// Options map, and thus, if Rapid Commit should be used.
+//
 // The error return value indicates if a valid Rapid Commit Option could not
 // be parsed.
 func (o Options) RapidCommit() (bool, error) {
@@ -326,10 +362,14 @@ func (o Options) RapidCommit() (bool, error) {
 }
 
 // UserClass returns the User Class Option value, described in RFC 3315,
-// Section 22.15.  The slice of byte slices returned contains any raw class
-// data present in the option.  The boolean return value indicates if
-// OptionUserClass was present in the Options map.  The error return value
-// indicates if any errors were present in the class data.
+// Section 22.15.
+//
+// The slice of byte slices returned contains any raw class data present in
+// the option.
+//
+// The boolean return value indicates if OptionUserClass was present in the
+// Options map.  The error return value indicates if any errors were present
+// in the class data.
 func (o Options) UserClass() ([][]byte, bool, error) {
 	v, ok := o.Get(OptionUserClass)
 	if !ok {
@@ -341,10 +381,14 @@ func (o Options) UserClass() ([][]byte, bool, error) {
 }
 
 // VendorClass returns the Vendor Class Option value, described in RFC 3315,
-// Section 22.15.  The slice of byte slices returned contains any raw class
-// data present in the option.  The boolean return value indicates if
-// OptionVendorClass was present in the Options map.  The error return value
-// indicates if any errors were present in the class data.
+// Section 22.15.
+//
+// The slice of byte slices returned contains any raw class data present in
+// the option.
+//
+// The boolean return value indicates if OptionVendorClass was present in the
+// Options map.  The error return value indicates if any errors were present
+// in the class data.
 func (o Options) VendorClass() ([][]byte, bool, error) {
 	v, ok := o.Get(OptionVendorClass)
 	if !ok {
@@ -356,10 +400,13 @@ func (o Options) VendorClass() ([][]byte, bool, error) {
 }
 
 // IAPD returns the Identity Association for Prefix Delegation Option value,
-// described in RFC 3633, Section 9.  Multiple IAPD values may be present in a
-// a single DHCP request.  The boolean return value indicates if OptionIAPD
-// was present in the Options map.  The error return value indicates if a valid
-// IAPD could not be parsed from the option.
+// described in RFC 3633, Section 9.
+//
+// Multiple IAPD values may be present in a a single DHCP request.
+//
+// The boolean return value indicates if OptionIAPD was present in the Options
+// map.  The error return value indicates if one or more valid IAPDs could not
+// be parsed from the option.
 func (o Options) IAPD() ([]*IAPD, bool, error) {
 	// Client may send multiple IAPD option requests, so we must
 	// access the map directly
@@ -383,10 +430,13 @@ func (o Options) IAPD() ([]*IAPD, bool, error) {
 }
 
 // IAPrefix returns the Identity Association Prefix Option value, as described
-// in RFC 3633, Section 10.  Multiple IAPrefix values may be present in a
-// a single DHCP request.  The boolean return value indicates if OptionIAPrefix
-// was present in the Options map.  The error return value indicates if a valid
-// IAPrefix could not be parsed from the option.
+// in RFC 3633, Section 10.
+//
+// Multiple IAPrefix values may be present in a a single DHCP request.
+//
+// The boolean return value indicates if OptionIAPrefix was present in the
+// Options map.  The error return value indicates if one or more valid
+// IAPrefixes could not be parsed from the option.
 func (o Options) IAPrefix() ([]*IAPrefix, bool, error) {
 	// Client may send multiple IAPrefix option requests, so we must
 	// access the map directly
