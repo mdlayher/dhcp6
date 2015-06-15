@@ -45,7 +45,7 @@ var (
 
 var (
 	// duidLLTTime is the date specified in RFC 3315, Section 9.2, for use
-	// with DUIT-LLT generation.  It is used to calculate a duration from an
+	// with DUID-LLT generation.  It is used to calculate a duration from an
 	// input time after this date.  Dates before this time are not valid for
 	// creation of DUIDLLT values.
 	duidLLTTime = time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
