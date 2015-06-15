@@ -42,11 +42,13 @@ func (i Status) String() string {
 const (
 	_OptionCode_name_0 = "OptionClientIDOptionServerIDOptionIANAOptionIATAOptionIAAddrOptionOROOptionPreferenceOptionElapsedTimeOptionRelayMsg"
 	_OptionCode_name_1 = "OptionAuthOptionUnicastOptionStatusCodeOptionRapidCommitOptionUserClassOptionVendorClassOptionVendorOptsOptionInterfaceIDOptionReconfMsgOptionReconfAccept"
+	_OptionCode_name_2 = "OptionIAPDOptionIAPrefix"
 )
 
 var (
 	_OptionCode_index_0 = [...]uint8{0, 14, 28, 38, 48, 60, 69, 85, 102, 116}
 	_OptionCode_index_1 = [...]uint8{0, 10, 23, 39, 56, 71, 88, 104, 121, 136, 154}
+	_OptionCode_index_2 = [...]uint8{0, 10, 24}
 )
 
 func (i OptionCode) String() string {
@@ -57,6 +59,9 @@ func (i OptionCode) String() string {
 	case 11 <= i && i <= 20:
 		i -= 11
 		return _OptionCode_name_1[_OptionCode_index_1[i]:_OptionCode_index_1[i+1]]
+	case 25 <= i && i <= 26:
+		i -= 25
+		return _OptionCode_name_2[_OptionCode_index_2[i]:_OptionCode_index_2[i+1]]
 	default:
 		return fmt.Sprintf("OptionCode(%d)", i)
 	}

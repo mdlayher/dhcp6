@@ -355,6 +355,60 @@ func (o Options) VendorClass() ([][]byte, bool, error) {
 	return c, true, err
 }
 
+// IAPD returns the Identity Association for Prefix Delegation Option value,
+// described in RFC 3633, Section 9.  Multiple IAPD values may be present in a
+// a single DHCP request.  The boolean return value indicates if OptionIAPD
+// was present in the Options map.  The error return value indicates if a valid
+// IAPD could not be parsed from the option.
+func (o Options) IAPD() ([]*IAPD, bool, error) {
+	// Client may send multiple IAPD option requests, so we must
+	// access the map directly
+	vv, ok := o[OptionIAPD]
+	if !ok {
+		return nil, false, nil
+	}
+
+	// Parse each IA_PD value
+	iapd := make([]*IAPD, len(vv))
+	for i := range vv {
+		ia, err := parseIAPD(vv[i])
+		if err != nil {
+			return nil, true, err
+		}
+
+		iapd[i] = ia
+	}
+
+	return iapd, true, nil
+}
+
+// IAPrefix returns the Identity Association Prefix Option value, as described
+// in RFC 3633, Section 10.  Multiple IAPrefix values may be present in a
+// a single DHCP request.  The boolean return value indicates if OptionIAPrefix
+// was present in the Options map.  The error return value indicates if a valid
+// IAPrefix could not be parsed from the option.
+func (o Options) IAPrefix() ([]*IAPrefix, bool, error) {
+	// Client may send multiple IAPrefix option requests, so we must
+	// access the map directly
+	vv, ok := o[OptionIAPrefix]
+	if !ok {
+		return nil, false, nil
+	}
+
+	// Parse each IAPrefix value
+	iaprefix := make([]*IAPrefix, len(vv))
+	for i := range vv {
+		ia, err := parseIAPrefix(vv[i])
+		if err != nil {
+			return nil, true, err
+		}
+
+		iaprefix[i] = ia
+	}
+
+	return iaprefix, true, nil
+}
+
 // parseClasses parses multiple contiguous byte slices contained in
 // OptionUserClass or OptionVendorClass, of the form:
 //   - 2 bytes: length

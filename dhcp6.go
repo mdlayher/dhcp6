@@ -18,13 +18,13 @@ var ErrHardwareTypeNotImplemented = errors.New("hardware type detection not impl
 // January 1, 2000 is used in NewDUIDLLT.
 var ErrInvalidDUIDLLTTime = errors.New("DUID-LLT time must be after midnight (UTC), January 1, 2000")
 
-// ErrInvalidIAAddrIP is returned when an input net.IP value is not
-// recognized as a valid IPv6 address.
-var ErrInvalidIAAddrIP = errors.New("IAAddr IP must be an IPv6 address")
+// ErrInvalidIP is returned when an input net.IP value is not recognized as a
+// valid IPv6 address.
+var ErrInvalidIP = errors.New("IP must be an IPv6 address")
 
-// ErrInvalidIAAddrLifetimes is returned when an input preferred
-// lifetime is shorter than a valid lifetime parameter.
-var ErrInvalidIAAddrLifetimes = errors.New("IAAddr preferred lifetime must be less than valid lifetime")
+// ErrInvalidLifetimes is returned when an input preferred lifetime is shorter
+// than a valid lifetime parameter.
+var ErrInvalidLifetimes = errors.New("preferred lifetime must be less than valid lifetime")
 
 // ErrInvalidPacket is returned when a byte slice does not contain enough
 // data to create a valid Packet.  A Packet must have at least a message type

@@ -58,12 +58,12 @@ type IAAddr struct {
 func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options Options) (*IAAddr, error) {
 	// From documentation: If ip is not an IPv4 address, To4 returns nil.
 	if ip.To4() != nil {
-		return nil, ErrInvalidIAAddrIP
+		return nil, ErrInvalidIP
 	}
 
 	// Preferred lifetime must always be less than valid lifetime.
 	if preferred > valid {
-		return nil, ErrInvalidIAAddrLifetimes
+		return nil, ErrInvalidLifetimes
 	}
 
 	// If no options set, make empty map
@@ -111,7 +111,7 @@ func parseIAAddr(b []byte) (*IAAddr, error) {
 
 	// Preferred lifetime must always be less than valid lifetime.
 	if preferred > valid {
-		return nil, ErrInvalidIAAddrLifetimes
+		return nil, ErrInvalidLifetimes
 	}
 
 	options, err := parseOptions(b[24:])

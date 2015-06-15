@@ -80,11 +80,13 @@ const (
 // parameters in DHCP messages between client and server.
 type OptionCode uint16
 
-// Status constants which indicate the option codes described in
-// RFC 3315, Section 24.3.  Additional option codes are defined in IANA's
-// DHCPv6 parameters registry:
+// OptionCode constants which indicate the option codes described in
+// RFC 3315 and RFC 3633.
+//
+// These option codes are taken from IANA's DHCPv6 parameters registry:
 // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml.
 const (
+	// RFC 3315
 	OptionClientID     OptionCode = 1
 	OptionServerID     OptionCode = 2
 	OptionIANA         OptionCode = 3
@@ -106,5 +108,9 @@ const (
 	OptionReconfMsg    OptionCode = 19
 	OptionReconfAccept OptionCode = 20
 
-	// BUG(mdlayher): add additional message types defined by IANA
+	// RFC 3633
+	OptionIAPD     OptionCode = 25
+	OptionIAPrefix OptionCode = 26
+
+	// BUG(mdlayher): add additional option code types defined by IANA
 )

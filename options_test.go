@@ -147,6 +147,44 @@ func TestOptionsAdd(t *testing.T) {
 				}},
 			},
 		},
+		{
+			description: "IA_PD",
+			code:        OptionIAPD,
+			byteser: &IAPD{
+				IAID: [4]byte{0, 1, 2, 3},
+				T1:   30 * time.Second,
+				T2:   60 * time.Second,
+			},
+			options: Options{
+				OptionIAPD: [][]byte{{
+					0, 1, 2, 3,
+					0, 0, 0, 30,
+					0, 0, 0, 60,
+				}},
+			},
+		},
+		{
+			description: "IAPrefix",
+			code:        OptionIAPrefix,
+			byteser: &IAPrefix{
+				PreferredLifetime: 30 * time.Second,
+				ValidLifetime:     60 * time.Second,
+				PrefixLength:      64,
+				Prefix: net.IP{
+					1, 1, 1, 1, 1, 1, 1, 1,
+					0, 0, 0, 0, 0, 0, 0, 0,
+				},
+			},
+			options: Options{
+				OptionIAPrefix: [][]byte{{
+					0, 0, 0, 30,
+					0, 0, 0, 60,
+					64,
+					1, 1, 1, 1, 1, 1, 1, 1,
+					0, 0, 0, 0, 0, 0, 0, 0,
+				}},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -1208,6 +1246,183 @@ func TestOptionsVendorClass(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.VendorClass(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsIAPD verifies that Options.IAPD properly parses and
+// returns multiple IAPD values, if one or more are available with OptionIAPD.
+func TestOptionsIAPD(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		iapd        []*IAPD
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionIAPD not present in Options map",
+		},
+		{
+			description: "OptionIAPD present in Options map, but too short",
+			options: Options{
+				OptionIAPD: [][]byte{bytes.Repeat([]byte{0}, 11)},
+			},
+			err: errInvalidIAPD,
+		},
+		{
+			description: "one OptionIAPD present in Options map",
+			options: Options{
+				OptionIAPD: [][]byte{{
+					1, 2, 3, 4,
+					0, 0, 0, 30,
+					0, 0, 0, 60,
+				}},
+			},
+			iapd: []*IAPD{
+				{
+					IAID: [4]byte{1, 2, 3, 4},
+					T1:   30 * time.Second,
+					T2:   60 * time.Second,
+				},
+			},
+			ok: true,
+		},
+		{
+			description: "two OptionIAPD present in Options map",
+			options: Options{
+				OptionIAPD: [][]byte{
+					append(bytes.Repeat([]byte{0}, 12), []byte{0, 1, 0, 1, 1}...),
+					append(bytes.Repeat([]byte{0}, 12), []byte{0, 2, 0, 1, 2}...),
+				},
+			},
+			iapd: []*IAPD{
+				{
+					Options: Options{
+						OptionClientID: [][]byte{{1}},
+					},
+				},
+				{
+					Options: Options{
+						OptionServerID: [][]byte{{2}},
+					},
+				},
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		iapd, ok, err := tt.options.IAPD()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.IAPD: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		for j := range tt.iapd {
+			if want, got := tt.iapd[j].Bytes(), iapd[j].Bytes(); !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAPD():\n- want: %v\n-  got: %v",
+					i, j, tt.description, want, got)
+			}
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAPD(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsIAPrefix verifies that Options.IAPrefix properly parses and
+// returns multiple IAPrefix values, if one or more are available with
+// OptionIAPrefix.
+func TestOptionsIAPrefix(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		iaprefix    []*IAPrefix
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionIAPrefix not present in Options map",
+		},
+		{
+			description: "OptionIAPrefix present in Options map, but too short",
+			options: Options{
+				OptionIAPrefix: [][]byte{bytes.Repeat([]byte{0}, 24)},
+			},
+			err: errInvalidIAPrefix,
+		},
+		{
+			description: "one OptionIAPrefix present in Options map",
+			options: Options{
+				OptionIAPrefix: [][]byte{{
+					0, 0, 0, 30,
+					0, 0, 0, 60,
+					32,
+					32, 1, 13, 184, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0,
+				}},
+			},
+			iaprefix: []*IAPrefix{
+				{
+					PreferredLifetime: 30 * time.Second,
+					ValidLifetime:     60 * time.Second,
+					PrefixLength:      32,
+					Prefix: net.IP{
+						32, 1, 13, 184, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0,
+					},
+				},
+			},
+			ok: true,
+		},
+		{
+			description: "two OptionIAPrefix present in Options map",
+			options: Options{
+				OptionIAPrefix: [][]byte{
+					bytes.Repeat([]byte{0}, 25),
+					bytes.Repeat([]byte{0}, 25),
+				},
+			},
+			iaprefix: []*IAPrefix{
+				{
+					Prefix: net.IPv6zero,
+				},
+				{
+					Prefix: net.IPv6zero,
+				},
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		iaprefix, ok, err := tt.options.IAPrefix()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.IAPrefix: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		for j := range tt.iaprefix {
+			if want, got := tt.iaprefix[j].Bytes(), iaprefix[j].Bytes(); !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAPrefix():\n- want: %v\n-  got: %v",
+					i, j, tt.description, want, got)
+			}
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAPrefix(): %v != %v",
 				i, tt.description, want, got)
 		}
 	}
