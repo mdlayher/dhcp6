@@ -263,6 +263,12 @@ func (c *conn) serve() {
 		return
 	}
 
+	// Filter out unknown/invalid message types, using the lowest and highest
+	// numbered types
+	if r.MessageType < MessageTypeSolicit || r.MessageType > MessageTypeDHCPv4Response {
+		return
+	}
+
 	// Set up response to send responses back to the original requester
 	w := &response{
 		remoteAddr: c.remoteAddr,

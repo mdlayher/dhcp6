@@ -208,6 +208,33 @@ func TestServeIgnoreInvalidPacket(t *testing.T) {
 	}
 }
 
+// TestServeIgnoreBadMessageType verifies that Serve will ignore request
+// packets with invalid message types.
+func TestServeIgnoreBadMessageType(t *testing.T) {
+	// Message types not known
+	badMT := []byte{0, 22}
+	for _, mt := range badMT {
+		r := &testMessage{}
+		r.b.Write([]byte{mt, 0, 0, 0})
+
+		// Expect no reply at all
+		w, _, err := testServe(r, nil, false, func(w ResponseSender, r *Request) {})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if l := w.b.Len(); l > 0 {
+			t.Fatalf("reply should be empty, but got length: %d", l)
+		}
+		if cm := w.cm; cm != nil {
+			t.Fatalf("control message should be nil, but got: %v", cm)
+		}
+		if addr := w.addr; addr != nil {
+			t.Fatalf("address should be nil, but got: %v", addr)
+		}
+	}
+}
+
 // TestServeOK verifies that Serve correctly handles an incoming request and
 // all of its options, and replies with expected values.
 func TestServeOK(t *testing.T) {
