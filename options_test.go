@@ -2,25 +2,26 @@ package dhcp6
 
 import (
 	"bytes"
+	"encoding"
 	"net"
 	"reflect"
 	"testing"
 	"time"
 )
 
-// TestOptionsAdd verifies that Options.Add correctly creates or appends
-// OptionCode keys with Byteser values to an Options map.
-func TestOptionsAdd(t *testing.T) {
+// TestOptionsAddBinaryMarshaler verifies that Options.Add correctly creates or
+// appends OptionCode keys with BinaryMarshaler bytes values to an Options map.
+func TestOptionsAddBinaryMarshaler(t *testing.T) {
 	var tests = []struct {
 		description string
 		code        OptionCode
-		byteser     Byteser
+		bin         encoding.BinaryMarshaler
 		options     Options
 	}{
 		{
 			description: "DUID-LLT",
 			code:        OptionClientID,
-			byteser: &DUIDLLT{
+			bin: &DUIDLLT{
 				Type:         DUIDTypeLLT,
 				HardwareType: 1,
 				Time:         duidLLTTime.Add(1 * time.Minute).Sub(duidLLTTime),
@@ -38,7 +39,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "DUID-EN",
 			code:        OptionClientID,
-			byteser: &DUIDEN{
+			bin: &DUIDEN{
 				Type:             DUIDTypeEN,
 				EnterpriseNumber: 100,
 				Identifier:       []byte{0, 1, 2, 3, 4},
@@ -54,7 +55,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "DUID-LL",
 			code:        OptionClientID,
-			byteser: &DUIDLL{
+			bin: &DUIDLL{
 				Type:         DUIDTypeLL,
 				HardwareType: 1,
 				HardwareAddr: net.HardwareAddr([]byte{0, 1, 0, 1, 0, 1}),
@@ -70,7 +71,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "DUID-UUID",
 			code:        OptionClientID,
-			byteser: &DUIDUUID{
+			bin: &DUIDUUID{
 				Type: DUIDTypeUUID,
 				UUID: [16]byte{
 					1, 1, 1, 1,
@@ -92,7 +93,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "IA_NA",
 			code:        OptionIANA,
-			byteser: &IANA{
+			bin: &IANA{
 				IAID: [4]byte{0, 1, 2, 3},
 				T1:   30 * time.Second,
 				T2:   60 * time.Second,
@@ -108,7 +109,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "IA_TA",
 			code:        OptionIATA,
-			byteser: &IATA{
+			bin: &IATA{
 				IAID: [4]byte{0, 1, 2, 3},
 			},
 			options: Options{
@@ -120,7 +121,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "IAAddr",
 			code:        OptionIAAddr,
-			byteser: &IAAddr{
+			bin: &IAAddr{
 				IP:                net.IPv6loopback,
 				PreferredLifetime: 30 * time.Second,
 				ValidLifetime:     60 * time.Second,
@@ -136,7 +137,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "StatusCode",
 			code:        OptionStatusCode,
-			byteser: &StatusCode{
+			bin: &StatusCode{
 				Code:    StatusSuccess,
 				Message: "hello world",
 			},
@@ -150,7 +151,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "IA_PD",
 			code:        OptionIAPD,
-			byteser: &IAPD{
+			bin: &IAPD{
 				IAID: [4]byte{0, 1, 2, 3},
 				T1:   30 * time.Second,
 				T2:   60 * time.Second,
@@ -166,7 +167,7 @@ func TestOptionsAdd(t *testing.T) {
 		{
 			description: "IAPrefix",
 			code:        OptionIAPrefix,
-			byteser: &IAPrefix{
+			bin: &IAPrefix{
 				PreferredLifetime: 30 * time.Second,
 				ValidLifetime:     60 * time.Second,
 				PrefixLength:      64,
@@ -189,7 +190,9 @@ func TestOptionsAdd(t *testing.T) {
 
 	for i, tt := range tests {
 		o := make(Options)
-		o.Add(tt.code, tt.byteser)
+		if err := o.Add(tt.code, tt.bin); err != nil {
+			t.Fatal(err)
+		}
 
 		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected Options map:\n- want: %v\n-  got: %v",
@@ -198,7 +201,7 @@ func TestOptionsAdd(t *testing.T) {
 	}
 }
 
-// TestOptionsAdd verifies that Options.AddRaw correctly creates or appends
+// TestOptionsAddRaw verifies that Options.AddRaw correctly creates or appends
 // key/value Option pairs to an Options map.
 func TestOptionsAddRaw(t *testing.T) {
 	var tests = []struct {
@@ -512,7 +515,16 @@ func TestOptionsIANA(t *testing.T) {
 		}
 
 		for j := range tt.iana {
-			if want, got := tt.iana[j].Bytes(), iana[j].Bytes(); !bytes.Equal(want, got) {
+			want, err := tt.iana[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := iana[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IANA():\n- want: %v\n-  got: %v",
 					i, j, tt.description, want, got)
 			}
@@ -597,7 +609,16 @@ func TestOptionsIATA(t *testing.T) {
 		}
 
 		for j := range tt.iata {
-			if want, got := tt.iata[j].Bytes(), iata[j].Bytes(); !bytes.Equal(want, got) {
+			want, err := tt.iata[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := iata[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IATA():\n- want: %v\n-  got: %v",
 					i, j, tt.description, want, got)
 			}
@@ -689,7 +710,16 @@ func TestOptionsIAAddr(t *testing.T) {
 		}
 
 		for j := range tt.iaaddr {
-			if want, got := tt.iaaddr[j].Bytes(), iaaddr[j].Bytes(); !bytes.Equal(want, got) {
+			want, err := tt.iaaddr[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := iaaddr[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAAddr():\n- want: %v\n-  got: %v",
 					i, j, tt.description, want, got)
 			}
@@ -1325,7 +1355,16 @@ func TestOptionsIAPD(t *testing.T) {
 		}
 
 		for j := range tt.iapd {
-			if want, got := tt.iapd[j].Bytes(), iapd[j].Bytes(); !bytes.Equal(want, got) {
+			want, err := tt.iapd[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := iapd[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAPD():\n- want: %v\n-  got: %v",
 					i, j, tt.description, want, got)
 			}
@@ -1415,7 +1454,16 @@ func TestOptionsIAPrefix(t *testing.T) {
 		}
 
 		for j := range tt.iaprefix {
-			if want, got := tt.iaprefix[j].Bytes(), iaprefix[j].Bytes(); !bytes.Equal(want, got) {
+			want, err := tt.iaprefix[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := iaprefix[j].MarshalBinary()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAPrefix():\n- want: %v\n-  got: %v",
 					i, j, tt.description, want, got)
 			}

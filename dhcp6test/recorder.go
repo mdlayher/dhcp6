@@ -38,5 +38,6 @@ func (r *Recorder) Send(mt dhcp6.MessageType) (int, error) {
 	}
 	r.Packet = p
 
-	return len(p.Bytes()), nil
+	b, err := p.MarshalBinary()
+	return len(b), err
 }

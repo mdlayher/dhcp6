@@ -37,16 +37,25 @@ func TestNewIATA(t *testing.T) {
 	for i, tt := range tests {
 		iata := NewIATA(tt.iaid, tt.options)
 
-		if want, got := tt.iata.Bytes(), iata.Bytes(); !reflect.DeepEqual(want, got) {
+		want, err := tt.iata.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := iata.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IATA bytes for NewIATA(%v, %v)\n- want: %v\n-  got: %v",
 				i, tt.description, tt.iaid, tt.options, want, got)
 		}
 	}
 }
 
-// Test_parseIATA verifies that parseIATA produces a correct IATA value or error
-// for an input buffer.
-func Test_parseIATA(t *testing.T) {
+// TestIATAUnmarshalBinary verifies that IATAUnmarshalBinary produces a
+// correct IATA value or error for an input buffer.
+func TestIATAUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		buf     []byte
 		iata    *IATA
@@ -83,8 +92,8 @@ func Test_parseIATA(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		iata, err := parseIATA(tt.buf)
-		if err != nil {
+		iata := new(IATA)
+		if err := iata.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] unexpected error for parseIATA(%v): %v != %v",
 					i, tt.buf, want, got)

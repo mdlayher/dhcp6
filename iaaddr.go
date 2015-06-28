@@ -79,9 +79,8 @@ func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options 
 	}, nil
 }
 
-// Bytes implements Byteser, and allocates a byte slice containing the data
-// from a IAAddr.
-func (i *IAAddr) Bytes() []byte {
+// MarshalBinary allocates a byte slice containing the data from a IAAddr.
+func (i *IAAddr) MarshalBinary() ([]byte, error) {
 	// 16 bytes: IPv6 address
 	//  4 bytes: preferred lifetime
 	//  4 bytes: valid lifetime
@@ -94,35 +93,36 @@ func (i *IAAddr) Bytes() []byte {
 	binary.BigEndian.PutUint32(b[20:24], uint32(i.ValidLifetime/time.Second))
 	opts.write(b[24:])
 
-	return b
+	return b, nil
 }
 
-// parseIAAddr attempts to parse an input byte slice as an IAAddr.
-func parseIAAddr(b []byte) (*IAAddr, error) {
+// UnmarshalBinary unmarshals a raw byte slice into a IAAddr.
+//
+// If the byte slice does not contain enough data to form a valid IAAddr,
+// errInvalidIAAddr is returned.  If the preferred lifetime value in the byte
+// slice is less than the valid lifetime, ErrInvalidLifetimes is returned.
+func (i *IAAddr) UnmarshalBinary(b []byte) error {
 	if len(b) < 24 {
-		return nil, errInvalidIAAddr
+		return errInvalidIAAddr
 	}
 
 	ip := make(net.IP, 16)
 	copy(ip, b[0:16])
+	i.IP = ip
 
-	preferred := time.Duration(binary.BigEndian.Uint32(b[16:20])) * time.Second
-	valid := time.Duration(binary.BigEndian.Uint32(b[20:24])) * time.Second
+	i.PreferredLifetime = time.Duration(binary.BigEndian.Uint32(b[16:20])) * time.Second
+	i.ValidLifetime = time.Duration(binary.BigEndian.Uint32(b[20:24])) * time.Second
 
 	// Preferred lifetime must always be less than valid lifetime.
-	if preferred > valid {
-		return nil, ErrInvalidLifetimes
+	if i.PreferredLifetime > i.ValidLifetime {
+		return ErrInvalidLifetimes
 	}
 
 	options, err := parseOptions(b[24:])
 	if err != nil {
-		return nil, err
+		return err
 	}
+	i.Options = options
 
-	return &IAAddr{
-		IP:                ip,
-		PreferredLifetime: preferred,
-		ValidLifetime:     valid,
-		Options:           options,
-	}, nil
+	return nil
 }

@@ -38,9 +38,8 @@ func NewIATA(iaid [4]byte, options Options) *IATA {
 	}
 }
 
-// Bytes implements Byteser, and allocates a byte slice containing the data
-// from a IATA.
-func (i *IATA) Bytes() []byte {
+// MarshalBinary allocates a byte slice containing the data from a IATA.
+func (i *IATA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: IAID
 	// N bytes: options slice byte count
 	opts := i.Options.enumerate()
@@ -49,26 +48,28 @@ func (i *IATA) Bytes() []byte {
 	copy(b[0:4], i.IAID[:])
 	opts.write(b[4:])
 
-	return b
+	return b, nil
 }
 
-// parseIATA attempts to parse an input byte slice as a IATA.
-func parseIATA(b []byte) (*IATA, error) {
+// UnmarshalBinary unmarshals a raw byte slice into a IATA.
+//
+// If the byte slice does not contain enough data to form a valid IATA,
+// errInvalidIATA is returned.
+func (i *IATA) UnmarshalBinary(b []byte) error {
 	// IATA must contain at least an IAID.
 	if len(b) < 4 {
-		return nil, errInvalidIATA
+		return errInvalidIATA
 	}
 
 	iaid := [4]byte{}
 	copy(iaid[:], b[0:4])
+	i.IAID = iaid
 
 	options, err := parseOptions(b[4:])
 	if err != nil {
-		return nil, err
+		return err
 	}
+	i.Options = options
 
-	return &IATA{
-		IAID:    iaid,
-		Options: options,
-	}, nil
+	return nil
 }

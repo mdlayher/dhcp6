@@ -53,9 +53,8 @@ func NewIAPD(iaid [4]byte, t1 time.Duration, t2 time.Duration, options Options) 
 	}
 }
 
-// Bytes implements Byteser, and allocates a byte slice containing the data
-// from a IAPD.
-func (i *IAPD) Bytes() []byte {
+// MarshalBinary allocates a byte slice containing the data from a IAPD.
+func (i *IAPD) MarshalBinary() ([]byte, error) {
 	// 4 bytes: IAID
 	// 4 bytes: T1
 	// 4 bytes: T2
@@ -68,28 +67,31 @@ func (i *IAPD) Bytes() []byte {
 	binary.BigEndian.PutUint32(b[8:12], uint32(i.T2/time.Second))
 	opts.write(b[12:])
 
-	return b
+	return b, nil
 }
 
-// parseIAPD attempts to parse an input byte slice as a IAPD.
-func parseIAPD(b []byte) (*IAPD, error) {
+// UnmarshalBinary unmarshals a raw byte slice into a IAPD.
+//
+// If the byte slice does not contain enough data to form a valid IAPD,
+// errInvalidIAPD is returned.
+func (i *IAPD) UnmarshalBinary(b []byte) error {
 	// IAPD must contain at least an IAID, T1, and T2.
 	if len(b) < 12 {
-		return nil, errInvalidIAPD
+		return errInvalidIAPD
 	}
 
 	iaid := [4]byte{}
 	copy(iaid[:], b[0:4])
+	i.IAID = iaid
+
+	i.T1 = time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second
+	i.T2 = time.Duration(binary.BigEndian.Uint32(b[8:12])) * time.Second
 
 	options, err := parseOptions(b[12:])
 	if err != nil {
-		return nil, err
+		return err
 	}
+	i.Options = options
 
-	return &IAPD{
-		IAID:    iaid,
-		T1:      time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second,
-		T2:      time.Duration(binary.BigEndian.Uint32(b[8:12])) * time.Second,
-		Options: options,
-	}, nil
+	return nil
 }

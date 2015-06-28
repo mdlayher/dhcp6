@@ -87,9 +87,8 @@ func NewIAPrefix(preferred time.Duration, valid time.Duration, prefixLength uint
 	}, nil
 }
 
-// Bytes implements Byteser, and allocates a byte slice containing the data
-// from a IAPrefix.
-func (i *IAPrefix) Bytes() []byte {
+// MarshalBinary allocates a byte slice containing the data from a IAPrefix.
+func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 	//  4 bytes: preferred lifetime
 	//  4 bytes: valid lifetime
 	//  1 byte : prefix length
@@ -104,39 +103,39 @@ func (i *IAPrefix) Bytes() []byte {
 	copy(b[9:25], i.Prefix)
 	opts.write(b[25:])
 
-	return b
+	return b, nil
 }
 
-// parseIAPrefix attempts to parse an input byte slice as an IAPrefix.
-func parseIAPrefix(b []byte) (*IAPrefix, error) {
+// UnmarshalBinary unmarshals a raw byte slice into a IAPrefix.
+//
+// If the byte slice does not contain enough data to form a valid IAPrefix,
+// errInvalidIAPrefix is returned.  If the preferred lifetime value in the byte
+// slice is less than the valid lifetime, ErrInvalidLifetimes is returned.
+func (i *IAPrefix) UnmarshalBinary(b []byte) error {
 	// IAPrefix must at least contain lifetimes, prefix length, and prefix
 	if len(b) < 25 {
-		return nil, errInvalidIAPrefix
+		return errInvalidIAPrefix
 	}
 
-	preferred := time.Duration(binary.BigEndian.Uint32(b[0:4])) * time.Second
-	valid := time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second
+	i.PreferredLifetime = time.Duration(binary.BigEndian.Uint32(b[0:4])) * time.Second
+	i.ValidLifetime = time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second
 
 	// Preferred lifetime must always be less than valid lifetime.
-	if preferred > valid {
-		return nil, ErrInvalidLifetimes
+	if i.PreferredLifetime > i.ValidLifetime {
+		return ErrInvalidLifetimes
 	}
 
-	prefixLength := b[8]
+	i.PrefixLength = b[8]
 
 	prefix := make(net.IP, 16)
 	copy(prefix, b[9:25])
+	i.Prefix = prefix
 
 	options, err := parseOptions(b[25:])
 	if err != nil {
-		return nil, err
+		return err
 	}
+	i.Options = options
 
-	return &IAPrefix{
-		PreferredLifetime: preferred,
-		ValidLifetime:     valid,
-		PrefixLength:      prefixLength,
-		Prefix:            prefix,
-		Options:           options,
-	}, nil
+	return nil
 }

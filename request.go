@@ -36,8 +36,8 @@ type Request struct {
 // If the input byte slice is not a valid DHCP packet, ErrInvalidPacket is
 // returned.
 func ParseRequest(b []byte, remoteAddr *net.UDPAddr) (*Request, error) {
-	p, err := parsePacket(b)
-	if err != nil {
+	p := new(Packet)
+	if err := p.UnmarshalBinary(b); err != nil {
 		return nil, err
 	}
 

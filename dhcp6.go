@@ -58,13 +58,6 @@ func (f HandlerFunc) ServeDHCP(w ResponseSender, r *Request) {
 	f(w, r)
 }
 
-// Byteser is implemented by any value that has a Bytes method.  The Bytes
-// method is used to return a value in byte slice form.  Byteser can be used
-// to add some types directly to an Options map.
-type Byteser interface {
-	Bytes() []byte
-}
-
 // ResponseSender provides an interface which allows a DHCP handler to construct
 // and send a DHCP response packet.  In addition, the server automatically handles
 // copying certain options from a client Request to a ResponseSender's Options,

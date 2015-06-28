@@ -20,10 +20,10 @@ func TestServeIPv6ControlParameters(t *testing.T) {
 		},
 	}
 
-	// Send Packet to avoid EOF, even though it does not matter
+	// Send pseudo-Packet to avoid EOF, even though it does not matter
 	// for this test
 	r := &testMessage{}
-	r.b.Write((&Packet{}).Bytes())
+	r.b.Write([]byte{0, 0, 0, 0})
 
 	// Don't expect a reply, don't handle a request
 	_, ip6, err := testServe(r, s, false, func(w ResponseSender, r *Request) {})
@@ -73,8 +73,13 @@ func TestServeWithSetServerID(t *testing.T) {
 		TransactionID: [3]byte{0, 1, 2},
 	}
 
+	pb, err := p.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	r := &testMessage{}
-	r.b.Write(p.Bytes())
+	r.b.Write(pb)
 
 	duid, err := NewDUIDLLT(1, time.Now(), []byte{0, 1, 0, 1, 0, 1})
 	s := &Server{
@@ -90,8 +95,8 @@ func TestServeWithSetServerID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wp, err := parsePacket(w.b.Bytes())
-	if err != nil {
+	wp := new(Packet)
+	if err := wp.UnmarshalBinary(w.b.Bytes()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,12 +104,17 @@ func TestServeWithSetServerID(t *testing.T) {
 		t.Fatalf("unexpected message type: %v != %v", want, got)
 	}
 
-	sID, ok, err := wp.Options.ServerID()
-	if !ok || err != nil {
-		t.Fatalf("server ID could not be parsed from reply: (%v, %v)", ok, err)
+	want, err := duid.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	if want, got := duid.Bytes(), sID.Bytes(); !bytes.Equal(want, got) {
+	got, ok := wp.Options.Get(OptionServerID)
+	if !ok {
+		t.Fatal("server ID not found in reply")
+	}
+
+	if !bytes.Equal(want, got) {
 		t.Fatalf("unexpected server ID bytes:\n- want: %v\n-  got: %v", want, got)
 	}
 }
@@ -116,28 +126,38 @@ func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
 	duid := NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
+	db, err := duid.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	p := &Packet{
 		MessageType:   MessageTypeSolicit,
 		TransactionID: txID,
 		Options:       make(Options),
 	}
-	p.Options.Add(OptionClientID, duid)
+	p.Options.AddRaw(OptionClientID, db)
+
+	pb, err := p.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	r := &testMessage{}
-	r.b.Write(p.Bytes())
+	r.b.Write(pb)
 
 	// Do not expect a reply, but do some validation to ensure that Serve
 	// sets up appropriate Request and ResponseSender values from an input request
-	_, _, err := testServe(r, nil, false, func(w ResponseSender, r *Request) {
+	_, _, err = testServe(r, nil, false, func(w ResponseSender, r *Request) {
 		if want, got := txID[:], r.TransactionID[:]; !bytes.Equal(want, got) {
 			t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 		}
 
-		cID, ok, err := w.Options().ClientID()
-		if !ok || err != nil || cID == nil {
+		cID, ok := w.Options().Get(OptionClientID)
+		if !ok {
 			t.Fatal("ResponseSender options did not contain client ID")
 		}
-		if want, got := duid.Bytes(), cID.Bytes(); !bytes.Equal(want, got) {
+		if want, got := db, cID; !bytes.Equal(want, got) {
 			t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 		}
 
@@ -159,7 +179,7 @@ func TestServeIgnoreWrongCMIfIndex(t *testing.T) {
 			IfIndex: -1,
 		},
 	}
-	r.b.Write((&Packet{}).Bytes())
+	r.b.Write([]byte{0, 0, 0, 0})
 
 	s := &Server{
 		Iface: &net.Interface{
@@ -241,13 +261,23 @@ func TestServeOK(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
 	duid := NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
+	db, err := duid.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// Perform an entire Solicit transaction
 	p := &Packet{
 		MessageType:   MessageTypeSolicit,
 		TransactionID: txID,
 		Options:       make(Options),
 	}
-	p.Options.Add(OptionClientID, duid)
+	p.Options.AddRaw(OptionClientID, db)
+
+	pb, err := p.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Send from a different mock IP
 	r := &testMessage{
@@ -255,7 +285,7 @@ func TestServeOK(t *testing.T) {
 			IP: net.ParseIP("::2"),
 		},
 	}
-	r.b.Write(p.Bytes())
+	r.b.Write(pb)
 
 	// Expect these option values set by server
 	var preference uint8 = 255
@@ -282,8 +312,8 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected client address: %v != %v", want, got)
 	}
 
-	wp, err := parsePacket(w.b.Bytes())
-	if err != nil {
+	wp := new(Packet)
+	if err := wp.UnmarshalBinary(w.b.Bytes()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -295,11 +325,11 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 	}
 
-	cID, ok, err := wp.Options.ClientID()
-	if !ok || err != nil || cID == nil {
+	cID, ok := wp.Options.Get(OptionClientID)
+	if !ok {
 		t.Fatal("response options did not contain client ID")
 	}
-	if want, got := duid.Bytes(), cID.Bytes(); !bytes.Equal(want, got) {
+	if want, got := db, cID; !bytes.Equal(want, got) {
 		t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 	}
 	if sID, ok, err := wp.Options.ServerID(); !ok || err != nil || sID == nil {

@@ -56,151 +56,9 @@ func TestNewDUIDLLT(t *testing.T) {
 	}
 }
 
-// TestNewDUIDEN verifies that NewDUIDEN generates a proper DUIDEN from
-// an input enterprise number and identifier.
-func TestNewDUIDEN(t *testing.T) {
-	var tests = []struct {
-		enterpriseNumber uint32
-		identifier       []byte
-		duid             *DUIDEN
-	}{
-		{
-			enterpriseNumber: 100,
-			identifier:       []byte{0, 1, 2, 3, 4},
-			duid: &DUIDEN{
-				Type:             DUIDTypeEN,
-				EnterpriseNumber: 100,
-				Identifier:       []byte{0, 1, 2, 3, 4},
-			},
-		},
-	}
-
-	for i, tt := range tests {
-		if want, got := tt.duid, NewDUIDEN(tt.enterpriseNumber, tt.identifier); !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] unexpected DUIDEN:\n- want %v\n-  got %v", i, want, got)
-		}
-	}
-}
-
-// TestNewDUIDLL verifies that NewDUIDLL generates a proper DUIDLL from
-// an input hardware type and hardware address.
-func TestNewDUIDLL(t *testing.T) {
-	var tests = []struct {
-		hardwareType uint16
-		hardwareAddr net.HardwareAddr
-		duid         *DUIDLL
-	}{
-		{
-			hardwareType: 1,
-			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
-			duid: &DUIDLL{
-				Type:         DUIDTypeLL,
-				HardwareType: 1,
-				HardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
-			},
-		},
-	}
-
-	for i, tt := range tests {
-		if want, got := tt.duid, NewDUIDLL(tt.hardwareType, tt.hardwareAddr); !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] unexpected DUIDLL:\n- want %v\n-  got %v", i, want, got)
-		}
-	}
-}
-
-// TestNewDUIDUUID verifies that NewDUIDUUID generates a proper DUIDUUID from
-// an input UUID.
-func TestNewDUIDUUID(t *testing.T) {
-	var tests = []struct {
-		uuid [16]byte
-		duid *DUIDUUID
-	}{
-		{
-			uuid: [16]byte{
-				1, 1, 1, 1,
-				2, 2, 2, 2,
-				3, 3, 3, 3,
-				4, 4, 4, 4,
-			},
-			duid: &DUIDUUID{
-				Type: DUIDTypeUUID,
-				UUID: [16]byte{
-					1, 1, 1, 1,
-					2, 2, 2, 2,
-					3, 3, 3, 3,
-					4, 4, 4, 4,
-				},
-			},
-		},
-	}
-
-	for i, tt := range tests {
-		if want, got := tt.duid, NewDUIDUUID(tt.uuid); !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] unexpected DUIDUUID:\n- want %v\n-  got %v", i, want, got)
-		}
-	}
-}
-
-// Test_parseDUID verifies that parseDUID detects the correct DUID type for a
-// variety of input data.
-func Test_parseDUID(t *testing.T) {
-	var tests = []struct {
-		buf    []byte
-		result reflect.Type
-		err    error
-	}{
-		{
-			buf: []byte{0},
-			err: errInvalidDUID,
-		},
-		{
-			buf: []byte{0, 0},
-			err: errUnknownDUID,
-		},
-		// Known types padded out to be just long enough to not error
-		{
-			buf:    []byte{0, 1, 0, 0, 0, 0, 0, 0},
-			result: reflect.TypeOf(&DUIDLLT{}),
-		},
-		{
-			buf:    []byte{0, 2, 0, 0, 0, 0},
-			result: reflect.TypeOf(&DUIDEN{}),
-		},
-		{
-			buf:    []byte{0, 3, 0, 0},
-			result: reflect.TypeOf(&DUIDLL{}),
-		},
-		{
-			buf:    append([]byte{0, 4}, bytes.Repeat([]byte{0}, 16)...),
-			result: reflect.TypeOf(&DUIDUUID{}),
-		},
-		{
-			buf: []byte{0, 5},
-			err: errUnknownDUID,
-		},
-	}
-
-	for i, tt := range tests {
-		d, err := parseDUID(tt.buf)
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] unexpected error for parseDUID(%v): %v != %v",
-					i, tt.buf, want, got)
-			}
-
-			continue
-		}
-
-		if want, got := tt.result, reflect.TypeOf(d); want != got {
-			t.Fatalf("[%02d] unexpected type for parseDUID(%v): %v != %v",
-				i, tt.buf, want, got)
-		}
-	}
-}
-
-// Test_parseDUIDLLT verifies that parseDUIDLLT returns appropriate DUIDLLTs and
-// errors for various input byte slices.
-func Test_parseDUIDLLT(t *testing.T) {
+// TestDUIDLLTUnmarshalBinary verifies that DUIDLLT.UnmarshalBinary creates
+// appropriate DUIDLLTs and errors for various input byte slices.
+func TestDUIDLLTUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -249,8 +107,8 @@ func Test_parseDUIDLLT(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		duid, err := parseDUIDLLT(tt.buf)
-		if err != nil {
+		duid := new(DUIDLLT)
+		if err := duid.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
 					i, tt.description, want, got)
@@ -266,9 +124,35 @@ func Test_parseDUIDLLT(t *testing.T) {
 	}
 }
 
-// Test_parseDUIDEN verifies that parseDUIDEN returns appropriate DUIDENs and
-// errors for various input byte slices.
-func Test_parseDUIDEN(t *testing.T) {
+// TestNewDUIDEN verifies that NewDUIDEN generates a proper DUIDEN from
+// an input enterprise number and identifier.
+func TestNewDUIDEN(t *testing.T) {
+	var tests = []struct {
+		enterpriseNumber uint32
+		identifier       []byte
+		duid             *DUIDEN
+	}{
+		{
+			enterpriseNumber: 100,
+			identifier:       []byte{0, 1, 2, 3, 4},
+			duid: &DUIDEN{
+				Type:             DUIDTypeEN,
+				EnterpriseNumber: 100,
+				Identifier:       []byte{0, 1, 2, 3, 4},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		if want, got := tt.duid, NewDUIDEN(tt.enterpriseNumber, tt.identifier); !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] unexpected DUIDEN:\n- want %v\n-  got %v", i, want, got)
+		}
+	}
+}
+
+// TestDUIDENUnmarshalBinary verifies that DUIDEN.UnmarshalBinary creates
+// appropriate DUIDENs and errors for various input byte slices.
+func TestDUIDENUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -313,8 +197,8 @@ func Test_parseDUIDEN(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		duid, err := parseDUIDEN(tt.buf)
-		if err != nil {
+		duid := new(DUIDEN)
+		if err := duid.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
 					i, tt.description, want, got)
@@ -330,9 +214,35 @@ func Test_parseDUIDEN(t *testing.T) {
 	}
 }
 
-// Test_parseDUIDLL verifies that parseDUIDLL returns appropriate DUIDLLs and
-// errors for various input byte slices.
-func Test_parseDUIDLL(t *testing.T) {
+// TestNewDUIDLL verifies that NewDUIDLL generates a proper DUIDLL from
+// an input hardware type and hardware address.
+func TestNewDUIDLL(t *testing.T) {
+	var tests = []struct {
+		hardwareType uint16
+		hardwareAddr net.HardwareAddr
+		duid         *DUIDLL
+	}{
+		{
+			hardwareType: 1,
+			hardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
+			duid: &DUIDLL{
+				Type:         DUIDTypeLL,
+				HardwareType: 1,
+				HardwareAddr: net.HardwareAddr([]byte{0, 0, 0, 0, 0, 0}),
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		if want, got := tt.duid, NewDUIDLL(tt.hardwareType, tt.hardwareAddr); !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] unexpected DUIDLL:\n- want %v\n-  got %v", i, want, got)
+		}
+	}
+}
+
+// TestDUIDLLUnmarshalBinary verifies that DUIDLL.UnmarshalBinary creates
+// appropriate DUIDLLs and errors for various input byte slices.
+func TestDUIDLLUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -379,8 +289,8 @@ func Test_parseDUIDLL(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		duid, err := parseDUIDLL(tt.buf)
-		if err != nil {
+		duid := new(DUIDLL)
+		if err := duid.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
 					i, tt.description, want, got)
@@ -396,9 +306,42 @@ func Test_parseDUIDLL(t *testing.T) {
 	}
 }
 
-// Test_parseDUIDUUID verifies that parseDUIDUUID returns appropriate DUIDUUIDs
-// and errors for various input byte slices.
-func Test_parseDUIDUUID(t *testing.T) {
+// TestNewDUIDUUID verifies that NewDUIDUUID generates a proper DUIDUUID from
+// an input UUID.
+func TestNewDUIDUUID(t *testing.T) {
+	var tests = []struct {
+		uuid [16]byte
+		duid *DUIDUUID
+	}{
+		{
+			uuid: [16]byte{
+				1, 1, 1, 1,
+				2, 2, 2, 2,
+				3, 3, 3, 3,
+				4, 4, 4, 4,
+			},
+			duid: &DUIDUUID{
+				Type: DUIDTypeUUID,
+				UUID: [16]byte{
+					1, 1, 1, 1,
+					2, 2, 2, 2,
+					3, 3, 3, 3,
+					4, 4, 4, 4,
+				},
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		if want, got := tt.duid, NewDUIDUUID(tt.uuid); !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] unexpected DUIDUUID:\n- want %v\n-  got %v", i, want, got)
+		}
+	}
+}
+
+// TestDUIDUUIDUnmarshalBinary verifies that DUIDUUID.UnmarshalBinary returns
+// appropriate DUIDUUIDs and errors for various input byte slices.
+func TestDUIDUUIDUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -457,8 +400,8 @@ func Test_parseDUIDUUID(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		duid, err := parseDUIDUUID(tt.buf)
-		if err != nil {
+		duid := new(DUIDUUID)
+		if err := duid.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
 					i, tt.description, want, got)
@@ -470,6 +413,63 @@ func Test_parseDUIDUUID(t *testing.T) {
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected DUID-UUID:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
+		}
+	}
+}
+
+// Test_parseDUID verifies that parseDUID detects the correct DUID type for a
+// variety of input data.
+func Test_parseDUID(t *testing.T) {
+	var tests = []struct {
+		buf    []byte
+		result reflect.Type
+		err    error
+	}{
+		{
+			buf: []byte{0},
+			err: errInvalidDUID,
+		},
+		{
+			buf: []byte{0, 0},
+			err: errUnknownDUID,
+		},
+		// Known types padded out to be just long enough to not error
+		{
+			buf:    []byte{0, 1, 0, 0, 0, 0, 0, 0},
+			result: reflect.TypeOf(&DUIDLLT{}),
+		},
+		{
+			buf:    []byte{0, 2, 0, 0, 0, 0},
+			result: reflect.TypeOf(&DUIDEN{}),
+		},
+		{
+			buf:    []byte{0, 3, 0, 0},
+			result: reflect.TypeOf(&DUIDLL{}),
+		},
+		{
+			buf:    append([]byte{0, 4}, bytes.Repeat([]byte{0}, 16)...),
+			result: reflect.TypeOf(&DUIDUUID{}),
+		},
+		{
+			buf: []byte{0, 5},
+			err: errUnknownDUID,
+		},
+	}
+
+	for i, tt := range tests {
+		d, err := parseDUID(tt.buf)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] unexpected error for parseDUID(%v): %v != %v",
+					i, tt.buf, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.result, reflect.TypeOf(d); want != got {
+			t.Fatalf("[%02d] unexpected type for parseDUID(%v): %v != %v",
+				i, tt.buf, want, got)
 		}
 	}
 }

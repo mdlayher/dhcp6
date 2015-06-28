@@ -32,9 +32,9 @@ func TestNewStatusCode(t *testing.T) {
 	}
 }
 
-// Test_parseStatusCode verifies that parseStatusCode returns correct StatusCode
-// and error values for several input values.
-func Test_parseStatusCode(t *testing.T) {
+// TestStatusCodeUnmarshalBinary verifies that StatusCode.UnmarshalBinary
+// returns correct StatusCode and error values for several input values.
+func TestStatusCodeUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		buf []byte
 		sc  *StatusCode
@@ -60,8 +60,8 @@ func Test_parseStatusCode(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		sc, err := parseStatusCode(tt.buf)
-		if err != nil {
+		sc := new(StatusCode)
+		if err := sc.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] unexpected error for parseStatusCode(%v): %v != %v",
 					i, tt.buf, want, got)
@@ -70,7 +70,16 @@ func Test_parseStatusCode(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.sc.Bytes(), sc.Bytes(); !bytes.Equal(want, got) {
+		want, err := tt.sc.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := sc.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] unexpected StatusCode for parseStatusCode(%v)\n- want: %v\n-  got: %v",
 				i, tt.buf, want, got)
 		}

@@ -76,16 +76,25 @@ func TestNewIAAddr(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.iaaddr.Bytes(), iaaddr.Bytes(); !bytes.Equal(want, got) {
+		want, err := tt.iaaddr.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := iaaddr.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr bytes:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}
 	}
 }
 
-// Test_parseIAAddr verifies that parseIAAddr produces a correct IAAddr value or error
-// for an input buffer.
-func Test_parseIAAddr(t *testing.T) {
+// TestIAAddrUnmarshalBinary verifies that IAAddr.UnmarshalBinary produces a
+// correct IAAddr value or error for an input buffer.
+func TestIAAddrUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -150,8 +159,8 @@ func Test_parseIAAddr(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		iaaddr, err := parseIAAddr(tt.buf)
-		if err != nil {
+		iaaddr := new(IAAddr)
+		if err := iaaddr.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for parseIAAddr: %v != %v",
 					i, tt.description, want, got)
@@ -160,7 +169,16 @@ func Test_parseIAAddr(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.iaaddr.Bytes(), iaaddr.Bytes(); !bytes.Equal(want, got) {
+		want, err := tt.iaaddr.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := iaaddr.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr bytes for parseIAAddr:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}

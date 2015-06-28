@@ -80,16 +80,25 @@ func TestNewIAPrefix(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.iaprefix.Bytes(), iaprefix.Bytes(); !bytes.Equal(want, got) {
+		want, err := tt.iaprefix.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := iaprefix.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAPrefix bytes:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}
 	}
 }
 
-// Test_parseIAPrefix verifies that parseIAPrefix produces a correct IAPrefix
-// value or error for an input buffer.
-func Test_parseIAPrefix(t *testing.T) {
+// TestIAPrefixUnmarshalBinary verifies that IAPrefix.UnmarshalBinary produces
+// a correct IAPrefix value or error for an input buffer.
+func TestIAPrefixUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -165,8 +174,8 @@ func Test_parseIAPrefix(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		iaprefix, err := parseIAPrefix(tt.buf)
-		if err != nil {
+		iaprefix := new(IAPrefix)
+		if err := iaprefix.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for parseIAPrefix: %v != %v",
 					i, tt.description, want, got)
@@ -175,7 +184,16 @@ func Test_parseIAPrefix(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.iaprefix.Bytes(), iaprefix.Bytes(); !bytes.Equal(want, got) {
+		want, err := tt.iaprefix.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := iaprefix.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAPrefix bytes for parseIAPrefix:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}

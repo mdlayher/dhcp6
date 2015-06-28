@@ -27,16 +27,21 @@ func TestParseRequest(t *testing.T) {
 		Port: 546,
 	}
 
+	buf, err := p.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	r := &Request{
 		MessageType:   p.MessageType,
 		TransactionID: p.TransactionID,
 		Options:       make(Options),
-		Length:        int64(len(p.Bytes())),
+		Length:        int64(len(buf)),
 		RemoteAddr:    "[::1]:546",
 	}
 	r.Options.AddRaw(opt.Code, opt.Data)
 
-	gotR, err := ParseRequest(p.Bytes(), addr)
+	gotR, err := ParseRequest(buf, addr)
 	if err != nil {
 		t.Fatal(err)
 	}

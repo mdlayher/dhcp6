@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"bytes"
+	"encoding"
 	"encoding/binary"
 	"errors"
 	"net"
@@ -47,10 +48,16 @@ var (
 // can be accessed directly.
 type Options map[OptionCode][][]byte
 
-// Add adds a new OptionCode key and Byteser struct's bytes to the
+// Add adds a new OptionCode key and BinaryMarshaler struct's bytes to the
 // Options map.
-func (o Options) Add(key OptionCode, value Byteser) {
-	o.AddRaw(key, value.Bytes())
+func (o Options) Add(key OptionCode, value encoding.BinaryMarshaler) error {
+	b, err := value.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	o.AddRaw(key, b)
+	return nil
 }
 
 // AddRaw adds a new OptionCode key and raw value byte slice to the
@@ -138,8 +145,8 @@ func (o Options) IANA() ([]*IANA, bool, error) {
 	// Parse each IA_NA value
 	iana := make([]*IANA, len(vv), len(vv))
 	for i := range vv {
-		ia, err := parseIANA(vv[i])
-		if err != nil {
+		ia := new(IANA)
+		if err := ia.UnmarshalBinary(vv[i]); err != nil {
 			return nil, true, err
 		}
 
@@ -168,8 +175,8 @@ func (o Options) IATA() ([]*IATA, bool, error) {
 	// Parse each IA_NA value
 	iata := make([]*IATA, len(vv), len(vv))
 	for i := range vv {
-		ia, err := parseIATA(vv[i])
-		if err != nil {
+		ia := new(IATA)
+		if err := ia.UnmarshalBinary(vv[i]); err != nil {
 			return nil, true, err
 		}
 
@@ -200,8 +207,8 @@ func (o Options) IAAddr() ([]*IAAddr, bool, error) {
 	// Parse each IAAddr value
 	iaaddr := make([]*IAAddr, len(vv), len(vv))
 	for i := range vv {
-		iaa, err := parseIAAddr(vv[i])
-		if err != nil {
+		iaa := new(IAAddr)
+		if err := iaa.UnmarshalBinary(vv[i]); err != nil {
 			return nil, true, err
 		}
 
@@ -334,8 +341,9 @@ func (o Options) StatusCode() (*StatusCode, bool, error) {
 		return nil, false, nil
 	}
 
-	status, err := parseStatusCode(v)
-	return status, true, err
+	s := new(StatusCode)
+	err := s.UnmarshalBinary(v)
+	return s, true, err
 }
 
 // RapidCommit returns the Rapid Commit Option value, described in RFC 3315,
@@ -418,8 +426,8 @@ func (o Options) IAPD() ([]*IAPD, bool, error) {
 	// Parse each IA_PD value
 	iapd := make([]*IAPD, len(vv))
 	for i := range vv {
-		ia, err := parseIAPD(vv[i])
-		if err != nil {
+		ia := new(IAPD)
+		if err := ia.UnmarshalBinary(vv[i]); err != nil {
 			return nil, true, err
 		}
 
@@ -448,8 +456,8 @@ func (o Options) IAPrefix() ([]*IAPrefix, bool, error) {
 	// Parse each IAPrefix value
 	iaprefix := make([]*IAPrefix, len(vv))
 	for i := range vv {
-		ia, err := parseIAPrefix(vv[i])
-		if err != nil {
+		ia := new(IAPrefix)
+		if err := ia.UnmarshalBinary(vv[i]); err != nil {
 			return nil, true, err
 		}
 

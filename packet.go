@@ -20,9 +20,9 @@ type Packet struct {
 	Options Options
 }
 
-// Bytes implements Byteser, and allocates a byte slice containing the data
+// MarshalBinary allocates a byte slice containing the data
 // from a Packet.
-func (p *Packet) Bytes() []byte {
+func (p *Packet) MarshalBinary() ([]byte, error) {
 	// 1 byte: message type
 	// 3 bytes: transaction ID
 	// N bytes: options slice byte count
@@ -33,30 +33,30 @@ func (p *Packet) Bytes() []byte {
 	copy(b[1:4], p.TransactionID[:])
 	opts.write(b[4:])
 
-	return b
+	return b, nil
 }
 
-// parsePacket parses a raw byte slice into a Packet.  If the byte slice
-// does not contain enough data to form a valid Packet, ErrInvalidPacket
-// is returned.
-func parsePacket(b []byte) (*Packet, error) {
+// UnmarshalBinary unmarshals a raw byte slice into a Packet.
+//
+// If the byte slice does not contain enough data to form a valid Packet,
+// ErrInvalidPacket is returned.
+func (p *Packet) UnmarshalBinary(b []byte) error {
 	// Packet must contain at least a message type and transaction ID
 	if len(b) < 4 {
-		return nil, ErrInvalidPacket
+		return ErrInvalidPacket
 	}
+	p.MessageType = MessageType(b[0])
 
 	txID := [3]byte{}
 	copy(txID[:], b[1:4])
+	p.TransactionID = txID
 
 	options, err := parseOptions(b[4:])
 	if err != nil {
 		// Invalid options means an invalid packet
-		return nil, ErrInvalidPacket
+		return ErrInvalidPacket
 	}
+	p.Options = options
 
-	return &Packet{
-		MessageType:   MessageType(b[0]),
-		TransactionID: txID,
-		Options:       options,
-	}, nil
+	return nil
 }

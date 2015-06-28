@@ -44,16 +44,25 @@ func TestNewIANA(t *testing.T) {
 	for i, tt := range tests {
 		iana := NewIANA(tt.iaid, tt.t1, tt.t2, tt.options)
 
-		if want, got := tt.iana.Bytes(), iana.Bytes(); !reflect.DeepEqual(want, got) {
+		want, err := tt.iana.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := iana.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IANA bytes for NewIANA(%v, %v, %v, %v)\n- want: %v\n-  got: %v",
 				i, tt.description, tt.iaid, tt.t1, tt.t2, tt.options, want, got)
 		}
 	}
 }
 
-// TestIANABytes verifies that IANA.Bytes allocates and returns a correct
+// TestIANAMarshalBinary verifies that IANA.MarshalBinary allocates and returns a correct
 // byte slice for a variety of input data.
-func TestIANABytes(t *testing.T) {
+func TestIANAMarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		iana        *IANA
@@ -112,16 +121,21 @@ func TestIANABytes(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.buf, tt.iana.Bytes(); !bytes.Equal(want, got) {
+		got, err := tt.iana.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if want := tt.buf; !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IANA bytes:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}
 	}
 }
 
-// Test_parseIANA verifies that parseIANA produces a correct IANA value or error
-// for an input buffer.
-func Test_parseIANA(t *testing.T) {
+// TestIANAUnmarshalBinary verifies that IANA.UnmarshalBinary produces a correct
+// IANA value or error for an input buffer.
+func TestIANAUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		buf     []byte
 		iana    *IANA
@@ -164,8 +178,8 @@ func Test_parseIANA(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		iana, err := parseIANA(tt.buf)
-		if err != nil {
+		iana := new(IANA)
+		if err := iana.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] unexpected error for parseIANA(%v): %v != %v",
 					i, tt.buf, want, got)

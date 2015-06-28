@@ -34,9 +34,8 @@ func NewStatusCode(code Status, message string) *StatusCode {
 	}
 }
 
-// Bytes implements Byteser, and allocates a byte slice containing the data
-// from a StatusCode.
-func (s *StatusCode) Bytes() []byte {
+// MarshalBinary allocates a byte slice containing the data from a StatusCode.
+func (s *StatusCode) MarshalBinary() ([]byte, error) {
 	// 2 bytes: status code
 	// N bytes: message
 	b := make([]byte, 2+len(s.Message))
@@ -44,20 +43,21 @@ func (s *StatusCode) Bytes() []byte {
 	binary.BigEndian.PutUint16(b[0:2], uint16(s.Code))
 	copy(b[2:], []byte(s.Message))
 
-	return b
+	return b, nil
 }
 
-// parseStatusCode parses an input byte slice into a StatusCode.  If the byte
-// slice does not contain enough data to form a valid StatusCode,
+// UnmarshalBinary unmarshals a raw byte slice into a StatusCode.
+//
+// If the byte slice does not contain enough data to form a valid StatusCode,
 // errInvalidStatusCode is returned.
-func parseStatusCode(b []byte) (*StatusCode, error) {
+func (s *StatusCode) UnmarshalBinary(b []byte) error {
 	// Too short to contain valid StatusCode
 	if len(b) < 2 {
-		return nil, errInvalidStatusCode
+		return errInvalidStatusCode
 	}
 
-	return &StatusCode{
-		Code:    Status(binary.BigEndian.Uint16(b[0:2])),
-		Message: string(b[2:]),
-	}, nil
+	s.Code = Status(binary.BigEndian.Uint16(b[0:2]))
+	s.Message = string(b[2:])
+
+	return nil
 }

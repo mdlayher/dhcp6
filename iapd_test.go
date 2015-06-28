@@ -44,16 +44,25 @@ func TestNewIAPD(t *testing.T) {
 	for i, tt := range tests {
 		iapd := NewIAPD(tt.iaid, tt.t1, tt.t2, tt.options)
 
-		if want, got := tt.iapd.Bytes(), iapd.Bytes(); !reflect.DeepEqual(want, got) {
+		want, err := tt.iapd.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := iapd.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAPD bytes for NewIAPD(%v, %v, %v, %v)\n- want: %v\n-  got: %v",
 				i, tt.description, tt.iaid, tt.t1, tt.t2, tt.options, want, got)
 		}
 	}
 }
 
-// Test_parseIAPD verifies that parseIAPD produces a correct IAPD value or error
-// for an input buffer.
-func Test_parseIAPD(t *testing.T) {
+// TestIAPDUnmarshalBinary verifies that IAPD.UnmarshalBinary produces a
+// correct IAPD value or error for an input buffer.
+func TestIAPDUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		buf     []byte
 		iapd    *IAPD
@@ -96,8 +105,8 @@ func Test_parseIAPD(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		iapd, err := parseIAPD(tt.buf)
-		if err != nil {
+		iapd := new(IAPD)
+		if err := iapd.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] unexpected error for parseIAPD(%v): %v != %v",
 					i, tt.buf, want, got)

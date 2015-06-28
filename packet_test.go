@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-// TestPacketBytes verifies that Packet.Bytes allocates and returns a correct
+// TestPacketMarshalBinary verifies that Packet.MarshalBinary allocates and returns a correct
 // byte slice for a variety of input data.
-func TestPacketBytes(t *testing.T) {
+func TestPacketMarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		packet      *Packet
@@ -48,16 +48,21 @@ func TestPacketBytes(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		if want, got := tt.buf, tt.packet.Bytes(); !bytes.Equal(want, got) {
+		buf, err := tt.packet.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if want, got := tt.buf, buf; !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected packet bytes:\n- want: %v\n-  got: %v",
 				i, tt.description, want, got)
 		}
 	}
 }
 
-// Test_parsePacket verifies that parsePacket returns appropriate Packets and
-// errors for various input byte slices.
-func Test_parsePacket(t *testing.T) {
+// TestPacketUnmarshalBinary verifies that Packet.UnmarshalBinary returns
+// appropriate Packets and errors for various input byte slices.
+func TestPacketUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		description string
 		buf         []byte
@@ -120,8 +125,8 @@ func Test_parsePacket(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		p, err := parsePacket(tt.buf)
-		if err != nil {
+		p := new(Packet)
+		if err := p.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
 					i, tt.description, want, got)
