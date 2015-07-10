@@ -81,7 +81,7 @@ const (
 type OptionCode uint16
 
 // OptionCode constants which indicate the option codes described in
-// RFC 3315 and RFC 3633.
+// RFC 3315, RFC 3633, and RFC 5970.
 //
 // These option codes are taken from IANA's DHCPv6 parameters registry:
 // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml.
@@ -111,6 +111,12 @@ const (
 	// RFC 3633
 	OptionIAPD     OptionCode = 25
 	OptionIAPrefix OptionCode = 26
+
+	// RFC 5970
+	OptionBootFileURL    OptionCode = 59
+	OptionBootFileParam  OptionCode = 60
+	OptionClientArchType OptionCode = 61
+	OptionNII            OptionCode = 62
 
 	// BUG(mdlayher): add additional option code types defined by IANA
 )
