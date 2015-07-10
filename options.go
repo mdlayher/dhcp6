@@ -12,6 +12,10 @@ import (
 )
 
 var (
+	// errInvalidBootFileParam is returned when OptionBootFileParam contains
+	// extra, invalid data.
+	errInvalidBootFileParam = errors.New("invalid boot file parameters")
+
 	// errInvalidOptions is returned when invalid options data is encountered
 	// during parsing.  The data could report an incorrect length or have
 	// trailing bytes which are not part of the option.
@@ -485,6 +489,39 @@ func (o Options) BootFileURL() (*url.URL, bool, error) {
 
 	u, err := url.Parse(string(v))
 	return u, true, err
+}
+
+// BootFileParam returns the Boot File Parameters Option value, described in
+// RFC 5970, Section 3.2.
+//
+// The slice of strings returned contains any parameters needed for a boot
+// file, such as a root filesystem label or a path to a configuration file for
+// further chainloading.
+//
+// The boolean return value indicates if OptionBootFileParam was present in
+// the Options map.  The error return value indicates if valid boot file
+// parameters could not be parsed from the option.
+func (o Options) BootFileParam() ([]string, bool, error) {
+	v, ok := o.Get(OptionBootFileParam)
+	if !ok {
+		return nil, false, nil
+	}
+
+	// This data is the same format as user/vendor class data, but returned
+	// as a string slice instead.  For now, we will use the same functionality,
+	// but this should probably be refactored into something more general in
+	// the future.
+	bb, err := parseClasses(v)
+	if err != nil {
+		return nil, true, errInvalidBootFileParam
+	}
+
+	ss := make([]string, len(bb))
+	for i := range bb {
+		ss[i] = string(bb[i])
+	}
+
+	return ss, true, nil
 }
 
 // parseClasses parses multiple contiguous byte slices contained in

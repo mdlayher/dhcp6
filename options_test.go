@@ -1541,6 +1541,101 @@ func TestOptionsBootFileURL(t *testing.T) {
 	}
 }
 
+// TestOptionsBootFileParam verifies that Options.BootFileParam properly parses
+// and returns boot file parameter data, if it is available with
+// OptionBootFileParam.
+func TestOptionsBootFileParam(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		param       []string
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionBootFileParam not present in Options map",
+		},
+		{
+			description: "OptionBootFileParam present in Options map, but empty",
+			options: Options{
+				OptionBootFileParam: [][]byte{{}},
+			},
+			err: errInvalidBootFileParam,
+		},
+		{
+			description: "OptionBootFileParam present in Options map, one item, zero length",
+			options: Options{
+				OptionBootFileParam: [][]byte{{
+					0, 0,
+				}},
+			},
+			param: []string{""},
+			ok:    true,
+		},
+		{
+			description: "OptionBootFileParam present in Options map, one item, extra byte",
+			options: Options{
+				OptionBootFileParam: [][]byte{{
+					0, 1, 1, 255,
+				}},
+			},
+			err: errInvalidBootFileParam,
+		},
+		{
+			description: "OptionBootFileParam present in Options map, one item",
+			options: Options{
+				OptionBootFileParam: [][]byte{{
+					0, 3, 'f', 'o', 'o',
+				}},
+			},
+			param: []string{"foo"},
+			ok:    true,
+		},
+		{
+			description: "OptionBootFileParam present in Options map, three items",
+			options: Options{
+				OptionBootFileParam: [][]byte{{
+					0, 1, 'a',
+					0, 2, 'a', 'b',
+					0, 3, 'a', 'b', 'c',
+				}},
+			},
+			param: []string{"a", "ab", "abc"},
+			ok:    true,
+		},
+	}
+
+	for i, tt := range tests {
+		param, ok, err := tt.options.BootFileParam()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.BootFileParam: %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := len(tt.param), len(param); want != got {
+			t.Fatalf("[%02d] test %q, unexpected param slice length: %v != %v",
+				i, tt.description, want, got)
+
+		}
+
+		for j := range param {
+			if want, got := tt.param[j], param[j]; want != got {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.BootFileParam()\n- want: %v\n-  got: %v",
+					i, j, tt.description, want, got)
+			}
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.BootFileParam(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
 // TestOptions_enumerate verifies that Options.enumerate correctly enumerates
 // and sorts an Options map into key/value option pairs.
 func TestOptions_enumerate(t *testing.T) {
