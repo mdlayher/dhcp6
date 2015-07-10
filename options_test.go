@@ -3,7 +3,9 @@ package dhcp6
 import (
 	"bytes"
 	"encoding"
+	"errors"
 	"net"
+	"net/url"
 	"reflect"
 	"testing"
 	"time"
@@ -1471,6 +1473,69 @@ func TestOptionsIAPrefix(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAPrefix(): %v != %v",
+				i, tt.description, want, got)
+		}
+	}
+}
+
+// TestOptionsBootFileURL verifies that Options.BootFileURL properly parses
+// and returns a URL, if it is available with OptionBootFileURL.
+func TestOptionsBootFileURL(t *testing.T) {
+	var tests = []struct {
+		description string
+		options     Options
+		u           *url.URL
+		ok          bool
+		err         error
+	}{
+		{
+			description: "OptionBootFileURL not present in Options map",
+		},
+		{
+			description: "OptionBootFileURL present in Options map, but invalid URL",
+			options: Options{
+				OptionBootFileURL: [][]byte{[]byte("http://www.%a0.com/foo")},
+			},
+			err: &url.Error{
+				Op:  "parse",
+				URL: "http://www.%a0.com/foo",
+				Err: errors.New("hexadecimal escape in host"),
+			},
+		},
+		{
+			description: "OptionBootFileURL present in Options map",
+			options: Options{
+				OptionBootFileURL: [][]byte{[]byte("tftp://192.168.1.1:69")},
+			},
+			u: &url.URL{
+				Scheme: "tftp",
+				Host:   "192.168.1.1:69",
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		u, ok, err := tt.options.BootFileURL()
+		if err != nil {
+			if want, got := tt.err.Error(), err.Error(); want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.BootFileURL(): %v != %v",
+					i, tt.description, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.BootFileURL(): %v != %v",
+				i, tt.description, want, got)
+		}
+		if !ok {
+			continue
+		}
+
+		if want, got := tt.u.String(), u.String(); want != got {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.BootFileURL(): %v != %v",
 				i, tt.description, want, got)
 		}
 	}

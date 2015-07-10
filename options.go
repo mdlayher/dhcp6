@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
+	"net/url"
 	"sort"
 	"time"
 )
@@ -465,6 +466,25 @@ func (o Options) IAPrefix() ([]*IAPrefix, bool, error) {
 	}
 
 	return iaprefix, true, nil
+}
+
+// BootFileURL returns the Boot File URL Option value, described in RFC 5970,
+// Section 3.1.
+//
+// The URL return value contains a URL which may be used by clients to obtain
+// a boot file for PXE.
+//
+// The boolean return value indicates if OptionBootFileURL was present in the
+// Options map.  The error return value indicates if a valid boot file URL
+// could not be parsed from the option.
+func (o Options) BootFileURL() (*url.URL, bool, error) {
+	v, ok := o.Get(OptionBootFileURL)
+	if !ok {
+		return nil, false, nil
+	}
+
+	u, err := url.Parse(string(v))
+	return u, true, err
 }
 
 // parseClasses parses multiple contiguous byte slices contained in
