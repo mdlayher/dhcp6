@@ -11,22 +11,22 @@ import (
 // input values.
 func TestNewIANA(t *testing.T) {
 	var tests = []struct {
-		description string
-		iaid        [4]byte
-		t1          time.Duration
-		t2          time.Duration
-		options     Options
-		iana        *IANA
+		desc    string
+		iaid    [4]byte
+		t1      time.Duration
+		t2      time.Duration
+		options Options
+		iana    *IANA
 	}{
 		{
-			description: "all zero values",
-			iana:        &IANA{},
+			desc: "all zero values",
+			iana: &IANA{},
 		},
 		{
-			description: "[0 1 2 3] IAID, 30s T1, 60s T2, option client ID [0 1]",
-			iaid:        [4]byte{0, 1, 2, 3},
-			t1:          30 * time.Second,
-			t2:          60 * time.Second,
+			desc: "[0 1 2 3] IAID, 30s T1, 60s T2, option client ID [0 1]",
+			iaid: [4]byte{0, 1, 2, 3},
+			t1:   30 * time.Second,
+			t2:   60 * time.Second,
 			options: Options{
 				OptionClientID: [][]byte{[]byte{0, 1}},
 			},
@@ -55,7 +55,7 @@ func TestNewIANA(t *testing.T) {
 
 		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IANA bytes for NewIANA(%v, %v, %v, %v)\n- want: %v\n-  got: %v",
-				i, tt.description, tt.iaid, tt.t1, tt.t2, tt.options, want, got)
+				i, tt.desc, tt.iaid, tt.t1, tt.t2, tt.options, want, got)
 		}
 	}
 }
@@ -64,13 +64,13 @@ func TestNewIANA(t *testing.T) {
 // byte slice for a variety of input data.
 func TestIANAMarshalBinary(t *testing.T) {
 	var tests = []struct {
-		description string
-		iana        *IANA
-		buf         []byte
+		desc string
+		iana *IANA
+		buf  []byte
 	}{
 		{
-			description: "empty IANA",
-			iana:        &IANA{},
+			desc: "empty IANA",
+			iana: &IANA{},
 			buf: []byte{
 				0, 0, 0, 0,
 				0, 0, 0, 0,
@@ -78,7 +78,7 @@ func TestIANAMarshalBinary(t *testing.T) {
 			},
 		},
 		{
-			description: "[1 2 3 4] IAID only",
+			desc: "[1 2 3 4] IAID only",
 			iana: &IANA{
 				IAID: [4]byte{1, 2, 3, 4},
 			},
@@ -89,7 +89,7 @@ func TestIANAMarshalBinary(t *testing.T) {
 			},
 		},
 		{
-			description: "[1 2 3 4] IAID, 30s T1, 60s T2",
+			desc: "[1 2 3 4] IAID, 30s T1, 60s T2",
 			iana: &IANA{
 				IAID: [4]byte{1, 2, 3, 4},
 				T1:   30 * time.Second,
@@ -102,7 +102,7 @@ func TestIANAMarshalBinary(t *testing.T) {
 			},
 		},
 		{
-			description: "[1 2 3 4] IAID, 30s T1, 60s T2, option client ID [0 1]",
+			desc: "[1 2 3 4] IAID, 30s T1, 60s T2, option client ID [0 1]",
 			iana: &IANA{
 				IAID: [4]byte{1, 2, 3, 4},
 				T1:   30 * time.Second,
@@ -128,7 +128,7 @@ func TestIANAMarshalBinary(t *testing.T) {
 
 		if want := tt.buf; !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IANA bytes:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }

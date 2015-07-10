@@ -23,13 +23,13 @@ func TestHardwareTypeLinux(t *testing.T) {
 	}
 
 	var tests = []struct {
-		description string
-		ifi         *net.Interface
-		htype       uint16
-		err         error
+		desc  string
+		ifi   *net.Interface
+		htype uint16
+		err   error
 	}{
 		{
-			description: "fake interface foo0",
+			desc: "fake interface foo0",
 			ifi: &net.Interface{
 				Index: 0,
 				Name:  "foo0",
@@ -38,9 +38,9 @@ func TestHardwareTypeLinux(t *testing.T) {
 			err:   ErrParseHardwareType,
 		},
 		{
-			description: "real interface eth0 with htype 1",
-			ifi:         eth0,
-			htype:       1,
+			desc:  "real interface eth0 with htype 1",
+			ifi:   eth0,
+			htype: 1,
 		},
 	}
 
@@ -49,7 +49,7 @@ func TestHardwareTypeLinux(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for HardwareType(%v): %v != %v",
-					i, tt.description, tt.ifi, want, got)
+					i, tt.desc, tt.ifi, want, got)
 			}
 
 			continue
@@ -57,7 +57,7 @@ func TestHardwareTypeLinux(t *testing.T) {
 
 		if want, got := tt.htype, htype; want != got {
 			t.Fatalf("[%02d] test %q, unexpected error for HardwareType(%v): %v != %v",
-				i, tt.description, tt.ifi, want, got)
+				i, tt.desc, tt.ifi, want, got)
 		}
 	}
 }

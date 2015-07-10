@@ -12,7 +12,7 @@ import (
 // from an input hardware type, time value, and hardware address.
 func TestNewDUIDLLT(t *testing.T) {
 	var tests = []struct {
-		description  string
+		desc         string
 		hardwareType uint16
 		time         time.Time
 		hardwareAddr net.HardwareAddr
@@ -20,12 +20,12 @@ func TestNewDUIDLLT(t *testing.T) {
 		err          error
 	}{
 		{
-			description: "date too early",
-			time:        duidLLTTime.Add(-1 * time.Minute),
-			err:         ErrInvalidDUIDLLTTime,
+			desc: "date too early",
+			time: duidLLTTime.Add(-1 * time.Minute),
+			err:  ErrInvalidDUIDLLTTime,
 		},
 		{
-			description:  "OK",
+			desc:         "OK",
 			hardwareType: 1,
 			time:         duidLLTTime.Add(1 * time.Minute),
 			hardwareAddr: net.HardwareAddr([]byte{0, 1, 0, 1, 0, 1}),
@@ -43,7 +43,7 @@ func TestNewDUIDLLT(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -51,7 +51,7 @@ func TestNewDUIDLLT(t *testing.T) {
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected DUIDLLT:\n- want %v\n-  got %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -60,27 +60,27 @@ func TestNewDUIDLLT(t *testing.T) {
 // appropriate DUIDLLTs and errors for various input byte slices.
 func TestDUIDLLTUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
-		description string
-		buf         []byte
-		duid        *DUIDLLT
-		err         error
+		desc string
+		buf  []byte
+		duid *DUIDLLT
+		err  error
 	}{
 		{
-			description: "nil buffer, invalid DUID-LLT",
-			err:         errInvalidDUIDLLT,
+			desc: "nil buffer, invalid DUID-LLT",
+			err:  errInvalidDUIDLLT,
 		},
 		{
-			description: "empty buffer, invalid DUID-LLT",
-			buf:         []byte{},
-			err:         errInvalidDUIDLLT,
+			desc: "empty buffer, invalid DUID-LLT",
+			buf:  []byte{},
+			err:  errInvalidDUIDLLT,
 		},
 		{
-			description: "length 7 buffer, invalid DUID-LLT",
-			buf:         bytes.Repeat([]byte{0}, 7),
-			err:         errInvalidDUIDLLT,
+			desc: "length 7 buffer, invalid DUID-LLT",
+			buf:  bytes.Repeat([]byte{0}, 7),
+			err:  errInvalidDUIDLLT,
 		},
 		{
-			description: "wrong DUID type",
+			desc: "wrong DUID type",
 			buf: []byte{
 				0, 2,
 				0, 0,
@@ -90,7 +90,7 @@ func TestDUIDLLTUnmarshalBinary(t *testing.T) {
 			err: errInvalidDUIDLLT,
 		},
 		{
-			description: "OK DUIDLLT",
+			desc: "OK DUIDLLT",
 			buf: []byte{
 				0, 1,
 				0, 1,
@@ -111,7 +111,7 @@ func TestDUIDLLTUnmarshalBinary(t *testing.T) {
 		if err := duid.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -119,7 +119,7 @@ func TestDUIDLLTUnmarshalBinary(t *testing.T) {
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected DUID-LLT:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -154,27 +154,27 @@ func TestNewDUIDEN(t *testing.T) {
 // appropriate DUIDENs and errors for various input byte slices.
 func TestDUIDENUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
-		description string
-		buf         []byte
-		duid        *DUIDEN
-		err         error
+		desc string
+		buf  []byte
+		duid *DUIDEN
+		err  error
 	}{
 		{
-			description: "nil buffer, invalid DUID-EN",
-			err:         errInvalidDUIDEN,
+			desc: "nil buffer, invalid DUID-EN",
+			err:  errInvalidDUIDEN,
 		},
 		{
-			description: "empty buffer, invalid DUID-EN",
-			buf:         []byte{},
-			err:         errInvalidDUIDEN,
+			desc: "empty buffer, invalid DUID-EN",
+			buf:  []byte{},
+			err:  errInvalidDUIDEN,
 		},
 		{
-			description: "length 5 buffer, invalid DUID-EN",
-			buf:         bytes.Repeat([]byte{0}, 5),
-			err:         errInvalidDUIDEN,
+			desc: "length 5 buffer, invalid DUID-EN",
+			buf:  bytes.Repeat([]byte{0}, 5),
+			err:  errInvalidDUIDEN,
 		},
 		{
-			description: "wrong DUID type",
+			desc: "wrong DUID type",
 			buf: []byte{
 				0, 3,
 				0, 0, 0, 0,
@@ -182,7 +182,7 @@ func TestDUIDENUnmarshalBinary(t *testing.T) {
 			err: errInvalidDUIDEN,
 		},
 		{
-			description: "OK DUIDEN",
+			desc: "OK DUIDEN",
 			buf: []byte{
 				0, 2,
 				0, 0, 0, 100,
@@ -201,7 +201,7 @@ func TestDUIDENUnmarshalBinary(t *testing.T) {
 		if err := duid.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -209,7 +209,7 @@ func TestDUIDENUnmarshalBinary(t *testing.T) {
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected DUID-EN:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -244,27 +244,27 @@ func TestNewDUIDLL(t *testing.T) {
 // appropriate DUIDLLs and errors for various input byte slices.
 func TestDUIDLLUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
-		description string
-		buf         []byte
-		duid        *DUIDLL
-		err         error
+		desc string
+		buf  []byte
+		duid *DUIDLL
+		err  error
 	}{
 		{
-			description: "nil buffer, invalid DUID-LL",
-			err:         errInvalidDUIDLL,
+			desc: "nil buffer, invalid DUID-LL",
+			err:  errInvalidDUIDLL,
 		},
 		{
-			description: "empty buffer, invalid DUID-LL",
-			buf:         []byte{},
-			err:         errInvalidDUIDLL,
+			desc: "empty buffer, invalid DUID-LL",
+			buf:  []byte{},
+			err:  errInvalidDUIDLL,
 		},
 		{
-			description: "length 7 buffer, invalid DUID-LL",
-			buf:         bytes.Repeat([]byte{0}, 7),
-			err:         errInvalidDUIDLL,
+			desc: "length 7 buffer, invalid DUID-LL",
+			buf:  bytes.Repeat([]byte{0}, 7),
+			err:  errInvalidDUIDLL,
 		},
 		{
-			description: "wrong DUID type",
+			desc: "wrong DUID type",
 			buf: []byte{
 				0, 1,
 				0, 0,
@@ -274,7 +274,7 @@ func TestDUIDLLUnmarshalBinary(t *testing.T) {
 			err: errInvalidDUIDLL,
 		},
 		{
-			description: "OK DUIDLL",
+			desc: "OK DUIDLL",
 			buf: []byte{
 				0, 3,
 				0, 1,
@@ -293,7 +293,7 @@ func TestDUIDLLUnmarshalBinary(t *testing.T) {
 		if err := duid.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -301,7 +301,7 @@ func TestDUIDLLUnmarshalBinary(t *testing.T) {
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected DUID-LL:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -343,32 +343,32 @@ func TestNewDUIDUUID(t *testing.T) {
 // appropriate DUIDUUIDs and errors for various input byte slices.
 func TestDUIDUUIDUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
-		description string
-		buf         []byte
-		duid        *DUIDUUID
-		err         error
+		desc string
+		buf  []byte
+		duid *DUIDUUID
+		err  error
 	}{
 		{
-			description: "nil buffer, invalid DUID-UUID",
-			err:         errInvalidDUIDUUID,
+			desc: "nil buffer, invalid DUID-UUID",
+			err:  errInvalidDUIDUUID,
 		},
 		{
-			description: "empty buffer, invalid DUID-UUID",
-			buf:         []byte{},
-			err:         errInvalidDUIDUUID,
+			desc: "empty buffer, invalid DUID-UUID",
+			buf:  []byte{},
+			err:  errInvalidDUIDUUID,
 		},
 		{
-			description: "length 17 buffer, invalid DUID-UUID",
-			buf:         bytes.Repeat([]byte{0}, 17),
-			err:         errInvalidDUIDUUID,
+			desc: "length 17 buffer, invalid DUID-UUID",
+			buf:  bytes.Repeat([]byte{0}, 17),
+			err:  errInvalidDUIDUUID,
 		},
 		{
-			description: "length 19 buffer, invalid DUID-UUID",
-			buf:         bytes.Repeat([]byte{0}, 19),
-			err:         errInvalidDUIDUUID,
+			desc: "length 19 buffer, invalid DUID-UUID",
+			buf:  bytes.Repeat([]byte{0}, 19),
+			err:  errInvalidDUIDUUID,
 		},
 		{
-			description: "wrong DUID type",
+			desc: "wrong DUID type",
 			buf: []byte{
 				0, 2,
 				0, 0, 0, 0,
@@ -379,7 +379,7 @@ func TestDUIDUUIDUnmarshalBinary(t *testing.T) {
 			err: errInvalidDUIDUUID,
 		},
 		{
-			description: "OK DUIDUUID",
+			desc: "OK DUIDUUID",
 			buf: []byte{
 				0, 4,
 				1, 1, 1, 1,
@@ -404,7 +404,7 @@ func TestDUIDUUIDUnmarshalBinary(t *testing.T) {
 		if err := duid.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -412,7 +412,7 @@ func TestDUIDUUIDUnmarshalBinary(t *testing.T) {
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected DUID-UUID:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }

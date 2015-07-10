@@ -11,22 +11,22 @@ import (
 // input values.
 func TestNewIAPD(t *testing.T) {
 	var tests = []struct {
-		description string
-		iaid        [4]byte
-		t1          time.Duration
-		t2          time.Duration
-		options     Options
-		iapd        *IAPD
+		desc    string
+		iaid    [4]byte
+		t1      time.Duration
+		t2      time.Duration
+		options Options
+		iapd    *IAPD
 	}{
 		{
-			description: "all zero values",
-			iapd:        &IAPD{},
+			desc: "all zero values",
+			iapd: &IAPD{},
 		},
 		{
-			description: "[0 1 2 3] IAID, 30s T1, 60s T2, option client ID [0 1]",
-			iaid:        [4]byte{0, 1, 2, 3},
-			t1:          30 * time.Second,
-			t2:          60 * time.Second,
+			desc: "[0 1 2 3] IAID, 30s T1, 60s T2, option client ID [0 1]",
+			iaid: [4]byte{0, 1, 2, 3},
+			t1:   30 * time.Second,
+			t2:   60 * time.Second,
 			options: Options{
 				OptionClientID: [][]byte{[]byte{0, 1}},
 			},
@@ -55,7 +55,7 @@ func TestNewIAPD(t *testing.T) {
 
 		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAPD bytes for NewIAPD(%v, %v, %v, %v)\n- want: %v\n-  got: %v",
-				i, tt.description, tt.iaid, tt.t1, tt.t2, tt.options, want, got)
+				i, tt.desc, tt.iaid, tt.t1, tt.t2, tt.options, want, got)
 		}
 	}
 }

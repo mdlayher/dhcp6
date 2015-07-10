@@ -11,35 +11,35 @@ import (
 // a correct error for input values.
 func TestNewIAAddr(t *testing.T) {
 	var tests = []struct {
-		description string
-		ip          net.IP
-		preferred   time.Duration
-		valid       time.Duration
-		options     Options
-		iaaddr      *IAAddr
-		err         error
+		desc      string
+		ip        net.IP
+		preferred time.Duration
+		valid     time.Duration
+		options   Options
+		iaaddr    *IAAddr
+		err       error
 	}{
 		{
-			description: "all zero values",
-			iaaddr:      &IAAddr{},
+			desc:   "all zero values",
+			iaaddr: &IAAddr{},
 		},
 		{
-			description: "IPv4 address",
-			ip:          net.IP([]byte{192, 168, 1, 1}),
-			err:         ErrInvalidIP,
+			desc: "IPv4 address",
+			ip:   net.IP([]byte{192, 168, 1, 1}),
+			err:  ErrInvalidIP,
 		},
 		{
-			description: "preferred greater than valid lifetime",
-			ip:          net.IPv6loopback,
-			preferred:   2 * time.Second,
-			valid:       1 * time.Second,
-			err:         ErrInvalidLifetimes,
+			desc:      "preferred greater than valid lifetime",
+			ip:        net.IPv6loopback,
+			preferred: 2 * time.Second,
+			valid:     1 * time.Second,
+			err:       ErrInvalidLifetimes,
 		},
 		{
-			description: "IPv6 localhost, 1s preferred, 2s valid, no options",
-			ip:          net.IPv6loopback,
-			preferred:   1 * time.Second,
-			valid:       2 * time.Second,
+			desc:      "IPv6 localhost, 1s preferred, 2s valid, no options",
+			ip:        net.IPv6loopback,
+			preferred: 1 * time.Second,
+			valid:     2 * time.Second,
 			iaaddr: &IAAddr{
 				IP:                net.IPv6loopback,
 				PreferredLifetime: 1 * time.Second,
@@ -47,10 +47,10 @@ func TestNewIAAddr(t *testing.T) {
 			},
 		},
 		{
-			description: "IPv6 localhost, 1s preferred, 2s valid, option client ID [0 1]",
-			ip:          net.IPv6loopback,
-			preferred:   1 * time.Second,
-			valid:       2 * time.Second,
+			desc:      "IPv6 localhost, 1s preferred, 2s valid, option client ID [0 1]",
+			ip:        net.IPv6loopback,
+			preferred: 1 * time.Second,
+			valid:     2 * time.Second,
 			options: Options{
 				OptionClientID: [][]byte{{0, 1}},
 			},
@@ -70,7 +70,7 @@ func TestNewIAAddr(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for NewIAAddr: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -87,7 +87,7 @@ func TestNewIAAddr(t *testing.T) {
 
 		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr bytes:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -96,23 +96,23 @@ func TestNewIAAddr(t *testing.T) {
 // correct IAAddr value or error for an input buffer.
 func TestIAAddrUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
-		description string
-		buf         []byte
-		iaaddr      *IAAddr
-		err         error
+		desc   string
+		buf    []byte
+		iaaddr *IAAddr
+		err    error
 	}{
 		{
-			description: "one byte IAAddr",
-			buf:         []byte{0},
-			err:         errInvalidIAAddr,
+			desc: "one byte IAAddr",
+			buf:  []byte{0},
+			err:  errInvalidIAAddr,
 		},
 		{
-			description: "23 bytes IAAddr",
-			buf:         bytes.Repeat([]byte{0}, 23),
-			err:         errInvalidIAAddr,
+			desc: "23 bytes IAAddr",
+			buf:  bytes.Repeat([]byte{0}, 23),
+			err:  errInvalidIAAddr,
 		},
 		{
-			description: "preferred greater than valid lifetime",
+			desc: "preferred greater than valid lifetime",
 			buf: append(net.IPv6zero, []byte{
 				0, 0, 0, 2,
 				0, 0, 0, 1,
@@ -120,7 +120,7 @@ func TestIAAddrUnmarshalBinary(t *testing.T) {
 			err: ErrInvalidLifetimes,
 		},
 		{
-			description: "invalid options (length mismatch)",
+			desc: "invalid options (length mismatch)",
 			buf: append(net.IPv6zero, []byte{
 				0, 0, 0, 1,
 				0, 0, 0, 2,
@@ -129,7 +129,7 @@ func TestIAAddrUnmarshalBinary(t *testing.T) {
 			err: errInvalidOptions,
 		},
 		{
-			description: "IPv6 loopback, 1s preferred, 2s valid, no options",
+			desc: "IPv6 loopback, 1s preferred, 2s valid, no options",
 			buf: append(net.IPv6loopback, []byte{
 				0, 0, 0, 1,
 				0, 0, 0, 2,
@@ -141,7 +141,7 @@ func TestIAAddrUnmarshalBinary(t *testing.T) {
 			},
 		},
 		{
-			description: "IPv6 loopback, 1s preferred, 2s valid, option client ID [0 1]",
+			desc: "IPv6 loopback, 1s preferred, 2s valid, option client ID [0 1]",
 			buf: append(net.IPv6loopback, []byte{
 				0, 0, 0, 1,
 				0, 0, 0, 2,
@@ -163,7 +163,7 @@ func TestIAAddrUnmarshalBinary(t *testing.T) {
 		if err := iaaddr.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for parseIAAddr: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -180,7 +180,7 @@ func TestIAAddrUnmarshalBinary(t *testing.T) {
 
 		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr bytes for parseIAAddr:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }

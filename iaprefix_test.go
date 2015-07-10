@@ -11,36 +11,36 @@ import (
 // or returns a correct error for input values.
 func TestNewIAPrefix(t *testing.T) {
 	var tests = []struct {
-		description string
-		preferred   time.Duration
-		valid       time.Duration
-		pLength     uint8
-		prefix      net.IP
-		options     Options
-		iaprefix    *IAPrefix
-		err         error
+		desc      string
+		preferred time.Duration
+		valid     time.Duration
+		pLength   uint8
+		prefix    net.IP
+		options   Options
+		iaprefix  *IAPrefix
+		err       error
 	}{
 		{
-			description: "all zero values",
-			iaprefix:    &IAPrefix{},
+			desc:     "all zero values",
+			iaprefix: &IAPrefix{},
 		},
 		{
-			description: "preferred greater than valid lifetime",
-			preferred:   2 * time.Second,
-			valid:       1 * time.Second,
-			err:         ErrInvalidLifetimes,
+			desc:      "preferred greater than valid lifetime",
+			preferred: 2 * time.Second,
+			valid:     1 * time.Second,
+			err:       ErrInvalidLifetimes,
 		},
 		{
-			description: "IPv4 address",
-			prefix:      net.IP([]byte{192, 168, 1, 1}),
-			err:         ErrInvalidIP,
+			desc:   "IPv4 address",
+			prefix: net.IP([]byte{192, 168, 1, 1}),
+			err:    ErrInvalidIP,
 		},
 		{
-			description: "1s preferred, 2s valid, '2001:db8::/32', no options",
-			preferred:   1 * time.Second,
-			valid:       2 * time.Second,
-			pLength:     32,
-			prefix:      net.ParseIP("2001:db8::"),
+			desc:      "1s preferred, 2s valid, '2001:db8::/32', no options",
+			preferred: 1 * time.Second,
+			valid:     2 * time.Second,
+			pLength:   32,
+			prefix:    net.ParseIP("2001:db8::"),
 			iaprefix: &IAPrefix{
 				PreferredLifetime: 1 * time.Second,
 				ValidLifetime:     2 * time.Second,
@@ -49,11 +49,11 @@ func TestNewIAPrefix(t *testing.T) {
 			},
 		},
 		{
-			description: "1s preferred, 2s valid, '2001:db8::6:1/64', option client ID [0 1]",
-			preferred:   1 * time.Second,
-			valid:       2 * time.Second,
-			pLength:     64,
-			prefix:      net.ParseIP("2001:db8::6:1"),
+			desc:      "1s preferred, 2s valid, '2001:db8::6:1/64', option client ID [0 1]",
+			preferred: 1 * time.Second,
+			valid:     2 * time.Second,
+			pLength:   64,
+			prefix:    net.ParseIP("2001:db8::6:1"),
 			options: Options{
 				OptionClientID: [][]byte{{0, 1}},
 			},
@@ -74,7 +74,7 @@ func TestNewIAPrefix(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for NewIAPrefix: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -91,7 +91,7 @@ func TestNewIAPrefix(t *testing.T) {
 
 		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAPrefix bytes:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -100,23 +100,23 @@ func TestNewIAPrefix(t *testing.T) {
 // a correct IAPrefix value or error for an input buffer.
 func TestIAPrefixUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
-		description string
-		buf         []byte
-		iaprefix    *IAPrefix
-		err         error
+		desc     string
+		buf      []byte
+		iaprefix *IAPrefix
+		err      error
 	}{
 		{
-			description: "one byte IAPrefix",
-			buf:         []byte{0},
-			err:         errInvalidIAPrefix,
+			desc: "one byte IAPrefix",
+			buf:  []byte{0},
+			err:  errInvalidIAPrefix,
 		},
 		{
-			description: "24 bytes IAPrefix",
-			buf:         bytes.Repeat([]byte{0}, 24),
-			err:         errInvalidIAPrefix,
+			desc: "24 bytes IAPrefix",
+			buf:  bytes.Repeat([]byte{0}, 24),
+			err:  errInvalidIAPrefix,
 		},
 		{
-			description: "preferred greater than valid lifetime",
+			desc: "preferred greater than valid lifetime",
 			buf: append([]byte{
 				0, 0, 0, 2,
 				0, 0, 0, 1,
@@ -124,7 +124,7 @@ func TestIAPrefixUnmarshalBinary(t *testing.T) {
 			err: ErrInvalidLifetimes,
 		},
 		{
-			description: "invalid options (length mismatch)",
+			desc: "invalid options (length mismatch)",
 			buf: []byte{
 				0, 0, 0, 1,
 				0, 0, 0, 2,
@@ -136,7 +136,7 @@ func TestIAPrefixUnmarshalBinary(t *testing.T) {
 			err: errInvalidOptions,
 		},
 		{
-			description: "1s preferred, 2s valid, '2001:db8::/32', no options",
+			desc: "1s preferred, 2s valid, '2001:db8::/32', no options",
 			buf: []byte{
 				0, 0, 0, 1,
 				0, 0, 0, 2,
@@ -152,7 +152,7 @@ func TestIAPrefixUnmarshalBinary(t *testing.T) {
 			},
 		},
 		{
-			description: "1s preferred, 2s valid, '2001:db8::6:1/64', option client ID [0 1]",
+			desc: "1s preferred, 2s valid, '2001:db8::6:1/64', option client ID [0 1]",
 			buf: []byte{
 				0, 0, 0, 1,
 				0, 0, 0, 2,
@@ -178,7 +178,7 @@ func TestIAPrefixUnmarshalBinary(t *testing.T) {
 		if err := iaprefix.UnmarshalBinary(tt.buf); err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for parseIAPrefix: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -195,7 +195,7 @@ func TestIAPrefixUnmarshalBinary(t *testing.T) {
 
 		if !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected IAPrefix bytes for parseIAPrefix:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }

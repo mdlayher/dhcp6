@@ -15,14 +15,14 @@ import (
 // appends OptionCode keys with BinaryMarshaler bytes values to an Options map.
 func TestOptionsAddBinaryMarshaler(t *testing.T) {
 	var tests = []struct {
-		description string
-		code        OptionCode
-		bin         encoding.BinaryMarshaler
-		options     Options
+		desc    string
+		code    OptionCode
+		bin     encoding.BinaryMarshaler
+		options Options
 	}{
 		{
-			description: "DUID-LLT",
-			code:        OptionClientID,
+			desc: "DUID-LLT",
+			code: OptionClientID,
 			bin: &DUIDLLT{
 				Type:         DUIDTypeLLT,
 				HardwareType: 1,
@@ -39,8 +39,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "DUID-EN",
-			code:        OptionClientID,
+			desc: "DUID-EN",
+			code: OptionClientID,
 			bin: &DUIDEN{
 				Type:             DUIDTypeEN,
 				EnterpriseNumber: 100,
@@ -55,8 +55,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "DUID-LL",
-			code:        OptionClientID,
+			desc: "DUID-LL",
+			code: OptionClientID,
 			bin: &DUIDLL{
 				Type:         DUIDTypeLL,
 				HardwareType: 1,
@@ -71,8 +71,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "DUID-UUID",
-			code:        OptionClientID,
+			desc: "DUID-UUID",
+			code: OptionClientID,
 			bin: &DUIDUUID{
 				Type: DUIDTypeUUID,
 				UUID: [16]byte{
@@ -93,8 +93,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "IA_NA",
-			code:        OptionIANA,
+			desc: "IA_NA",
+			code: OptionIANA,
 			bin: &IANA{
 				IAID: [4]byte{0, 1, 2, 3},
 				T1:   30 * time.Second,
@@ -109,8 +109,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "IA_TA",
-			code:        OptionIATA,
+			desc: "IA_TA",
+			code: OptionIATA,
 			bin: &IATA{
 				IAID: [4]byte{0, 1, 2, 3},
 			},
@@ -121,8 +121,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "IAAddr",
-			code:        OptionIAAddr,
+			desc: "IAAddr",
+			code: OptionIAAddr,
 			bin: &IAAddr{
 				IP:                net.IPv6loopback,
 				PreferredLifetime: 30 * time.Second,
@@ -137,8 +137,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "StatusCode",
-			code:        OptionStatusCode,
+			desc: "StatusCode",
+			code: OptionStatusCode,
 			bin: &StatusCode{
 				Code:    StatusSuccess,
 				Message: "hello world",
@@ -151,8 +151,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "IA_PD",
-			code:        OptionIAPD,
+			desc: "IA_PD",
+			code: OptionIAPD,
 			bin: &IAPD{
 				IAID: [4]byte{0, 1, 2, 3},
 				T1:   30 * time.Second,
@@ -167,8 +167,8 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
-			description: "IAPrefix",
-			code:        OptionIAPrefix,
+			desc: "IAPrefix",
+			code: OptionIAPrefix,
 			bin: &IAPrefix{
 				PreferredLifetime: 30 * time.Second,
 				ValidLifetime:     60 * time.Second,
@@ -198,7 +198,7 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 
 		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected Options map:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -207,12 +207,12 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 // key/value Option pairs to an Options map.
 func TestOptionsAddRaw(t *testing.T) {
 	var tests = []struct {
-		description string
-		kv          []option
-		options     Options
+		desc    string
+		kv      []option
+		options Options
 	}{
 		{
-			description: "one key/value pair",
+			desc: "one key/value pair",
 			kv: []option{
 				{
 					Code: 1,
@@ -224,7 +224,7 @@ func TestOptionsAddRaw(t *testing.T) {
 			},
 		},
 		{
-			description: "two key/value pairs",
+			desc: "two key/value pairs",
 			kv: []option{
 				{
 					Code: 1,
@@ -241,7 +241,7 @@ func TestOptionsAddRaw(t *testing.T) {
 			},
 		},
 		{
-			description: "three key/value pairs, two with same key",
+			desc: "three key/value pairs, two with same key",
 			kv: []option{
 				{
 					Code: 1,
@@ -271,7 +271,7 @@ func TestOptionsAddRaw(t *testing.T) {
 
 		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected Options map:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -280,28 +280,28 @@ func TestOptionsAddRaw(t *testing.T) {
 // for a given key, if the value is not empty in an Options map.
 func TestOptionsGet(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		key         OptionCode
-		value       []byte
-		ok          bool
+		desc    string
+		options Options
+		key     OptionCode
+		value   []byte
+		ok      bool
 	}{
 		{
-			description: "nil Options map",
+			desc: "nil Options map",
 		},
 		{
-			description: "empty Options map",
-			options:     Options{},
+			desc:    "empty Options map",
+			options: Options{},
 		},
 		{
-			description: "value not present in Options map",
+			desc: "value not present in Options map",
 			options: Options{
 				2: [][]byte{[]byte("foo")},
 			},
 			key: 1,
 		},
 		{
-			description: "value present in Options map, but zero length value for key",
+			desc: "value present in Options map, but zero length value for key",
 			options: Options{
 				1: [][]byte{},
 			},
@@ -309,7 +309,7 @@ func TestOptionsGet(t *testing.T) {
 			ok:  true,
 		},
 		{
-			description: "value present in Options map",
+			desc: "value present in Options map",
 			options: Options{
 				1: [][]byte{[]byte("foo")},
 			},
@@ -318,7 +318,7 @@ func TestOptionsGet(t *testing.T) {
 			ok:    true,
 		},
 		{
-			description: "value present in Options map, with multiple values",
+			desc: "value present in Options map, with multiple values",
 			options: Options{
 				1: [][]byte{[]byte("foo"), []byte("bar")},
 			},
@@ -333,12 +333,12 @@ func TestOptionsGet(t *testing.T) {
 
 		if want, got := tt.value, value; !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.Get(%v):\n- want: %v\n-  got: %v",
-				i, tt.description, tt.key, want, got)
+				i, tt.desc, tt.key, want, got)
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.Get(%v): %v != %v",
-				i, tt.description, tt.key, want, got)
+				i, tt.desc, tt.key, want, got)
 		}
 	}
 }
@@ -347,16 +347,16 @@ func TestOptionsGet(t *testing.T) {
 // a DUID value, if one is available with OptionClientID.
 func TestOptionsClientID(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		duid        DUID
-		ok          bool
+		desc    string
+		options Options
+		duid    DUID
+		ok      bool
 	}{
 		{
-			description: "OptionClientID not present in Options map",
+			desc: "OptionClientID not present in Options map",
 		},
 		{
-			description: "OptionClientID present in Options map",
+			desc: "OptionClientID present in Options map",
 			options: Options{
 				OptionClientID: [][]byte{{
 					0, 3,
@@ -383,12 +383,12 @@ func TestOptionsClientID(t *testing.T) {
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.ClientID():\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.ClientID(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -397,16 +397,16 @@ func TestOptionsClientID(t *testing.T) {
 // a DUID value, if one is available with OptionServerID.
 func TestOptionsServerID(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		duid        DUID
-		ok          bool
+		desc    string
+		options Options
+		duid    DUID
+		ok      bool
 	}{
 		{
-			description: "OptionServerID not present in Options map",
+			desc: "OptionServerID not present in Options map",
 		},
 		{
-			description: "OptionServerID present in Options map",
+			desc: "OptionServerID present in Options map",
 			options: Options{
 				OptionServerID: [][]byte{{
 					0, 3,
@@ -433,12 +433,12 @@ func TestOptionsServerID(t *testing.T) {
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.ServerID():\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.ServerID(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -447,24 +447,24 @@ func TestOptionsServerID(t *testing.T) {
 // returns multiple IANA values, if one or more are available with OptionIANA.
 func TestOptionsIANA(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		iana        []*IANA
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		iana    []*IANA
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionIANA not present in Options map",
+			desc: "OptionIANA not present in Options map",
 		},
 		{
-			description: "OptionIANA present in Options map, but too short",
+			desc: "OptionIANA present in Options map, but too short",
 			options: Options{
 				OptionIANA: [][]byte{bytes.Repeat([]byte{0}, 11)},
 			},
 			err: errInvalidIANA,
 		},
 		{
-			description: "one OptionIANA present in Options map",
+			desc: "one OptionIANA present in Options map",
 			options: Options{
 				OptionIANA: [][]byte{{
 					1, 2, 3, 4,
@@ -482,7 +482,7 @@ func TestOptionsIANA(t *testing.T) {
 			ok: true,
 		},
 		{
-			description: "two OptionIANA present in Options map",
+			desc: "two OptionIANA present in Options map",
 			options: Options{
 				OptionIANA: [][]byte{
 					append(bytes.Repeat([]byte{0}, 12), []byte{0, 1, 0, 1, 1}...),
@@ -510,7 +510,7 @@ func TestOptionsIANA(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.IANA: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -528,13 +528,13 @@ func TestOptionsIANA(t *testing.T) {
 
 			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IANA():\n- want: %v\n-  got: %v",
-					i, j, tt.description, want, got)
+					i, j, tt.desc, want, got)
 			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.IANA(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -543,24 +543,24 @@ func TestOptionsIANA(t *testing.T) {
 // returns multiple IATA values, if one or more are available with OptionIATA.
 func TestOptionsIATA(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		iata        []*IATA
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		iata    []*IATA
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionIATA not present in Options map",
+			desc: "OptionIATA not present in Options map",
 		},
 		{
-			description: "OptionIATA present in Options map, but too short",
+			desc: "OptionIATA present in Options map, but too short",
 			options: Options{
 				OptionIATA: [][]byte{{0, 0, 0}},
 			},
 			err: errInvalidIATA,
 		},
 		{
-			description: "one OptionIATA present in Options map",
+			desc: "one OptionIATA present in Options map",
 			options: Options{
 				OptionIATA: [][]byte{{
 					1, 2, 3, 4,
@@ -574,7 +574,7 @@ func TestOptionsIATA(t *testing.T) {
 			ok: true,
 		},
 		{
-			description: "two OptionIATA present in Options map",
+			desc: "two OptionIATA present in Options map",
 			options: Options{
 				OptionIATA: [][]byte{
 					[]byte{0, 1, 2, 3, 0, 1, 0, 1, 1},
@@ -604,7 +604,7 @@ func TestOptionsIATA(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.IATA: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -622,13 +622,13 @@ func TestOptionsIATA(t *testing.T) {
 
 			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IATA():\n- want: %v\n-  got: %v",
-					i, j, tt.description, want, got)
+					i, j, tt.desc, want, got)
 			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.IATA(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -638,24 +638,24 @@ func TestOptionsIATA(t *testing.T) {
 // OptionIAAddr.
 func TestOptionsIAAddr(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		iaaddr      []*IAAddr
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		iaaddr  []*IAAddr
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionIAAddr not present in Options map",
+			desc: "OptionIAAddr not present in Options map",
 		},
 		{
-			description: "OptionIAAddr present in Options map, but too short",
+			desc: "OptionIAAddr present in Options map, but too short",
 			options: Options{
 				OptionIAAddr: [][]byte{bytes.Repeat([]byte{0}, 23)},
 			},
 			err: errInvalidIAAddr,
 		},
 		{
-			description: "one OptionIAAddr present in Options map",
+			desc: "one OptionIAAddr present in Options map",
 			options: Options{
 				OptionIAAddr: [][]byte{{
 					0, 0, 0, 0,
@@ -681,7 +681,7 @@ func TestOptionsIAAddr(t *testing.T) {
 			ok: true,
 		},
 		{
-			description: "two OptionIAAddr present in Options map",
+			desc: "two OptionIAAddr present in Options map",
 			options: Options{
 				OptionIAAddr: [][]byte{
 					bytes.Repeat([]byte{0}, 24),
@@ -705,7 +705,7 @@ func TestOptionsIAAddr(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.IAAddr: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -723,13 +723,13 @@ func TestOptionsIAAddr(t *testing.T) {
 
 			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAAddr():\n- want: %v\n-  got: %v",
-					i, j, tt.description, want, got)
+					i, j, tt.desc, want, got)
 			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAAddr(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -739,24 +739,24 @@ func TestOptionsIAAddr(t *testing.T) {
 // OptionORO.
 func TestOptionsOptionRequest(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		codes       []OptionCode
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		codes   []OptionCode
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionORO not present in Options map",
+			desc: "OptionORO not present in Options map",
 		},
 		{
-			description: "OptionORO present in Options map, but not even length",
+			desc: "OptionORO present in Options map, but not even length",
 			options: Options{
 				OptionORO: [][]byte{{0}},
 			},
 			err: errInvalidOptionRequest,
 		},
 		{
-			description: "OptionORO present in Options map",
+			desc: "OptionORO present in Options map",
 			options: Options{
 				OptionORO: [][]byte{{0, 1}},
 			},
@@ -764,7 +764,7 @@ func TestOptionsOptionRequest(t *testing.T) {
 			ok:    true,
 		},
 		{
-			description: "OptionORO present in Options map, with multiple values",
+			desc: "OptionORO present in Options map, with multiple values",
 			options: Options{
 				OptionORO: [][]byte{{0, 1, 0, 2, 0, 3}},
 			},
@@ -778,7 +778,7 @@ func TestOptionsOptionRequest(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.OptionRequest(): %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -786,12 +786,12 @@ func TestOptionsOptionRequest(t *testing.T) {
 
 		if want, got := tt.codes, codes; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.OptionRequest():\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.OptionRequest(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -800,31 +800,31 @@ func TestOptionsOptionRequest(t *testing.T) {
 // and returns an integer value, if it is available with OptionPreference.
 func TestOptionsPreference(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		preference  uint8
-		ok          bool
-		err         error
+		desc       string
+		options    Options
+		preference uint8
+		ok         bool
+		err        error
 	}{
 		{
-			description: "OptionPreference not present in Options map",
+			desc: "OptionPreference not present in Options map",
 		},
 		{
-			description: "OptionPreference present in Options map, but too short length",
+			desc: "OptionPreference present in Options map, but too short length",
 			options: Options{
 				OptionPreference: [][]byte{{}},
 			},
 			err: errInvalidPreference,
 		},
 		{
-			description: "OptionPreference present in Options map, but too long length",
+			desc: "OptionPreference present in Options map, but too long length",
 			options: Options{
 				OptionPreference: [][]byte{{0, 1}},
 			},
 			err: errInvalidPreference,
 		},
 		{
-			description: "OptionPreference present in Options map",
+			desc: "OptionPreference present in Options map",
 			options: Options{
 				OptionPreference: [][]byte{{255}},
 			},
@@ -838,7 +838,7 @@ func TestOptionsPreference(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.Preference(): %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -846,12 +846,12 @@ func TestOptionsPreference(t *testing.T) {
 
 		if want, got := tt.preference, preference; want != got {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.Preference(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.Preference(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -860,38 +860,38 @@ func TestOptionsPreference(t *testing.T) {
 // and returns an IPv6 address or an error, if available with OptionUnicast.
 func TestOptionsUnicast(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		ip          net.IP
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		ip      net.IP
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionUnicast not present in Options map",
+			desc: "OptionUnicast not present in Options map",
 		},
 		{
-			description: "OptionUnicast present in Options map, but too short length",
+			desc: "OptionUnicast present in Options map, but too short length",
 			options: Options{
 				OptionUnicast: [][]byte{bytes.Repeat([]byte{0}, 15)},
 			},
 			err: errInvalidUnicast,
 		},
 		{
-			description: "OptionUnicast present in Options map, but too long length",
+			desc: "OptionUnicast present in Options map, but too long length",
 			options: Options{
 				OptionUnicast: [][]byte{bytes.Repeat([]byte{0}, 17)},
 			},
 			err: errInvalidUnicast,
 		},
 		{
-			description: "OptionUnicast present in Options map with IPv4 address",
+			desc: "OptionUnicast present in Options map with IPv4 address",
 			options: Options{
 				OptionUnicast: [][]byte{net.IPv4(192, 168, 1, 1)},
 			},
 			err: errInvalidUnicast,
 		},
 		{
-			description: "OptionUnicast present in Options map with IPv6 address",
+			desc: "OptionUnicast present in Options map with IPv6 address",
 			options: Options{
 				OptionUnicast: [][]byte{net.IPv6loopback},
 			},
@@ -905,7 +905,7 @@ func TestOptionsUnicast(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.Unicast(): %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -913,12 +913,12 @@ func TestOptionsUnicast(t *testing.T) {
 
 		if want, got := tt.ip, ip; !bytes.Equal(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.Unicast():\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.Unicast(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -927,24 +927,24 @@ func TestOptionsUnicast(t *testing.T) {
 // and returns a StatusCode value, if it is available with OptionStatusCode.
 func TestOptionsStatusCode(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		sc          *StatusCode
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		sc      *StatusCode
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionStatusCode not present in Options map",
+			desc: "OptionStatusCode not present in Options map",
 		},
 		{
-			description: "OptionStatusCode present in Options map, but too short length",
+			desc: "OptionStatusCode present in Options map, but too short length",
 			options: Options{
 				OptionStatusCode: [][]byte{{}},
 			},
 			err: errInvalidStatusCode,
 		},
 		{
-			description: "OptionStatusCode present in Options map, no message",
+			desc: "OptionStatusCode present in Options map, no message",
 			options: Options{
 				OptionStatusCode: [][]byte{{0, 0}},
 			},
@@ -954,7 +954,7 @@ func TestOptionsStatusCode(t *testing.T) {
 			ok: true,
 		},
 		{
-			description: "OptionStatusCode present in Options map, with message",
+			desc: "OptionStatusCode present in Options map, with message",
 			options: Options{
 				OptionStatusCode: [][]byte{append([]byte{0, 0}, []byte("deadbeef")...)},
 			},
@@ -971,7 +971,7 @@ func TestOptionsStatusCode(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.StatusCode(): %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -979,12 +979,12 @@ func TestOptionsStatusCode(t *testing.T) {
 
 		if want, got := tt.sc, sc; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.StatusCode():\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.StatusCode(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -993,31 +993,31 @@ func TestOptionsStatusCode(t *testing.T) {
 // returns a time.Duration value, if one is available with OptionElapsedTime.
 func TestOptionsElapsedTime(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		duration    time.Duration
-		ok          bool
-		err         error
+		desc     string
+		options  Options
+		duration time.Duration
+		ok       bool
+		err      error
 	}{
 		{
-			description: "OptionElapsedTime not present in Options map",
+			desc: "OptionElapsedTime not present in Options map",
 		},
 		{
-			description: "OptionElapsedTime present in Options map, but too short",
+			desc: "OptionElapsedTime present in Options map, but too short",
 			options: Options{
 				OptionElapsedTime: [][]byte{{1}},
 			},
 			err: errInvalidElapsedTime,
 		},
 		{
-			description: "OptionElapsedTime present in Options map, but too long",
+			desc: "OptionElapsedTime present in Options map, but too long",
 			options: Options{
 				OptionElapsedTime: [][]byte{{1, 2, 3}},
 			},
 			err: errInvalidElapsedTime,
 		},
 		{
-			description: "OptionElapsedTime present in Options map",
+			desc: "OptionElapsedTime present in Options map",
 			options: Options{
 				OptionElapsedTime: [][]byte{{1, 1}},
 			},
@@ -1031,7 +1031,7 @@ func TestOptionsElapsedTime(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.ElapsedTime: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -1039,12 +1039,12 @@ func TestOptionsElapsedTime(t *testing.T) {
 
 		if want, got := tt.duration, duration; want != got {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.ElapsedTime(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.ElapsedTime(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1053,23 +1053,23 @@ func TestOptionsElapsedTime(t *testing.T) {
 // if OptionRapidCommit was present in Options.
 func TestOptionsRapidCommit(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionRapidCommit not present in Options map",
+			desc: "OptionRapidCommit not present in Options map",
 		},
 		{
-			description: "OptionRapidCommit present in Options map, but non-empty",
+			desc: "OptionRapidCommit present in Options map, but non-empty",
 			options: Options{
 				OptionRapidCommit: [][]byte{{1}},
 			},
 			err: errInvalidRapidCommit,
 		},
 		{
-			description: "OptionRapidCommit present in Options map, empty",
+			desc: "OptionRapidCommit present in Options map, empty",
 			options: Options{
 				OptionRapidCommit: [][]byte{},
 			},
@@ -1082,7 +1082,7 @@ func TestOptionsRapidCommit(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.RapidCommit: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -1090,7 +1090,7 @@ func TestOptionsRapidCommit(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.RapidCommit(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1099,24 +1099,24 @@ func TestOptionsRapidCommit(t *testing.T) {
 // and returns raw user class data, if it is available with OptionUserClass.
 func TestOptionsUserClass(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		classes     [][]byte
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		classes [][]byte
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionUserClass not present in Options map",
+			desc: "OptionUserClass not present in Options map",
 		},
 		{
-			description: "OptionUserClass present in Options map, but empty",
+			desc: "OptionUserClass present in Options map, but empty",
 			options: Options{
 				OptionUserClass: [][]byte{{}},
 			},
 			err: errInvalidClass,
 		},
 		{
-			description: "OptionUserClass present in Options map, one item, zero length",
+			desc: "OptionUserClass present in Options map, one item, zero length",
 			options: Options{
 				OptionUserClass: [][]byte{{
 					0, 0,
@@ -1126,7 +1126,7 @@ func TestOptionsUserClass(t *testing.T) {
 			ok:      true,
 		},
 		{
-			description: "OptionUserClass present in Options map, one item, extra byte",
+			desc: "OptionUserClass present in Options map, one item, extra byte",
 			options: Options{
 				OptionUserClass: [][]byte{{
 					0, 1, 1, 255,
@@ -1135,7 +1135,7 @@ func TestOptionsUserClass(t *testing.T) {
 			err: errInvalidClass,
 		},
 		{
-			description: "OptionUserClass present in Options map, one item",
+			desc: "OptionUserClass present in Options map, one item",
 			options: Options{
 				OptionUserClass: [][]byte{{
 					0, 1, 1,
@@ -1145,7 +1145,7 @@ func TestOptionsUserClass(t *testing.T) {
 			ok:      true,
 		},
 		{
-			description: "OptionUserClass present in Options map, three items",
+			desc: "OptionUserClass present in Options map, three items",
 			options: Options{
 				OptionUserClass: [][]byte{{
 					0, 1, 1,
@@ -1163,7 +1163,7 @@ func TestOptionsUserClass(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.UserClass: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -1171,20 +1171,20 @@ func TestOptionsUserClass(t *testing.T) {
 
 		if want, got := len(tt.classes), len(classes); want != got {
 			t.Fatalf("[%02d] test %q, unexpected classes slice length: %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 
 		}
 
 		for j := range classes {
 			if want, got := tt.classes[j], classes[j]; !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.UserClass()\n- want: %v\n-  got: %v",
-					i, j, tt.description, want, got)
+					i, j, tt.desc, want, got)
 			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.UserClass(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1193,24 +1193,24 @@ func TestOptionsUserClass(t *testing.T) {
 // and returns raw vendor class data, if it is available with OptionVendorClass.
 func TestOptionsVendorClass(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		classes     [][]byte
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		classes [][]byte
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionVendorClass not present in Options map",
+			desc: "OptionVendorClass not present in Options map",
 		},
 		{
-			description: "OptionVendorClass present in Options map, but empty",
+			desc: "OptionVendorClass present in Options map, but empty",
 			options: Options{
 				OptionVendorClass: [][]byte{{}},
 			},
 			err: errInvalidClass,
 		},
 		{
-			description: "OptionVendorClass present in Options map, one item, zero length",
+			desc: "OptionVendorClass present in Options map, one item, zero length",
 			options: Options{
 				OptionVendorClass: [][]byte{{
 					0, 0,
@@ -1220,7 +1220,7 @@ func TestOptionsVendorClass(t *testing.T) {
 			ok:      true,
 		},
 		{
-			description: "OptionVendorClass present in Options map, one item, extra byte",
+			desc: "OptionVendorClass present in Options map, one item, extra byte",
 			options: Options{
 				OptionVendorClass: [][]byte{{
 					0, 1, 1, 255,
@@ -1229,7 +1229,7 @@ func TestOptionsVendorClass(t *testing.T) {
 			err: errInvalidClass,
 		},
 		{
-			description: "OptionVendorClass present in Options map, one item",
+			desc: "OptionVendorClass present in Options map, one item",
 			options: Options{
 				OptionVendorClass: [][]byte{{
 					0, 1, 1,
@@ -1239,7 +1239,7 @@ func TestOptionsVendorClass(t *testing.T) {
 			ok:      true,
 		},
 		{
-			description: "OptionVendorClass present in Options map, three items",
+			desc: "OptionVendorClass present in Options map, three items",
 			options: Options{
 				OptionVendorClass: [][]byte{{
 					0, 1, 1,
@@ -1257,7 +1257,7 @@ func TestOptionsVendorClass(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.VendorClass: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -1265,20 +1265,20 @@ func TestOptionsVendorClass(t *testing.T) {
 
 		if want, got := len(tt.classes), len(classes); want != got {
 			t.Fatalf("[%02d] test %q, unexpected classes slice length: %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 
 		}
 
 		for j := range classes {
 			if want, got := tt.classes[j], classes[j]; !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.VendorClass()\n- want: %v\n-  got: %v",
-					i, j, tt.description, want, got)
+					i, j, tt.desc, want, got)
 			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.VendorClass(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1287,24 +1287,24 @@ func TestOptionsVendorClass(t *testing.T) {
 // returns multiple IAPD values, if one or more are available with OptionIAPD.
 func TestOptionsIAPD(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		iapd        []*IAPD
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		iapd    []*IAPD
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionIAPD not present in Options map",
+			desc: "OptionIAPD not present in Options map",
 		},
 		{
-			description: "OptionIAPD present in Options map, but too short",
+			desc: "OptionIAPD present in Options map, but too short",
 			options: Options{
 				OptionIAPD: [][]byte{bytes.Repeat([]byte{0}, 11)},
 			},
 			err: errInvalidIAPD,
 		},
 		{
-			description: "one OptionIAPD present in Options map",
+			desc: "one OptionIAPD present in Options map",
 			options: Options{
 				OptionIAPD: [][]byte{{
 					1, 2, 3, 4,
@@ -1322,7 +1322,7 @@ func TestOptionsIAPD(t *testing.T) {
 			ok: true,
 		},
 		{
-			description: "two OptionIAPD present in Options map",
+			desc: "two OptionIAPD present in Options map",
 			options: Options{
 				OptionIAPD: [][]byte{
 					append(bytes.Repeat([]byte{0}, 12), []byte{0, 1, 0, 1, 1}...),
@@ -1350,7 +1350,7 @@ func TestOptionsIAPD(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.IAPD: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -1368,13 +1368,13 @@ func TestOptionsIAPD(t *testing.T) {
 
 			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAPD():\n- want: %v\n-  got: %v",
-					i, j, tt.description, want, got)
+					i, j, tt.desc, want, got)
 			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAPD(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1384,24 +1384,24 @@ func TestOptionsIAPD(t *testing.T) {
 // OptionIAPrefix.
 func TestOptionsIAPrefix(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		iaprefix    []*IAPrefix
-		ok          bool
-		err         error
+		desc     string
+		options  Options
+		iaprefix []*IAPrefix
+		ok       bool
+		err      error
 	}{
 		{
-			description: "OptionIAPrefix not present in Options map",
+			desc: "OptionIAPrefix not present in Options map",
 		},
 		{
-			description: "OptionIAPrefix present in Options map, but too short",
+			desc: "OptionIAPrefix present in Options map, but too short",
 			options: Options{
 				OptionIAPrefix: [][]byte{bytes.Repeat([]byte{0}, 24)},
 			},
 			err: errInvalidIAPrefix,
 		},
 		{
-			description: "one OptionIAPrefix present in Options map",
+			desc: "one OptionIAPrefix present in Options map",
 			options: Options{
 				OptionIAPrefix: [][]byte{{
 					0, 0, 0, 30,
@@ -1425,7 +1425,7 @@ func TestOptionsIAPrefix(t *testing.T) {
 			ok: true,
 		},
 		{
-			description: "two OptionIAPrefix present in Options map",
+			desc: "two OptionIAPrefix present in Options map",
 			options: Options{
 				OptionIAPrefix: [][]byte{
 					bytes.Repeat([]byte{0}, 25),
@@ -1449,7 +1449,7 @@ func TestOptionsIAPrefix(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.IAPrefix: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -1467,13 +1467,13 @@ func TestOptionsIAPrefix(t *testing.T) {
 
 			if !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAPrefix():\n- want: %v\n-  got: %v",
-					i, j, tt.description, want, got)
+					i, j, tt.desc, want, got)
 			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAPrefix(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1482,17 +1482,17 @@ func TestOptionsIAPrefix(t *testing.T) {
 // and returns a URL, if it is available with OptionBootFileURL.
 func TestOptionsBootFileURL(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		u           *url.URL
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		u       *url.URL
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionBootFileURL not present in Options map",
+			desc: "OptionBootFileURL not present in Options map",
 		},
 		{
-			description: "OptionBootFileURL present in Options map, but invalid URL",
+			desc: "OptionBootFileURL present in Options map, but invalid URL",
 			options: Options{
 				OptionBootFileURL: [][]byte{[]byte("http://www.%a0.com/foo")},
 			},
@@ -1503,7 +1503,7 @@ func TestOptionsBootFileURL(t *testing.T) {
 			},
 		},
 		{
-			description: "OptionBootFileURL present in Options map",
+			desc: "OptionBootFileURL present in Options map",
 			options: Options{
 				OptionBootFileURL: [][]byte{[]byte("tftp://192.168.1.1:69")},
 			},
@@ -1520,7 +1520,7 @@ func TestOptionsBootFileURL(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err.Error(), err.Error(); want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.BootFileURL(): %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -1528,7 +1528,7 @@ func TestOptionsBootFileURL(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.BootFileURL(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 		if !ok {
 			continue
@@ -1536,7 +1536,7 @@ func TestOptionsBootFileURL(t *testing.T) {
 
 		if want, got := tt.u.String(), u.String(); want != got {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.BootFileURL(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1546,24 +1546,24 @@ func TestOptionsBootFileURL(t *testing.T) {
 // OptionBootFileParam.
 func TestOptionsBootFileParam(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		param       []string
-		ok          bool
-		err         error
+		desc    string
+		options Options
+		param   []string
+		ok      bool
+		err     error
 	}{
 		{
-			description: "OptionBootFileParam not present in Options map",
+			desc: "OptionBootFileParam not present in Options map",
 		},
 		{
-			description: "OptionBootFileParam present in Options map, but empty",
+			desc: "OptionBootFileParam present in Options map, but empty",
 			options: Options{
 				OptionBootFileParam: [][]byte{{}},
 			},
 			err: errInvalidBootFileParam,
 		},
 		{
-			description: "OptionBootFileParam present in Options map, one item, zero length",
+			desc: "OptionBootFileParam present in Options map, one item, zero length",
 			options: Options{
 				OptionBootFileParam: [][]byte{{
 					0, 0,
@@ -1573,7 +1573,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 			ok:    true,
 		},
 		{
-			description: "OptionBootFileParam present in Options map, one item, extra byte",
+			desc: "OptionBootFileParam present in Options map, one item, extra byte",
 			options: Options{
 				OptionBootFileParam: [][]byte{{
 					0, 1, 1, 255,
@@ -1582,7 +1582,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 			err: errInvalidBootFileParam,
 		},
 		{
-			description: "OptionBootFileParam present in Options map, one item",
+			desc: "OptionBootFileParam present in Options map, one item",
 			options: Options{
 				OptionBootFileParam: [][]byte{{
 					0, 3, 'f', 'o', 'o',
@@ -1592,7 +1592,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 			ok:    true,
 		},
 		{
-			description: "OptionBootFileParam present in Options map, three items",
+			desc: "OptionBootFileParam present in Options map, three items",
 			options: Options{
 				OptionBootFileParam: [][]byte{{
 					0, 1, 'a',
@@ -1610,7 +1610,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for Options.BootFileParam: %v != %v",
-					i, tt.description, want, got)
+					i, tt.desc, want, got)
 			}
 
 			continue
@@ -1618,20 +1618,20 @@ func TestOptionsBootFileParam(t *testing.T) {
 
 		if want, got := len(tt.param), len(param); want != got {
 			t.Fatalf("[%02d] test %q, unexpected param slice length: %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 
 		}
 
 		for j := range param {
 			if want, got := tt.param[j], param[j]; want != got {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.BootFileParam()\n- want: %v\n-  got: %v",
-					i, j, tt.description, want, got)
+					i, j, tt.desc, want, got)
 			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.BootFileParam(): %v != %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1640,12 +1640,12 @@ func TestOptionsBootFileParam(t *testing.T) {
 // and sorts an Options map into key/value option pairs.
 func TestOptions_enumerate(t *testing.T) {
 	var tests = []struct {
-		description string
-		options     Options
-		kv          optslice
+		desc    string
+		options Options
+		kv      optslice
 	}{
 		{
-			description: "one key/value pair",
+			desc: "one key/value pair",
 			options: Options{
 				1: [][]byte{[]byte("foo")},
 			},
@@ -1657,7 +1657,7 @@ func TestOptions_enumerate(t *testing.T) {
 			},
 		},
 		{
-			description: "two key/value pairs",
+			desc: "two key/value pairs",
 			options: Options{
 				1: [][]byte{[]byte("foo")},
 				2: [][]byte{[]byte("bar")},
@@ -1674,7 +1674,7 @@ func TestOptions_enumerate(t *testing.T) {
 			},
 		},
 		{
-			description: "four key/value pairs, two with same key",
+			desc: "four key/value pairs, two with same key",
 			options: Options{
 				1: [][]byte{[]byte("foo"), []byte("baz")},
 				3: [][]byte{[]byte("qux")},
@@ -1704,7 +1704,7 @@ func TestOptions_enumerate(t *testing.T) {
 	for i, tt := range tests {
 		if want, got := tt.kv, tt.options.enumerate(); !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected key/value options:\n- want: %v\n-  got: %v",
-				i, tt.description, want, got)
+				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1714,49 +1714,49 @@ func TestOptions_enumerate(t *testing.T) {
 // slice cannot contain options.
 func Test_parseOptions(t *testing.T) {
 	var tests = []struct {
-		description string
-		buf         []byte
-		options     Options
-		err         error
+		desc    string
+		buf     []byte
+		options Options
+		err     error
 	}{
 		{
-			description: "nil options bytes",
-			options:     Options{},
+			desc:    "nil options bytes",
+			options: Options{},
 		},
 		{
-			description: "empty options bytes",
-			buf:         []byte{},
-			options:     Options{},
+			desc:    "empty options bytes",
+			buf:     []byte{},
+			options: Options{},
 		},
 		{
-			description: "too short options bytes",
-			buf:         []byte{0},
-			err:         errInvalidOptions,
+			desc: "too short options bytes",
+			buf:  []byte{0},
+			err:  errInvalidOptions,
 		},
 		{
-			description: "zero code, zero length option bytes",
-			buf:         []byte{0, 0, 0, 0},
-			options:     Options{},
+			desc:    "zero code, zero length option bytes",
+			buf:     []byte{0, 0, 0, 0},
+			options: Options{},
 		},
 		{
-			description: "zero code, zero length option bytes with trailing byte",
-			buf:         []byte{0, 0, 0, 0, 1},
-			err:         errInvalidOptions,
+			desc: "zero code, zero length option bytes with trailing byte",
+			buf:  []byte{0, 0, 0, 0, 1},
+			err:  errInvalidOptions,
 		},
 		{
-			description: "zero code, length 3, incorrect length for data",
-			buf:         []byte{0, 0, 0, 3, 1, 2},
-			err:         errInvalidOptions,
+			desc: "zero code, length 3, incorrect length for data",
+			buf:  []byte{0, 0, 0, 3, 1, 2},
+			err:  errInvalidOptions,
 		},
 		{
-			description: "client ID, length 1, value [1]",
-			buf:         []byte{0, 1, 0, 1, 1},
+			desc: "client ID, length 1, value [1]",
+			buf:  []byte{0, 1, 0, 1, 1},
 			options: Options{
 				OptionClientID: [][]byte{{1}},
 			},
 		},
 		{
-			description: "client ID, length 2, value [1 1] + server ID, length 3, value [1 2 3]",
+			desc: "client ID, length 2, value [1 1] + server ID, length 3, value [1 2 3]",
 			buf: []byte{
 				0, 1, 0, 2, 1, 1,
 				0, 2, 0, 3, 1, 2, 3,
@@ -1773,14 +1773,14 @@ func Test_parseOptions(t *testing.T) {
 		if err != nil {
 			if want, got := tt.err, err; want != got {
 				t.Fatalf("[%02d] test %q, unexpected error for parseOptions(%v): %v != %v",
-					i, tt.description, tt.buf, want, got)
+					i, tt.desc, tt.buf, want, got)
 			}
 
 			continue
 		}
 		if want, got := tt.options, options; !reflect.DeepEqual(want, got) {
 			t.Fatalf("[%02d] test %q, unexpected Options map for parseOptions(%v):\n- want: %v\n-  got: %v",
-				i, tt.description, tt.buf, want, got)
+				i, tt.desc, tt.buf, want, got)
 		}
 	}
 }
