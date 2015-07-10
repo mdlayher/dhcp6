@@ -3,7 +3,6 @@ package dhcp6
 import (
 	"bytes"
 	"encoding"
-	"errors"
 	"net"
 	"net/url"
 	"reflect"
@@ -1486,7 +1485,7 @@ func TestOptionsBootFileURL(t *testing.T) {
 		options Options
 		u       *url.URL
 		ok      bool
-		err     error
+		err     *url.Error
 	}{
 		{
 			desc: "OptionBootFileURL not present in Options map",
@@ -1499,7 +1498,6 @@ func TestOptionsBootFileURL(t *testing.T) {
 			err: &url.Error{
 				Op:  "parse",
 				URL: "http://www.%a0.com/foo",
-				Err: errors.New("hexadecimal escape in host"),
 			},
 		},
 		{
@@ -1518,8 +1516,13 @@ func TestOptionsBootFileURL(t *testing.T) {
 	for i, tt := range tests {
 		u, ok, err := tt.options.BootFileURL()
 		if err != nil {
-			if want, got := tt.err.Error(), err.Error(); want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.BootFileURL(): %v != %v",
+			uerr, ok := err.(*url.Error)
+			if !ok {
+				t.Fatalf("[%02d] test %q, not *url.Error", i, tt.desc)
+			}
+
+			if want, got := tt.err.Op, uerr.Op; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error Op for Options.BootFileURL(): %v != %v",
 					i, tt.desc, want, got)
 			}
 
