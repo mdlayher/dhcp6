@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/url"
 	"sort"
-	"time"
 )
 
 var (
@@ -20,10 +19,6 @@ var (
 	// during parsing.  The data could report an incorrect length or have
 	// trailing bytes which are not part of the option.
 	errInvalidOptions = errors.New("invalid options data")
-
-	// errInvalidElapsedTime is returned when a valid duration cannot be parsed
-	// from OptionElapsedTime, because too many or too few bytes are present.
-	errInvalidElapsedTime = errors.New("invalid option value for OptionElapsedTime")
 
 	// errInvalidOptionRequest is returned when a valid duration cannot be parsed
 	// from OptionOptionRequest, because an odd number of bytes are present.
@@ -279,20 +274,15 @@ func (o Options) Preference() (Preference, bool, error) {
 // The boolean return value indicates if OptionElapsedTime was present in the
 // Options map.  The error return value indicates if a valid duration could be
 // parsed from the option.
-func (o Options) ElapsedTime() (time.Duration, bool, error) {
+func (o Options) ElapsedTime() (ElapsedTime, bool, error) {
 	v, ok := o.Get(OptionElapsedTime)
 	if !ok {
 		return 0, false, nil
 	}
 
-	// Data must be exactly two bytes
-	if len(v) != 2 {
-		return 0, false, errInvalidElapsedTime
-	}
-
-	// Time is reported in hundredths of seconds, so we convert
-	// it to a more manageable milliseconds
-	return time.Duration(binary.BigEndian.Uint16(v)) * 10 * time.Millisecond, true, nil
+	t := new(ElapsedTime)
+	err := t.UnmarshalBinary(v)
+	return *t, true, err
 }
 
 // Unicast returns the IP from a Unicast Option value, described in RFC 3315,

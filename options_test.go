@@ -145,6 +145,14 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
+			desc: "ElapsedTime",
+			code: OptionElapsedTime,
+			bin:  ElapsedTime(60 * time.Second),
+			options: Options{
+				OptionElapsedTime: [][]byte{{23, 112}},
+			},
+		},
+		{
 			desc: "StatusCode",
 			code: OptionStatusCode,
 			bin: &StatusCode{
@@ -1003,7 +1011,7 @@ func TestOptionsElapsedTime(t *testing.T) {
 	var tests = []struct {
 		desc     string
 		options  Options
-		duration time.Duration
+		duration ElapsedTime
 		ok       bool
 		err      error
 	}{
@@ -1015,21 +1023,21 @@ func TestOptionsElapsedTime(t *testing.T) {
 			options: Options{
 				OptionElapsedTime: [][]byte{{1}},
 			},
-			err: errInvalidElapsedTime,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionElapsedTime present in Options map, but too long",
 			options: Options{
 				OptionElapsedTime: [][]byte{{1, 2, 3}},
 			},
-			err: errInvalidElapsedTime,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionElapsedTime present in Options map",
 			options: Options{
 				OptionElapsedTime: [][]byte{{1, 1}},
 			},
-			duration: 2570 * time.Millisecond,
+			duration: ElapsedTime(2570 * time.Millisecond),
 			ok:       true,
 		},
 	}
