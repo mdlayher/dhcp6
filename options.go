@@ -29,10 +29,6 @@ var (
 	// from OptionOptionRequest, because an odd number of bytes are present.
 	errInvalidOptionRequest = errors.New("invalid option value for OptionRequestOption")
 
-	// errInvalidPreference is returned when a valid integer cannot be parsed
-	// from OptionPreference, because more or less than one byte are present.
-	errInvalidPreference = errors.New("invalid option value for OptionPreference")
-
 	// errInvalidRapidCommit is returned when OptionRapidCommit contains any
 	// amount of additional data, since it should be completely empty.
 	errInvalidRapidCommit = errors.New("invalid option value for OptionRapidCommit")
@@ -263,18 +259,15 @@ func (o Options) OptionRequest() ([]OptionCode, bool, error) {
 // The boolean return value indicates if OptionPreference was present in the
 // Options map.  The error return value indicates if a valid integer value
 // could not be parsed from the option.
-func (o Options) Preference() (uint8, bool, error) {
+func (o Options) Preference() (Preference, bool, error) {
 	v, ok := o.Get(OptionPreference)
 	if !ok {
 		return 0, false, nil
 	}
 
-	// Length must be exactly 1
-	if len(v) != 1 {
-		return 0, false, errInvalidPreference
-	}
-
-	return uint8(v[0]), true, nil
+	p := new(Preference)
+	err := p.UnmarshalBinary(v)
+	return *p, true, err
 }
 
 // ElapsedTime returns the Elapsed Time Option value, as described in RFC 3315,

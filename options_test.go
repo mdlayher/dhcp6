@@ -3,6 +3,7 @@ package dhcp6
 import (
 	"bytes"
 	"encoding"
+	"io"
 	"net"
 	"net/url"
 	"reflect"
@@ -133,6 +134,14 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 					0, 0, 0, 30,
 					0, 0, 0, 60,
 				}},
+			},
+		},
+		{
+			desc: "Preference",
+			code: OptionPreference,
+			bin:  Preference(255),
+			options: Options{
+				OptionPreference: [][]byte{{255}},
 			},
 		},
 		{
@@ -801,7 +810,7 @@ func TestOptionsPreference(t *testing.T) {
 	var tests = []struct {
 		desc       string
 		options    Options
-		preference uint8
+		preference Preference
 		ok         bool
 		err        error
 	}{
@@ -813,14 +822,14 @@ func TestOptionsPreference(t *testing.T) {
 			options: Options{
 				OptionPreference: [][]byte{{}},
 			},
-			err: errInvalidPreference,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionPreference present in Options map, but too long length",
 			options: Options{
 				OptionPreference: [][]byte{{0, 1}},
 			},
-			err: errInvalidPreference,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionPreference present in Options map",
