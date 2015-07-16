@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
+	"net/url"
 	"time"
 )
 
@@ -145,5 +146,29 @@ func (d *Data) UnmarshalBinary(b []byte) error {
 	}
 
 	*d = data
+	return nil
+}
+
+// A URL is a uniform resource locater.  The URL type is provided for
+// convenience. It can be used to easily add URLs to an Options map.
+type URL url.URL
+
+// MarshalBinary allocates a byte slice containing the data from a URL.
+func (u URL) MarshalBinary() ([]byte, error) {
+	uu := url.URL(u)
+	return []byte(uu.String()), nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into an URL.
+//
+// If the byte slice is not an URLv6 address, io.ErrUnexpectedEOF is
+// returned.
+func (u *URL) UnmarshalBinary(b []byte) error {
+	uu, err := url.Parse(string(b))
+	if err != nil {
+		return err
+	}
+
+	*u = URL(*uu)
 	return nil
 }

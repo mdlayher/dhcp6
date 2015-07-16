@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"net/url"
 	"sort"
 )
 
@@ -447,13 +446,14 @@ func (o Options) IAPrefix() ([]*IAPrefix, bool, error) {
 // The boolean return value indicates if OptionBootFileURL was present in the
 // Options map.  The error return value indicates if a valid boot file URL
 // could not be parsed from the option.
-func (o Options) BootFileURL() (*url.URL, bool, error) {
+func (o Options) BootFileURL() (*URL, bool, error) {
 	v, ok := o.Get(OptionBootFileURL)
 	if !ok {
 		return nil, false, nil
 	}
 
-	u, err := url.Parse(string(v))
+	u := new(URL)
+	err := u.UnmarshalBinary(v)
 	return u, true, err
 }
 

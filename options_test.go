@@ -239,6 +239,17 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 				}},
 			},
 		},
+		{
+			desc: "URL",
+			code: OptionBootFileURL,
+			bin: &URL{
+				Scheme: "tftp",
+				Host:   "192.168.1.1:69",
+			},
+			options: Options{
+				OptionBootFileURL: [][]byte{[]byte("tftp://192.168.1.1:69")},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -1589,7 +1600,9 @@ func TestOptionsBootFileURL(t *testing.T) {
 			continue
 		}
 
-		if want, got := tt.u.String(), u.String(); want != got {
+		ttuu := url.URL(*tt.u)
+		uu := url.URL(*u)
+		if want, got := ttuu.String(), uu.String(); want != got {
 			t.Fatalf("[%02d] test %q, unexpected value for Options.BootFileURL(): %v != %v",
 				i, tt.desc, want, got)
 		}
