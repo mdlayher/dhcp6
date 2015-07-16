@@ -178,6 +178,14 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
+			desc: "RapidCommit",
+			code: OptionRapidCommit,
+			bin:  nil,
+			options: Options{
+				OptionRapidCommit: [][]byte{nil},
+			},
+		},
+		{
 			desc: "IA_PD",
 			code: OptionIAPD,
 			bin: &IAPD{

@@ -46,6 +46,13 @@ type Options map[OptionCode][][]byte
 // Add adds a new OptionCode key and BinaryMarshaler struct's bytes to the
 // Options map.
 func (o Options) Add(key OptionCode, value encoding.BinaryMarshaler) error {
+	// Special case: since OptionRapidCommit actually has zero length, it is
+	// possible for an option key to appear with no value.
+	if value == nil {
+		o.AddRaw(key, nil)
+		return nil
+	}
+
 	b, err := value.MarshalBinary()
 	if err != nil {
 		return err
