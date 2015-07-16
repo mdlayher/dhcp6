@@ -3,6 +3,7 @@ package dhcp6
 import (
 	"encoding/binary"
 	"io"
+	"net"
 	"time"
 )
 
@@ -57,5 +58,35 @@ func (t *ElapsedTime) UnmarshalBinary(b []byte) error {
 	// Time is reported in hundredths of seconds, so we convert it to a more
 	// manageable milliseconds
 	*t = ElapsedTime(time.Duration(binary.BigEndian.Uint16(b)) * 10 * time.Millisecond)
+	return nil
+}
+
+// An IP is an IPv6 address.  The IP type is provided for convenience.
+// It can be used to easily add IPv6 addresses to an Options map.
+type IP net.IP
+
+// MarshalBinary allocates a byte slice containing the data from a IP.
+func (i IP) MarshalBinary() ([]byte, error) {
+	ip := make([]byte, net.IPv6len)
+	copy(ip, i)
+	return ip, nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into an IP.
+//
+// If the byte slice is not an IPv6 address, io.ErrUnexpectedEOF is
+// returned.
+func (i *IP) UnmarshalBinary(b []byte) error {
+	if len(b) != net.IPv6len {
+		return io.ErrUnexpectedEOF
+	}
+
+	ip := net.IP(b)
+	if ip.To4() != nil {
+		return io.ErrUnexpectedEOF
+	}
+
+	*i = make(IP, net.IPv6len)
+	copy(*i, b)
 	return nil
 }

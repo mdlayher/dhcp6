@@ -153,6 +153,17 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
+			desc: "Unicast IP",
+			code: OptionUnicast,
+			bin:  IP(net.IPv6loopback),
+			options: Options{
+				OptionUnicast: [][]byte{{
+					0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 1,
+				}},
+			},
+		},
+		{
 			desc: "StatusCode",
 			code: OptionStatusCode,
 			bin: &StatusCode{
@@ -878,7 +889,7 @@ func TestOptionsUnicast(t *testing.T) {
 	var tests = []struct {
 		desc    string
 		options Options
-		ip      net.IP
+		ip      IP
 		ok      bool
 		err     error
 	}{
@@ -890,28 +901,28 @@ func TestOptionsUnicast(t *testing.T) {
 			options: Options{
 				OptionUnicast: [][]byte{bytes.Repeat([]byte{0}, 15)},
 			},
-			err: errInvalidUnicast,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionUnicast present in Options map, but too long length",
 			options: Options{
 				OptionUnicast: [][]byte{bytes.Repeat([]byte{0}, 17)},
 			},
-			err: errInvalidUnicast,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionUnicast present in Options map with IPv4 address",
 			options: Options{
 				OptionUnicast: [][]byte{net.IPv4(192, 168, 1, 1)},
 			},
-			err: errInvalidUnicast,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionUnicast present in Options map with IPv6 address",
 			options: Options{
 				OptionUnicast: [][]byte{net.IPv6loopback},
 			},
-			ip: net.IPv6loopback,
+			ip: IP(net.IPv6loopback),
 			ok: true,
 		},
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding"
 	"encoding/binary"
 	"errors"
-	"net"
 	"net/url"
 	"sort"
 )
@@ -294,24 +293,15 @@ func (o Options) ElapsedTime() (ElapsedTime, bool, error) {
 // The boolean return value indicates if OptionUnicast was present in the
 // Options map.  The error return value indicates if a valid IPv6 address
 // could not be parsed from the option.
-func (o Options) Unicast() (net.IP, bool, error) {
+func (o Options) Unicast() (IP, bool, error) {
 	v, ok := o.Get(OptionUnicast)
 	if !ok {
 		return nil, false, nil
 	}
 
-	// IP must be be exactly 16 bytes
-	if len(v) != 16 {
-		return nil, false, errInvalidUnicast
-	}
-
-	// IP must not be IPv4 address
-	ip := net.IP(v)
-	if ip.To4() != nil {
-		return nil, false, errInvalidUnicast
-	}
-
-	return ip, true, nil
+	var ip IP
+	err := ip.UnmarshalBinary(v)
+	return ip, true, err
 }
 
 // StatusCode returns the Status Code Option value, described in RFC 3315,
