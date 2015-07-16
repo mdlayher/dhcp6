@@ -32,7 +32,7 @@ func (o Options) Add(key OptionCode, value encoding.BinaryMarshaler) error {
 	// Special case: since OptionRapidCommit actually has zero length, it is
 	// possible for an option key to appear with no value.
 	if value == nil {
-		o.AddRaw(key, nil)
+		o.addRaw(key, nil)
 		return nil
 	}
 
@@ -41,13 +41,13 @@ func (o Options) Add(key OptionCode, value encoding.BinaryMarshaler) error {
 		return err
 	}
 
-	o.AddRaw(key, b)
+	o.addRaw(key, b)
 	return nil
 }
 
-// AddRaw adds a new OptionCode key and raw value byte slice to the
+// addRaw adds a new OptionCode key and raw value byte slice to the
 // Options map.
-func (o Options) AddRaw(key OptionCode, value []byte) {
+func (o Options) addRaw(key OptionCode, value []byte) {
 	o[key] = append(o[key], value)
 }
 
@@ -535,7 +535,7 @@ func parseOptions(b []byte) (Options, error) {
 			return nil, errInvalidOptions
 		}
 
-		options.AddRaw(o.Code, o.Data)
+		options.addRaw(o.Code, o.Data)
 	}
 
 	// Report error for any trailing bytes

@@ -2,6 +2,7 @@ package dhcp6test
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 
 	"github.com/mdlayher/dhcp6"
@@ -14,13 +15,10 @@ func TestRecorder(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
 	clientID := dhcp6.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
-	cb, err := clientID.MarshalBinary()
-	if err != nil {
+	r := NewRecorder(txID)
+	if err := r.Options().Add(dhcp6.OptionClientID, clientID); err != nil {
 		t.Fatal(err)
 	}
-
-	r := NewRecorder(txID)
-	r.Options().AddRaw(dhcp6.OptionClientID, cb)
 
 	if _, err := r.Send(mt); err != nil {
 		t.Fatal(err)
@@ -33,11 +31,14 @@ func TestRecorder(t *testing.T) {
 		t.Fatalf("unexpected transaction ID: %v != %v", want, got)
 	}
 
-	duid, ok := r.Options().Get(dhcp6.OptionClientID)
+	duid, ok, err := r.Options().ClientID()
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !ok {
 		t.Fatal("empty client ID option")
 	}
-	if want, got := cb, duid; !bytes.Equal(want, got) {
+	if want, got := clientID, duid; !reflect.DeepEqual(want, got) {
 		t.Fatalf("unexpected client ID: %v != %v", want, got)
 	}
 }

@@ -136,7 +136,7 @@ func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 		TransactionID: txID,
 		Options:       make(Options),
 	}
-	p.Options.AddRaw(OptionClientID, db)
+	p.Options.addRaw(OptionClientID, db)
 
 	pb, err := p.MarshalBinary()
 	if err != nil {
@@ -272,7 +272,7 @@ func TestServeOK(t *testing.T) {
 		TransactionID: txID,
 		Options:       make(Options),
 	}
-	p.Options.AddRaw(OptionClientID, db)
+	p.Options.addRaw(OptionClientID, db)
 
 	pb, err := p.MarshalBinary()
 	if err != nil {
@@ -295,7 +295,7 @@ func TestServeOK(t *testing.T) {
 	// Expect Advertise reply with several options added by server
 	mt := MessageTypeAdvertise
 	w, _, err := testServe(r, nil, true, func(w ResponseSender, r *Request) {
-		w.Options().AddRaw(OptionPreference, []byte{byte(preference)})
+		w.Options().Add(OptionPreference, preference)
 		w.Options().Add(OptionStatusCode, NewStatusCode(sCode, sMsg))
 
 		w.Send(mt)

@@ -39,7 +39,7 @@ func TestParseRequest(t *testing.T) {
 		Length:        int64(len(buf)),
 		RemoteAddr:    "[::1]:546",
 	}
-	r.Options.AddRaw(opt.Code, opt.Data)
+	r.Options.addRaw(opt.Code, opt.Data)
 
 	gotR, err := ParseRequest(buf, addr)
 	if err != nil {

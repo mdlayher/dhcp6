@@ -289,7 +289,7 @@ func (c *conn) serve() {
 
 	// If available in request, add client ID to response
 	if cID, ok := r.Options.Get(OptionClientID); ok {
-		w.options.AddRaw(OptionClientID, cID)
+		w.options.addRaw(OptionClientID, cID)
 	}
 
 	// If set, invoke DHCP handler using request and response

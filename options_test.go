@@ -265,9 +265,9 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 	}
 }
 
-// TestOptionsAddRaw verifies that Options.AddRaw correctly creates or appends
+// TestOptions_addRaw verifies that Options.addRaw correctly creates or appends
 // key/value Option pairs to an Options map.
-func TestOptionsAddRaw(t *testing.T) {
+func TestOptions_addRaw(t *testing.T) {
 	var tests = []struct {
 		desc    string
 		kv      []option
@@ -328,7 +328,7 @@ func TestOptionsAddRaw(t *testing.T) {
 	for i, tt := range tests {
 		o := make(Options)
 		for _, p := range tt.kv {
-			o.AddRaw(p.Code, p.Data)
+			o.addRaw(p.Code, p.Data)
 		}
 
 		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {
