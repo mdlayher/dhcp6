@@ -186,6 +186,22 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			},
 		},
 		{
+			desc: "Data (UserClass, VendorClass, BootFileParam)",
+			code: OptionUserClass,
+			bin: Data{
+				[]byte{0},
+				[]byte{0, 1},
+				[]byte{0, 1, 2},
+			},
+			options: Options{
+				OptionUserClass: [][]byte{{
+					0, 1, 0,
+					0, 2, 0, 1,
+					0, 3, 0, 1, 2,
+				}},
+			},
+		},
+		{
 			desc: "IA_PD",
 			code: OptionIAPD,
 			bin: &IAPD{
@@ -1101,7 +1117,7 @@ func TestOptionsRapidCommit(t *testing.T) {
 			options: Options{
 				OptionRapidCommit: [][]byte{{1}},
 			},
-			err: errInvalidRapidCommit,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionRapidCommit present in Options map, empty",
@@ -1148,7 +1164,7 @@ func TestOptionsUserClass(t *testing.T) {
 			options: Options{
 				OptionUserClass: [][]byte{{}},
 			},
-			err: errInvalidClass,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionUserClass present in Options map, one item, zero length",
@@ -1167,7 +1183,7 @@ func TestOptionsUserClass(t *testing.T) {
 					0, 1, 1, 255,
 				}},
 			},
-			err: errInvalidClass,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionUserClass present in Options map, one item",
@@ -1242,7 +1258,7 @@ func TestOptionsVendorClass(t *testing.T) {
 			options: Options{
 				OptionVendorClass: [][]byte{{}},
 			},
-			err: errInvalidClass,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionVendorClass present in Options map, one item, zero length",
@@ -1261,7 +1277,7 @@ func TestOptionsVendorClass(t *testing.T) {
 					0, 1, 1, 255,
 				}},
 			},
-			err: errInvalidClass,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionVendorClass present in Options map, one item",
@@ -1587,7 +1603,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 	var tests = []struct {
 		desc    string
 		options Options
-		param   []string
+		param   Data
 		ok      bool
 		err     error
 	}{
@@ -1599,7 +1615,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 			options: Options{
 				OptionBootFileParam: [][]byte{{}},
 			},
-			err: errInvalidBootFileParam,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionBootFileParam present in Options map, one item, zero length",
@@ -1608,7 +1624,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 					0, 0,
 				}},
 			},
-			param: []string{""},
+			param: Data{{}},
 			ok:    true,
 		},
 		{
@@ -1618,7 +1634,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 					0, 1, 1, 255,
 				}},
 			},
-			err: errInvalidBootFileParam,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionBootFileParam present in Options map, one item",
@@ -1627,7 +1643,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 					0, 3, 'f', 'o', 'o',
 				}},
 			},
-			param: []string{"foo"},
+			param: Data{[]byte("foo")},
 			ok:    true,
 		},
 		{
@@ -1639,7 +1655,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 					0, 3, 'a', 'b', 'c',
 				}},
 			},
-			param: []string{"a", "ab", "abc"},
+			param: Data{[]byte("a"), []byte("ab"), []byte("abc")},
 			ok:    true,
 		},
 	}
@@ -1662,7 +1678,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 		}
 
 		for j := range param {
-			if want, got := tt.param[j], param[j]; want != got {
+			if want, got := tt.param[j], param[j]; !bytes.Equal(want, got) {
 				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.BootFileParam()\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}

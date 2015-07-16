@@ -1,6 +1,7 @@
 package dhcp6
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 	"net"
@@ -88,5 +89,61 @@ func (i *IP) UnmarshalBinary(b []byte) error {
 
 	*i = make(IP, net.IPv6len)
 	copy(*i, b)
+	return nil
+}
+
+// Data is a raw collection of byte slices, typically carrying user class
+// data, vendor class data, or PXE boot file parameters.
+type Data [][]byte
+
+// MarshalBinary allocates a byte slice containing the data from a Data
+// structure.
+func (d Data) MarshalBinary() ([]byte, error) {
+	// Count number of bytes needed to allocate at once
+	var c int
+	for _, dd := range d {
+		c += 2 + len(dd)
+	}
+
+	b := make([]byte, c)
+	var i int
+
+	for _, dd := range d {
+		// 2 byte: length of data
+		binary.BigEndian.PutUint16(b[i:i+2], uint16(len(dd)))
+		i += 2
+
+		// N bytes: actual raw data
+		copy(b[i:i+len(dd)], dd)
+		i += len(dd)
+	}
+
+	return b, nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into a Data structure.
+// Data is packed in the form:
+//   - 2 bytes: data length
+//   - N bytes: raw data
+func (d *Data) UnmarshalBinary(b []byte) error {
+	data := make(Data, 0)
+
+	// Iterate until not enough bytes remain to parse another length value
+	buf := bytes.NewBuffer(b)
+	for buf.Len() > 1 {
+		data = append(data, buf.Next(int(binary.BigEndian.Uint16(buf.Next(2)))))
+	}
+
+	// At least one instance of class data must be present
+	if len(data) == 0 {
+		return io.ErrUnexpectedEOF
+	}
+
+	// If we encounter any trailing bytes, report an error
+	if buf.Len() != 0 {
+		return io.ErrUnexpectedEOF
+	}
+
+	*d = data
 	return nil
 }

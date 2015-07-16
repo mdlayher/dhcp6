@@ -5,15 +5,12 @@ import (
 	"encoding"
 	"encoding/binary"
 	"errors"
+	"io"
 	"net/url"
 	"sort"
 )
 
 var (
-	// errInvalidBootFileParam is returned when OptionBootFileParam contains
-	// extra, invalid data.
-	errInvalidBootFileParam = errors.New("invalid boot file parameters")
-
 	// errInvalidOptions is returned when invalid options data is encountered
 	// during parsing.  The data could report an incorrect length or have
 	// trailing bytes which are not part of the option.
@@ -22,19 +19,6 @@ var (
 	// errInvalidOptionRequest is returned when a valid duration cannot be parsed
 	// from OptionOptionRequest, because an odd number of bytes are present.
 	errInvalidOptionRequest = errors.New("invalid option value for OptionRequestOption")
-
-	// errInvalidRapidCommit is returned when OptionRapidCommit contains any
-	// amount of additional data, since it should be completely empty.
-	errInvalidRapidCommit = errors.New("invalid option value for OptionRapidCommit")
-
-	// errInvalidUnicast is returned when a valid IPv6 address cannot be
-	// parsed from OptionUnicast, because more or less than 16 bytes are present,
-	// or the IP address indicated is an IPv4 address.
-	errInvalidUnicast = errors.New("invalid option value for OptionUnicast")
-
-	// errInvalidClass is returned when OptionUserClass or OptionVendorClass
-	// contain extra, invalid data.
-	errInvalidClass = errors.New("invalid option value for OptionUserClass or OptionVendorClass")
 )
 
 // Options is a map of OptionCode keys with a slice of byte slice values.
@@ -348,7 +332,7 @@ func (o Options) RapidCommit() (bool, error) {
 	// Data must be completely empty; presence of the Rapid Commit option
 	// indicates it is requested.
 	if len(v) != 0 {
-		return false, errInvalidRapidCommit
+		return false, io.ErrUnexpectedEOF
 	}
 
 	return true, nil
@@ -357,39 +341,41 @@ func (o Options) RapidCommit() (bool, error) {
 // UserClass returns the User Class Option value, described in RFC 3315,
 // Section 22.15.
 //
-// The slice of byte slices returned contains any raw class data present in
+// The Data structure returned contains any raw class data present in
 // the option.
 //
 // The boolean return value indicates if OptionUserClass was present in the
 // Options map.  The error return value indicates if any errors were present
 // in the class data.
-func (o Options) UserClass() ([][]byte, bool, error) {
+func (o Options) UserClass() (Data, bool, error) {
 	v, ok := o.Get(OptionUserClass)
 	if !ok {
 		return nil, false, nil
 	}
 
-	c, err := parseClasses(v)
-	return c, true, err
+	var d Data
+	err := d.UnmarshalBinary(v)
+	return d, true, err
 }
 
 // VendorClass returns the Vendor Class Option value, described in RFC 3315,
-// Section 22.15.
+// Section 22.16.
 //
-// The slice of byte slices returned contains any raw class data present in
+// The Data structure returned contains any raw class data present in
 // the option.
 //
 // The boolean return value indicates if OptionVendorClass was present in the
 // Options map.  The error return value indicates if any errors were present
 // in the class data.
-func (o Options) VendorClass() ([][]byte, bool, error) {
+func (o Options) VendorClass() (Data, bool, error) {
 	v, ok := o.Get(OptionVendorClass)
 	if !ok {
 		return nil, false, nil
 	}
 
-	c, err := parseClasses(v)
-	return c, true, err
+	var d Data
+	err := d.UnmarshalBinary(v)
+	return d, true, err
 }
 
 // IAPD returns the Identity Association for Prefix Delegation Option value,
@@ -474,60 +460,22 @@ func (o Options) BootFileURL() (*url.URL, bool, error) {
 // BootFileParam returns the Boot File Parameters Option value, described in
 // RFC 5970, Section 3.2.
 //
-// The slice of strings returned contains any parameters needed for a boot
+// The Data structure returned contains any parameters needed for a boot
 // file, such as a root filesystem label or a path to a configuration file for
 // further chainloading.
 //
 // The boolean return value indicates if OptionBootFileParam was present in
 // the Options map.  The error return value indicates if valid boot file
 // parameters could not be parsed from the option.
-func (o Options) BootFileParam() ([]string, bool, error) {
+func (o Options) BootFileParam() (Data, bool, error) {
 	v, ok := o.Get(OptionBootFileParam)
 	if !ok {
 		return nil, false, nil
 	}
 
-	// This data is the same format as user/vendor class data, but returned
-	// as a string slice instead.  For now, we will use the same functionality,
-	// but this should probably be refactored into something more general in
-	// the future.
-	bb, err := parseClasses(v)
-	if err != nil {
-		return nil, true, errInvalidBootFileParam
-	}
-
-	ss := make([]string, len(bb))
-	for i := range bb {
-		ss[i] = string(bb[i])
-	}
-
-	return ss, true, nil
-}
-
-// parseClasses parses multiple contiguous byte slices contained in
-// OptionUserClass or OptionVendorClass, of the form:
-//   - 2 bytes: length
-//   - N bytes: class data
-func parseClasses(v []byte) ([][]byte, error) {
-	classes := make([][]byte, 0)
-	buf := bytes.NewBuffer(v)
-
-	// Iterate until not enough bytes remain to parse another length value
-	for buf.Len() > 1 {
-		classes = append(classes, buf.Next(int(binary.BigEndian.Uint16(buf.Next(2)))))
-	}
-
-	// At least one instance of class data must be present
-	if len(classes) == 0 {
-		return nil, errInvalidClass
-	}
-
-	// If we encounter any trailing bytes, report an error
-	if buf.Len() != 0 {
-		return nil, errInvalidClass
-	}
-
-	return classes, nil
+	var d Data
+	err := d.UnmarshalBinary(v)
+	return d, true, err
 }
 
 // byOptionCode implements sort.Interface for optslice.
