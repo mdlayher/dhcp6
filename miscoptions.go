@@ -209,3 +209,47 @@ func (a *ArchTypes) UnmarshalBinary(b []byte) error {
 	*a = arch
 	return nil
 }
+
+// A NII is a Client Network Interface Identifier, as defined in RFC 5970,
+// Section 3.4.
+//
+// A NII is used to indicate a client's level of Universal Network Device
+// Interface (UNDI) support.
+type NII struct {
+	// Type specifies a network interface type.
+	Type uint8
+
+	// Major specifies the UNDI major revisision which this client supports.
+	Major uint8
+
+	// Minor specifies the UNDI minor revision which this client supports.
+	Minor uint8
+}
+
+// MarshalBinary allocates a byte slice containing the data from a NII.
+func (n *NII) MarshalBinary() ([]byte, error) {
+	b := make([]byte, 3)
+
+	b[0] = n.Type
+	b[1] = n.Major
+	b[2] = n.Minor
+
+	return b, nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into a NII.
+//
+// If the byte slice is not exactly 3 bytes in length, io.ErrUnexpectedEOF
+// is returned.
+func (n *NII) UnmarshalBinary(b []byte) error {
+	// Length must be exactly 3
+	if len(b) != 3 {
+		return io.ErrUnexpectedEOF
+	}
+
+	n.Type = b[0]
+	n.Major = b[1]
+	n.Minor = b[2]
+
+	return nil
+}

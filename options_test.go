@@ -262,6 +262,18 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 				OptionClientArchType: [][]byte{[]byte{0, 9, 0, 0, 0, 5}},
 			},
 		},
+		{
+			desc: "NII",
+			code: OptionNII,
+			bin: &NII{
+				Type:  1,
+				Major: 2,
+				Minor: 3,
+			},
+			options: Options{
+				OptionNII: [][]byte{[]byte{1, 2, 3}},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -1791,6 +1803,70 @@ func TestOptionsClientArchType(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.ClientArchType(): %v != %v",
+				i, tt.desc, want, got)
+		}
+	}
+}
+
+// TestOptionsNII verifies that Options.NII properly parses and returns a
+// Network Interface Identifier value, if it is available with OptionNII.
+func TestOptionsNII(t *testing.T) {
+	var tests = []struct {
+		desc    string
+		options Options
+		nii     *NII
+		ok      bool
+		err     error
+	}{
+		{
+			desc: "OptionNII not present in Options map",
+		},
+		{
+			desc: "OptionNII present in Options map, but too short length",
+			options: Options{
+				OptionNII: [][]byte{{1, 2}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "OptionNII present in Options map, but too long length",
+			options: Options{
+				OptionNII: [][]byte{{1, 2, 3, 4}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "OptionNII present in Options map",
+			options: Options{
+				OptionNII: [][]byte{{1, 2, 3}},
+			},
+			nii: &NII{
+				Type:  1,
+				Major: 2,
+				Minor: 3,
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		nii, ok, err := tt.options.NII()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.NII(): %v != %v",
+					i, tt.desc, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := tt.nii, nii; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.NII(): %v != %v",
+				i, tt.desc, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.NII(): %v != %v",
 				i, tt.desc, want, got)
 		}
 	}

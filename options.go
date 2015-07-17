@@ -499,6 +499,26 @@ func (o Options) ClientArchType() (ArchTypes, bool, error) {
 	return a, true, err
 }
 
+// NII returns the Client Network Interface Identifier Option value, described
+// in RFC 5970, Section 3.4.
+//
+// The NII value returned indicates a client's level of Universal Network
+// Device Interface (UNDI) support.
+//
+// The boolean return value indicates if OptionNII was present in
+// the Options map.  The error return value indicates if a valid list of
+// ArchType values could not be parsed from the option.
+func (o Options) NII() (*NII, bool, error) {
+	v, ok := o.Get(OptionNII)
+	if !ok {
+		return nil, false, nil
+	}
+
+	n := new(NII)
+	err := n.UnmarshalBinary(v)
+	return n, true, err
+}
+
 // byOptionCode implements sort.Interface for optslice.
 type byOptionCode optslice
 
