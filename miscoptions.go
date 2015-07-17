@@ -172,3 +172,40 @@ func (u *URL) UnmarshalBinary(b []byte) error {
 	*u = URL(*uu)
 	return nil
 }
+
+// ArchTypes is a slice of ArchType values.  It is provided for convenient
+// marshaling and unmarshaling of a slice of ArchType values from an Options
+// map.
+type ArchTypes []ArchType
+
+// MarshalBinary allocates a byte slice containing the data from ArchTypes.
+func (a ArchTypes) MarshalBinary() ([]byte, error) {
+	// Allocate a single byte slice at once and pack every two bytes
+	// with an element from the ArchTypes slice
+	b := make([]byte, len(a)*2)
+	for i, j := 0, 0; j < len(a); i, j = i+2, j+1 {
+		binary.BigEndian.PutUint16(b[i:i+2], uint16(a[j]))
+	}
+
+	return b, nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into an ArchTypes slice.
+//
+// If the byte slice is less than 2 bytes in length, or is not a length that
+// is divisible by 2, io.ErrUnexpectedEOF is returned.
+func (a *ArchTypes) UnmarshalBinary(b []byte) error {
+	// Length must be at least 2, and divisible by 2
+	if len(b) < 2 || len(b)%2 != 0 {
+		return io.ErrUnexpectedEOF
+	}
+
+	// Allocate ArchTypes at once and unpack every two bytes into an element
+	arch := make(ArchTypes, len(b)/2)
+	for i, j := 0, 0; j < len(b)/2; i, j = i+2, j+1 {
+		arch[j] = ArchType(binary.BigEndian.Uint16(b[i : i+2]))
+	}
+
+	*a = arch
+	return nil
+}

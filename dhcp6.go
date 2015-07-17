@@ -8,7 +8,7 @@ import (
 	"errors"
 )
 
-//go:generate stringer -output=string.go -type=DUIDType,MessageType,Status,OptionCode
+//go:generate stringer -output=string.go -type=ArchType,DUIDType,MessageType,Status,OptionCode
 
 // ErrHardwareTypeNotImplemented is returned when HardwareType is not
 // implemented on the current platform.

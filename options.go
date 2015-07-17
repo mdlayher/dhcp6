@@ -478,6 +478,27 @@ func (o Options) BootFileParam() (Data, bool, error) {
 	return d, true, err
 }
 
+// ClientArchType returns the Client System Architecture Type Option value,
+// described in RFC 5970, Section 3.3.
+//
+// The ArchTypes slice returned contains a list of one or more ArchType values.
+// The first ArchType listed is the client's most preferable value.
+//
+//
+// The boolean return value indicates if OptionClientArchType was present in
+// the Options map.  The error return value indicates if a valid list of
+// ArchType values could not be parsed from the option.
+func (o Options) ClientArchType() (ArchTypes, bool, error) {
+	v, ok := o.Get(OptionClientArchType)
+	if !ok {
+		return nil, false, nil
+	}
+
+	var a ArchTypes
+	err := a.UnmarshalBinary(v)
+	return a, true, err
+}
+
 // byOptionCode implements sort.Interface for optslice.
 type byOptionCode optslice
 

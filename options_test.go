@@ -250,6 +250,18 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 				OptionBootFileURL: [][]byte{[]byte("tftp://192.168.1.1:69")},
 			},
 		},
+		{
+			desc: "ArchTypes",
+			code: OptionClientArchType,
+			bin: ArchTypes{
+				ArchTypeEFIx8664,
+				ArchTypeIntelx86PC,
+				ArchTypeIntelLeanClient,
+			},
+			options: Options{
+				OptionClientArchType: [][]byte{[]byte{0, 9, 0, 0, 0, 5}},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -1699,6 +1711,86 @@ func TestOptionsBootFileParam(t *testing.T) {
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.BootFileParam(): %v != %v",
+				i, tt.desc, want, got)
+		}
+	}
+}
+
+// TestOptionsClientArchType verifies that Options.ClientArchType properly parses
+// and returns client architecture type data, if it is available with
+// OptionClientArchType.
+func TestOptionsClientArchType(t *testing.T) {
+	var tests = []struct {
+		desc    string
+		options Options
+		arch    ArchTypes
+		ok      bool
+		err     error
+	}{
+		{
+			desc: "OptionClientArchType not present in Options map",
+		},
+		{
+			desc: "OptionClientArchType present in Options map, but empty",
+			options: Options{
+				OptionClientArchType: [][]byte{{}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "OptionClientArchType present in Options map, but not divisible by 2",
+			options: Options{
+				OptionClientArchType: [][]byte{{0, 0, 0}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "OptionClientArchType present in Options map, one architecture",
+			options: Options{
+				OptionClientArchType: [][]byte{{0, 9}},
+			},
+			arch: ArchTypes{ArchTypeEFIx8664},
+			ok:   true,
+		},
+		{
+			desc: "OptionClientArchType present in Options map, three architectures",
+			options: Options{
+				OptionClientArchType: [][]byte{{0, 5, 0, 9, 0, 0}},
+			},
+			arch: ArchTypes{
+				ArchTypeIntelLeanClient,
+				ArchTypeEFIx8664,
+				ArchTypeIntelx86PC,
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		arch, ok, err := tt.options.ClientArchType()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.ClientArchType: %v != %v",
+					i, tt.desc, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := len(tt.arch), len(arch); want != got {
+			t.Fatalf("[%02d] test %q, unexpected arch slice length: %v != %v",
+				i, tt.desc, want, got)
+		}
+
+		for j := range arch {
+			if want, got := tt.arch[j], arch[j]; !reflect.DeepEqual(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.ClientArchType()\n- want: %v\n-  got: %v",
+					i, j, tt.desc, want, got)
+			}
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.ClientArchType(): %v != %v",
 				i, tt.desc, want, got)
 		}
 	}
