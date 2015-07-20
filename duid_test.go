@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"bytes"
+	"io"
 	"net"
 	"reflect"
 	"testing"
@@ -67,17 +68,17 @@ func TestDUIDLLTUnmarshalBinary(t *testing.T) {
 	}{
 		{
 			desc: "nil buffer, invalid DUID-LLT",
-			err:  errInvalidDUIDLLT,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "empty buffer, invalid DUID-LLT",
 			buf:  []byte{},
-			err:  errInvalidDUIDLLT,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "length 7 buffer, invalid DUID-LLT",
 			buf:  bytes.Repeat([]byte{0}, 7),
-			err:  errInvalidDUIDLLT,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "wrong DUID type",
@@ -161,17 +162,17 @@ func TestDUIDENUnmarshalBinary(t *testing.T) {
 	}{
 		{
 			desc: "nil buffer, invalid DUID-EN",
-			err:  errInvalidDUIDEN,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "empty buffer, invalid DUID-EN",
 			buf:  []byte{},
-			err:  errInvalidDUIDEN,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "length 5 buffer, invalid DUID-EN",
 			buf:  bytes.Repeat([]byte{0}, 5),
-			err:  errInvalidDUIDEN,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "wrong DUID type",
@@ -251,12 +252,12 @@ func TestDUIDLLUnmarshalBinary(t *testing.T) {
 	}{
 		{
 			desc: "nil buffer, invalid DUID-LL",
-			err:  errInvalidDUIDLL,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "empty buffer, invalid DUID-LL",
 			buf:  []byte{},
-			err:  errInvalidDUIDLL,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "length 7 buffer, invalid DUID-LL",
@@ -350,22 +351,22 @@ func TestDUIDUUIDUnmarshalBinary(t *testing.T) {
 	}{
 		{
 			desc: "nil buffer, invalid DUID-UUID",
-			err:  errInvalidDUIDUUID,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "empty buffer, invalid DUID-UUID",
 			buf:  []byte{},
-			err:  errInvalidDUIDUUID,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "length 17 buffer, invalid DUID-UUID",
 			buf:  bytes.Repeat([]byte{0}, 17),
-			err:  errInvalidDUIDUUID,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "length 19 buffer, invalid DUID-UUID",
 			buf:  bytes.Repeat([]byte{0}, 19),
-			err:  errInvalidDUIDUUID,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "wrong DUID type",
@@ -427,7 +428,7 @@ func Test_parseDUID(t *testing.T) {
 	}{
 		{
 			buf: []byte{0},
-			err: errInvalidDUID,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			buf: []byte{0, 0},

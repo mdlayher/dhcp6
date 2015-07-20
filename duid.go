@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/binary"
 	"errors"
+	"io"
 	"net"
 	"time"
 )
@@ -15,10 +16,6 @@ const (
 )
 
 var (
-	// errInvalidDUID is returned when not enough bytes are present
-	// to parse a valid DUID from a byte slice.
-	errInvalidDUID = errors.New("not enough bytes for valid DUID")
-
 	// errInvalidDUIDLLT is returned when not enough bytes are present
 	// to parse a valid DUIDLLT from a byte slice, or when the DUID type
 	// found in the byte slice is incorrect.
@@ -168,7 +165,7 @@ func (d *DUIDLLT) MarshalBinary() ([]byte, error) {
 func (d *DUIDLLT) UnmarshalBinary(b []byte) error {
 	// Too short to be valid DUIDLLT
 	if len(b) < 8 {
-		return errInvalidDUIDLLT
+		return io.ErrUnexpectedEOF
 	}
 
 	// Verify DUID type
@@ -235,7 +232,7 @@ func (d *DUIDEN) MarshalBinary() ([]byte, error) {
 func (d *DUIDEN) UnmarshalBinary(b []byte) error {
 	// Too short to be valid DUIDEN
 	if len(b) < 6 {
-		return errInvalidDUIDEN
+		return io.ErrUnexpectedEOF
 	}
 
 	// Verify DUID type
@@ -310,7 +307,7 @@ func (d *DUIDLL) MarshalBinary() ([]byte, error) {
 func (d *DUIDLL) UnmarshalBinary(b []byte) error {
 	// Too short to be DUIDLL
 	if len(b) < 4 {
-		return errInvalidDUIDLL
+		return io.ErrUnexpectedEOF
 	}
 
 	// Verify DUID type
@@ -368,7 +365,7 @@ func (d *DUIDUUID) MarshalBinary() ([]byte, error) {
 func (d *DUIDUUID) UnmarshalBinary(b []byte) error {
 	// DUIDUUIDs are fixed-length structures
 	if len(b) != 18 {
-		return errInvalidDUIDUUID
+		return io.ErrUnexpectedEOF
 	}
 
 	// Verify DUID type
@@ -390,7 +387,7 @@ func (d *DUIDUUID) UnmarshalBinary(b []byte) error {
 func parseDUID(b []byte) (DUID, error) {
 	// DUID must have enough bytes to determine its type
 	if len(b) < 2 {
-		return nil, errInvalidDUID
+		return nil, io.ErrUnexpectedEOF
 	}
 
 	var d DUID
