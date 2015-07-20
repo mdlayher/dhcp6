@@ -2,15 +2,9 @@ package dhcp6
 
 import (
 	"encoding/binary"
-	"errors"
+	"io"
 	"net"
 	"time"
-)
-
-var (
-	// errInvalidIAAddr is returned when a byte slice does not contain
-	// enough bytes to parse a valid IAAddr value.
-	errInvalidIAAddr = errors.New("not enough bytes for valid IAAddr")
 )
 
 // IAAddr represents an Identity Association Address, as defined in RFC 3315,
@@ -99,11 +93,11 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary unmarshals a raw byte slice into a IAAddr.
 //
 // If the byte slice does not contain enough data to form a valid IAAddr,
-// errInvalidIAAddr is returned.  If the preferred lifetime value in the byte
-// slice is less than the valid lifetime, ErrInvalidLifetimes is returned.
+// io.ErrUnexpectedEOF is returned.  If the preferred lifetime value in the
+// byte slice is less than the valid lifetime, ErrInvalidLifetimes is returned.
 func (i *IAAddr) UnmarshalBinary(b []byte) error {
 	if len(b) < 24 {
-		return errInvalidIAAddr
+		return io.ErrUnexpectedEOF
 	}
 
 	ip := make(net.IP, 16)

@@ -738,7 +738,7 @@ func TestOptionsIAAddr(t *testing.T) {
 			options: Options{
 				OptionIAAddr: [][]byte{bytes.Repeat([]byte{0}, 23)},
 			},
-			err: errInvalidIAAddr,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "one OptionIAAddr present in Options map",
