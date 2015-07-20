@@ -2,14 +2,8 @@ package dhcp6
 
 import (
 	"encoding/binary"
-	"errors"
+	"io"
 	"time"
-)
-
-var (
-	// errInvalidIANA is returned when a byte slice does not contain
-	// enough bytes to parse a valid IANA value.
-	errInvalidIANA = errors.New("not enough bytes for valid IANA")
 )
 
 // IANA represents an Identity Association for Non-temporary Addresses, as
@@ -73,11 +67,11 @@ func (i *IANA) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary unmarshals a raw byte slice into a IANA.
 //
 // If the byte slice does not contain enough data to form a valid IANA,
-// errInvalidIANA is returned.
+// io.ErrUnexpectedEOF is returned.
 func (i *IANA) UnmarshalBinary(b []byte) error {
 	// IANA must contain at least an IAID, T1, and T2.
 	if len(b) < 12 {
-		return errInvalidIANA
+		return io.ErrUnexpectedEOF
 	}
 
 	iaid := [4]byte{}

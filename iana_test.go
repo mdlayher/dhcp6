@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"bytes"
+	"io"
 	"reflect"
 	"testing"
 	"time"
@@ -144,11 +145,11 @@ func TestIANAUnmarshalBinary(t *testing.T) {
 	}{
 		{
 			buf: []byte{0},
-			err: errInvalidIANA,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			buf: bytes.Repeat([]byte{0}, 11),
-			err: errInvalidIANA,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			buf: []byte{

@@ -547,7 +547,7 @@ func TestOptionsIANA(t *testing.T) {
 			options: Options{
 				OptionIANA: [][]byte{bytes.Repeat([]byte{0}, 11)},
 			},
-			err: errInvalidIANA,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "one OptionIANA present in Options map",
