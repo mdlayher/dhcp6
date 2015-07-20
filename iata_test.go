@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"bytes"
+	"io"
 	"reflect"
 	"testing"
 )
@@ -64,11 +65,11 @@ func TestIATAUnmarshalBinary(t *testing.T) {
 	}{
 		{
 			buf: []byte{0},
-			err: errInvalidIATA,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			buf: bytes.Repeat([]byte{0}, 3),
-			err: errInvalidIATA,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			buf: []byte{

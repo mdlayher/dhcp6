@@ -643,7 +643,7 @@ func TestOptionsIATA(t *testing.T) {
 			options: Options{
 				OptionIATA: [][]byte{{0, 0, 0}},
 			},
-			err: errInvalidIATA,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "one OptionIATA present in Options map",

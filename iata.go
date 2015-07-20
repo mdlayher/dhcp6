@@ -1,13 +1,7 @@
 package dhcp6
 
 import (
-	"errors"
-)
-
-var (
-	// errInvalidIATA is returned when a byte slice does not contain
-	// enough bytes to parse a valid IATA value.
-	errInvalidIATA = errors.New("not enough bytes for valid IATA")
+	"io"
 )
 
 // IATA represents an Identity Association for Temporary Addresses, as
@@ -54,11 +48,11 @@ func (i *IATA) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary unmarshals a raw byte slice into a IATA.
 //
 // If the byte slice does not contain enough data to form a valid IATA,
-// errInvalidIATA is returned.
+// io.ErrUnexpectedEOF is returned.
 func (i *IATA) UnmarshalBinary(b []byte) error {
 	// IATA must contain at least an IAID.
 	if len(b) < 4 {
-		return errInvalidIATA
+		return io.ErrUnexpectedEOF
 	}
 
 	iaid := [4]byte{}
