@@ -2,15 +2,9 @@ package dhcp6
 
 import (
 	"encoding/binary"
-	"errors"
+	"io"
 	"net"
 	"time"
-)
-
-var (
-	// errInvalidIAPrefix is returned when a byte slice does not contain
-	// enough bytes to parse a valid IAPrefix value.
-	errInvalidIAPrefix = errors.New("not enough bytes for valid IAPrefix")
 )
 
 // IAPrefix represents an Identity Association Prefix, as defined in RFC 3633,
@@ -109,12 +103,13 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary unmarshals a raw byte slice into a IAPrefix.
 //
 // If the byte slice does not contain enough data to form a valid IAPrefix,
-// errInvalidIAPrefix is returned.  If the preferred lifetime value in the byte
-// slice is less than the valid lifetime, ErrInvalidLifetimes is returned.
+// io.ErrUnexpectedEOF is returned.  If the preferred lifetime value in the
+// byte slice is less than the valid lifetime, ErrInvalidLifetimes is
+// returned.
 func (i *IAPrefix) UnmarshalBinary(b []byte) error {
 	// IAPrefix must at least contain lifetimes, prefix length, and prefix
 	if len(b) < 25 {
-		return errInvalidIAPrefix
+		return io.ErrUnexpectedEOF
 	}
 
 	i.PreferredLifetime = time.Duration(binary.BigEndian.Uint32(b[0:4])) * time.Second

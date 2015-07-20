@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"bytes"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -108,12 +109,12 @@ func TestIAPrefixUnmarshalBinary(t *testing.T) {
 		{
 			desc: "one byte IAPrefix",
 			buf:  []byte{0},
-			err:  errInvalidIAPrefix,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "24 bytes IAPrefix",
 			buf:  bytes.Repeat([]byte{0}, 24),
-			err:  errInvalidIAPrefix,
+			err:  io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "preferred greater than valid lifetime",

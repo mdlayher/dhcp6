@@ -1484,7 +1484,7 @@ func TestOptionsIAPrefix(t *testing.T) {
 			options: Options{
 				OptionIAPrefix: [][]byte{bytes.Repeat([]byte{0}, 24)},
 			},
-			err: errInvalidIAPrefix,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "one OptionIAPrefix present in Options map",
