@@ -1387,7 +1387,7 @@ func TestOptionsIAPD(t *testing.T) {
 			options: Options{
 				OptionIAPD: [][]byte{bytes.Repeat([]byte{0}, 11)},
 			},
-			err: errInvalidIAPD,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "one OptionIAPD present in Options map",

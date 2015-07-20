@@ -2,14 +2,8 @@ package dhcp6
 
 import (
 	"encoding/binary"
-	"errors"
+	"io"
 	"time"
-)
-
-var (
-	// errInvalidIAPD is returned when a byte slice does not contain
-	// enough bytes to parse a valid IAPD value.
-	errInvalidIAPD = errors.New("not enough bytes for valid IAPD")
 )
 
 // IAPD represents an Identity Association for Prefix Delegation, as
@@ -73,11 +67,11 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary unmarshals a raw byte slice into a IAPD.
 //
 // If the byte slice does not contain enough data to form a valid IAPD,
-// errInvalidIAPD is returned.
+// io.ErrUnexpectedEOF is returned.
 func (i *IAPD) UnmarshalBinary(b []byte) error {
 	// IAPD must contain at least an IAID, T1, and T2.
 	if len(b) < 12 {
-		return errInvalidIAPD
+		return io.ErrUnexpectedEOF
 	}
 
 	iaid := [4]byte{}
