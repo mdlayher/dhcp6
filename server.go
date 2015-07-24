@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"errors"
+	"log"
 	"net"
 
 	"golang.org/x/net/ipv6"
@@ -73,6 +74,22 @@ type Server struct {
 	// servers with persistent storage available should generate a DUID-LLT
 	// and store it for future use.
 	ServerID DUID
+
+	// ErrorLog is an optional logger which can be used to report errors and
+	// erroneous behavior while the server is accepting client requests.
+	// If ErrorLog is nil, logging goes to os.Stderr via the log package's
+	// standard logger.
+	ErrorLog *log.Logger
+}
+
+// logf logs a message using the server's ErrorLog logger, or the log package
+// standard logger, if ErrorLog is nil.
+func (s *Server) logf(format string, args ...interface{}) {
+	if s.ErrorLog != nil {
+		s.ErrorLog.Printf(format, args...)
+	} else {
+		log.Printf(format, args...)
+	}
 }
 
 // ListenAndServe listens for UDP6 connections on the specified address of the
@@ -265,12 +282,14 @@ func (c *conn) serve() {
 		}
 
 		// BUG(mdlayher): decide to log or handle other request errors
+		c.server.logf("%s: error parsing request: %s", c.remoteAddr.String(), err.Error())
 		return
 	}
 
 	// Filter out unknown/invalid message types, using the lowest and highest
 	// numbered types
 	if r.MessageType < MessageTypeSolicit || r.MessageType > MessageTypeDHCPv4Response {
+		c.server.logf("%s: unrecognized message type: %d", c.remoteAddr.String(), r.MessageType)
 		return
 	}
 

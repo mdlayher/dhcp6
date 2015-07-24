@@ -2,12 +2,19 @@ package dhcp6
 
 import (
 	"bytes"
+	"io/ioutil"
+	"log"
 	"net"
 	"testing"
 	"time"
 
 	"golang.org/x/net/ipv6"
 )
+
+func init() {
+	// Discard all output from Server.logf
+	log.SetOutput(ioutil.Discard)
+}
 
 // TestServeIPv6ControlParameters verifies that a PacketConn successfully
 // joins and leaves the appropriate multicast groups designated by a Server,
