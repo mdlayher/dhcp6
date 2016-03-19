@@ -253,3 +253,44 @@ func (n *NII) UnmarshalBinary(b []byte) error {
 
 	return nil
 }
+
+// A DHCPv6 Relay Agent relays messages between clients and servers or
+// other relay agents through Relay-Forward and Relay-Reply message
+// types. The original client DHCP message (i.e., the packet payload,
+// excluding UDP and IP headers) is encapsulated in a Relay Message
+// option
+type RelayMessageOption []byte
+
+// MarshalBinary allocates a byte slice containing the data from a RelayMessageOption.
+func (r *RelayMessageOption) MarshalBinary() ([]byte, error) {
+	return *r, nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into a RelayMessageOption.
+func (r *RelayMessageOption) UnmarshalBinary(b []byte) error {
+	*r = make([]byte, len(b))
+	copy(*r, b)
+	return nil
+}
+
+// Set Client Server Message (e.g. Solicit, Advertise ...) into this option.
+func (r *RelayMessageOption) SetClientServerMessage(p *Packet) error {
+	b, err := p.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	*r = b
+	return nil
+}
+
+// Set RelayMessage (e.g. Relay Forward, Relay Reply) into this option.
+func (r *RelayMessageOption) SetRelayMessage(p *RelayMessage) error {
+	b, err := p.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	*r = b
+	return nil
+}
