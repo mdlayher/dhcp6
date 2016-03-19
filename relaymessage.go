@@ -60,6 +60,9 @@ type RelayMessage struct {
 	// Options specifies a map of DHCP options.  Its methods can be used to
 	// retrieve data from an incoming packet, or send data with an outgoing
 	// packet.
+	// MUST include a "Relay Message option" (see
+	// section 22.10); MAY include other options added by
+	// the relay agent.
 	Options Options
 }
 
