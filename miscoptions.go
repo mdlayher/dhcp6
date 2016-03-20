@@ -253,3 +253,35 @@ func (n *NII) UnmarshalBinary(b []byte) error {
 
 	return nil
 }
+
+type RelayMessageOption []byte
+
+func (r *RelayMessageOption) MarshalBinary() ([]byte, error) {
+	return *r, nil
+}
+
+func (r *RelayMessageOption) UnmarshalBinary(b []byte) error {
+	*r = make([]byte, len(b))
+	copy(*r, b)
+	return nil
+}
+
+func (r *RelayMessageOption) SetClientServerMessage(p *Packet) error {
+	b, err := p.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	*r = b
+	return nil
+}
+
+func (r *RelayMessageOption) SetRelayMessage(p *RelayMessage) error {
+	b, err := p.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	*r = b
+	return nil
+}
