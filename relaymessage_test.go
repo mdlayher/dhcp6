@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"bytes"
+	"net"
 	"reflect"
 	"testing"
 )
@@ -37,9 +38,9 @@ func TestRelayMessageMarshalBinary(t *testing.T) {
 			desc: "RelayForw, 15 Hopcount, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] LinkAddress, [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32] PeerAddress",
 			relayMsg: &RelayMessage{
 				MessageType: MessageTypeRelayForw,
-				Hopcount:    15,
-				LinkAddress: [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-				PeerAddress: [16]byte{17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+				HopCount:    15,
+				LinkAddress: net.IP([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}),
+				PeerAddress: net.IP([]byte{17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}),
 			},
 			buf: []byte{12, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
 		},
@@ -95,7 +96,9 @@ func TestRelayMessageUnmarshalBinary(t *testing.T) {
 			desc: "length 34 buffer, OK",
 			buf:  []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			relayMsg: &RelayMessage{
-				Options: make(Options),
+				LinkAddress: net.IP(make([]byte, net.IPv6len)),
+				PeerAddress: net.IP(make([]byte, net.IPv6len)),
+				Options:     make(Options),
 			},
 		},
 		{
@@ -103,9 +106,9 @@ func TestRelayMessageUnmarshalBinary(t *testing.T) {
 			buf:  []byte{12, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
 			relayMsg: &RelayMessage{
 				MessageType: MessageTypeRelayForw,
-				Hopcount:    15,
-				LinkAddress: [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-				PeerAddress: [16]byte{17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+				HopCount:    15,
+				LinkAddress: net.IP([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}),
+				PeerAddress: net.IP([]byte{17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}),
 				Options:     make(Options),
 			},
 		},
