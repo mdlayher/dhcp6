@@ -1572,20 +1572,9 @@ func TestOptionsBootFileURL(t *testing.T) {
 		options Options
 		u       *url.URL
 		ok      bool
-		err     *url.Error
 	}{
 		{
 			desc: "OptionBootFileURL not present in Options map",
-		},
-		{
-			desc: "OptionBootFileURL present in Options map, but invalid URL",
-			options: Options{
-				OptionBootFileURL: [][]byte{[]byte("http://www.%a0.com/foo")},
-			},
-			err: &url.Error{
-				Op:  "parse",
-				URL: "http://www.%a0.com/foo",
-			},
 		},
 		{
 			desc: "OptionBootFileURL present in Options map",
@@ -1603,17 +1592,7 @@ func TestOptionsBootFileURL(t *testing.T) {
 	for i, tt := range tests {
 		u, ok, err := tt.options.BootFileURL()
 		if err != nil {
-			uerr, ok := err.(*url.Error)
-			if !ok {
-				t.Fatalf("[%02d] test %q, not *url.Error", i, tt.desc)
-			}
-
-			if want, got := tt.err.Op, uerr.Op; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error Op for Options.BootFileURL(): %v != %v",
-					i, tt.desc, want, got)
-			}
-
-			continue
+			t.Fatalf("unexpected error: %v", err)
 		}
 
 		if want, got := tt.ok, ok; want != got {
