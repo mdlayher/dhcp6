@@ -3,6 +3,7 @@ package dhcp6
 import (
 	"bytes"
 	"encoding"
+	"encoding/binary"
 	"io"
 	"net"
 	"net/url"
@@ -1131,6 +1132,62 @@ func TestOptionsElapsedTime(t *testing.T) {
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.ElapsedTime(): %v != %v",
 				i, tt.desc, want, got)
+		}
+	}
+}
+
+// TestAuthentication verifies that Options.Authentication properly parses and
+// returns an authentication value, if one is available with Authentication.
+func TestAuthentication(t *testing.T) {
+	var tests = []struct {
+		desc           string
+		options        Options
+		authentication *Authentication
+		ok             bool
+		err            error
+	}{
+		{
+			desc: "Authentication not present in Options map",
+		},
+		{
+			desc: "Authentication present in Options map, but too short",
+			options: Options{
+				OptionAuth: [][]byte{bytes.Repeat([]byte{0}, 10)},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "Authentication present in Options map",
+			options: Options{
+				OptionAuth: [][]byte{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf}},
+			},
+			authentication: &Authentication{
+				Protocol:                  0,
+				Algorithm:                 1,
+				RDM:                       2,
+				ReplayDetection:           binary.BigEndian.Uint64([]byte{3, 4, 5, 6, 7, 8, 9, 0xa}),
+				AuthenticationInformation: []byte{0xb, 0xc, 0xd, 0xe, 0xf},
+			},
+			ok: true,
+		},
+	}
+
+	for i, tt := range tests {
+		authentication, ok, err := tt.options.Authentication()
+		if want, got := tt.err, err; want != got {
+			t.Fatalf("[%02d] test %q, unexpected error for Options.Authentication\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+		}
+
+		if tt.err != nil {
+			continue
+		}
+
+		if want, got := tt.authentication, authentication; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.Authentication()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.Authentication(): %v != %v", i, tt.desc, want, got)
 		}
 	}
 }
