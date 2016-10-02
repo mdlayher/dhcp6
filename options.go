@@ -437,6 +437,26 @@ func (o Options) IAPrefix() ([]*IAPrefix, bool, error) {
 	return iaprefix, true, nil
 }
 
+// RemoteIdentifier returns the Remote Identifier, described in RFC 4649.
+//
+// This option may be added by DHCPv6 relay agents that terminate
+// switched or permanent circuits and have mechanisms to identify the
+// remote host end of the circuit.
+//
+// The boolean return value indicates if OptionRemoteIdentifier was present in the
+// Options map.  The error return value indicates if any errors were present
+// in the class data.
+func (o Options) RemoteIdentifier() (*RemoteIdentifier, bool, error) {
+	v, ok := o.Get(OptionRemoteIdentifier)
+	if !ok {
+		return nil, false, nil
+	}
+
+	r := new(RemoteIdentifier)
+	err := r.UnmarshalBinary(v)
+	return r, true, err
+}
+
 // BootFileURL returns the Boot File URL Option value, described in RFC 5970,
 // Section 3.1.
 //

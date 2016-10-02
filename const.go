@@ -112,6 +112,9 @@ const (
 	OptionIAPD     OptionCode = 25
 	OptionIAPrefix OptionCode = 26
 
+	// RFC 4649
+	OptionRemoteIdentifier OptionCode = 37
+
 	// RFC 5970
 	OptionBootFileURL    OptionCode = 59
 	OptionBootFileParam  OptionCode = 60

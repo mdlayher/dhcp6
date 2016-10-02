@@ -1564,6 +1564,63 @@ func TestOptionsIAPrefix(t *testing.T) {
 	}
 }
 
+// TestRemoteIdentifier verifies that Options.RemoteIdentifier properly parses
+// and returns a RemoteIdentifier, if it is available with OptionsRemoteIdentifier.
+func TestOptionsRemoteIdentifier(t *testing.T) {
+	var tests = []struct {
+		desc             string
+		options          Options
+		remoteIdentifier *RemoteIdentifier
+		ok               bool
+		err              error
+	}{
+		{
+			desc: "OptionsRemoteIdentifier not present in Options map",
+		},
+		{
+			desc: "OptionsRemoteIdentifier present in Options map, but too short",
+			options: Options{
+				OptionRemoteIdentifier: [][]byte{{
+					0, 0, 5, 0x58,
+				}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "OptionsRemoteIdentifier present in Options map",
+			options: Options{
+				OptionRemoteIdentifier: [][]byte{{
+					0, 0, 5, 0x58,
+					0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf,
+				}},
+			},
+			remoteIdentifier: &RemoteIdentifier{
+				EnterpriseNumber: 1368,
+				RemoteId:         []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf},
+			},
+			ok: true,
+		},
+	}
+	for i, tt := range tests {
+		remoteIdentifier, ok, err := tt.options.RemoteIdentifier()
+		if want, got := tt.err, err; want != got {
+			t.Fatalf("[%02d] test %q, unexpected error for Options.RemoteIdentifier\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+		}
+
+		if tt.err != nil {
+			continue
+		}
+
+		if want, got := tt.remoteIdentifier, remoteIdentifier; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.RemoteIdentifier()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.RemoteIdentifier(): %v != %v", i, tt.desc, want, got)
+		}
+	}
+}
+
 // TestOptionsBootFileURL verifies that Options.BootFileURL properly parses
 // and returns a URL, if it is available with OptionBootFileURL.
 func TestOptionsBootFileURL(t *testing.T) {
