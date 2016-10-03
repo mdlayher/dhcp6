@@ -397,6 +397,26 @@ func (o Options) VendorClass() (Data, bool, error) {
 	return d, true, err
 }
 
+// VendorOpts returns the Vendor-specific Information Option value, described in RFC 3315,
+// Section 22.17.
+//
+// The VendorOpts structure returned contains Vendor-specific Information data present in
+// the option.
+//
+// The boolean return value indicates if VendorOpts was present in the
+// Options map.  The error return value indicates if any errors were present
+// in the class data.
+func (o Options) VendorOpts() (*VendorOpts, bool, error) {
+	v, ok := o.Get(OptionVendorOpts)
+	if !ok {
+		return nil, false, nil
+	}
+
+	vo := new(VendorOpts)
+	err := vo.UnmarshalBinary(v)
+	return vo, true, err
+}
+
 // InterfaceID returns the Interface-Id Option value, described in RFC 3315,
 // Section 22.18.
 //
