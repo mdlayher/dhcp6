@@ -274,6 +274,26 @@ func (o Options) ElapsedTime() (ElapsedTime, bool, error) {
 	return *t, true, err
 }
 
+// Authentication returns the Authentication Option value, as described in RFC 3315,
+// Section 22.11.
+//
+// The Authentication option carries authentication information to
+// authenticate the identity and contents of DHCP messages.
+//
+// The boolean return value indicates if Authentication was present in the
+// Options map.  The error return value indicates if a valid authentication could be
+// parsed from the option.
+func (o Options) Authentication() (*Authentication, bool, error) {
+	v, ok := o.Get(OptionAuth)
+	if !ok {
+		return nil, false, nil
+	}
+
+	a := new(Authentication)
+	err := a.UnmarshalBinary(v)
+	return a, true, err
+}
+
 // Unicast returns the IP from a Unicast Option value, described in RFC 3315,
 // Section 22.12.
 //
