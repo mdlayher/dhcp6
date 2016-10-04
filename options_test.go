@@ -1426,6 +1426,100 @@ func TestOptionsVendorClass(t *testing.T) {
 	}
 }
 
+// TestInterfaceID verifies that Options.InterfaceID properly parses
+// and returns raw interface-id data, if it is available with InterfaceID.
+func TestInterfaceID(t *testing.T) {
+	var tests = []struct {
+		desc        string
+		options     Options
+		interfaceID [][]byte
+		ok          bool
+		err         error
+	}{
+		{
+			desc: "InterfaceID not present in Options map",
+		},
+		{
+			desc: "InterfaceID present in Options map, but empty",
+			options: Options{
+				OptionInterfaceID: [][]byte{{}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "InterfaceID present in Options map, one item, zero length",
+			options: Options{
+				OptionInterfaceID: [][]byte{{
+					0, 0,
+				}},
+			},
+			interfaceID: [][]byte{{}},
+			ok:          true,
+		},
+		{
+			desc: "InterfaceID present in Options map, one item, extra byte",
+			options: Options{
+				OptionInterfaceID: [][]byte{{
+					0, 1, 1, 255,
+				}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "InterfaceID present in Options map, one item",
+			options: Options{
+				OptionInterfaceID: [][]byte{{
+					0, 1, 1,
+				}},
+			},
+			interfaceID: [][]byte{{1}},
+			ok:          true,
+		},
+		{
+			desc: "InterfaceID present in Options map, three items",
+			options: Options{
+				OptionInterfaceID: [][]byte{{
+					0, 1, 1,
+					0, 2, 2, 2,
+					0, 3, 3, 3, 3,
+				}},
+			},
+			interfaceID: [][]byte{{1}, {2, 2}, {3, 3, 3}},
+			ok:          true,
+		},
+	}
+
+	for i, tt := range tests {
+		interfaceID, ok, err := tt.options.InterfaceID()
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Fatalf("[%02d] test %q, unexpected error for Options.InterfaceID: %v != %v",
+					i, tt.desc, want, got)
+			}
+
+			continue
+		}
+
+		if want, got := len(tt.interfaceID), len(interfaceID); want != got {
+			t.Fatalf("[%02d] test %q, unexpected interface-id slice length: %v != %v",
+				i, tt.desc, want, got)
+
+		}
+
+		for j := range interfaceID {
+			if want, got := tt.interfaceID[j], interfaceID[j]; !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.InterfaceID()\n- want: %v\n-  got: %v",
+					i, j, tt.desc, want, got)
+			}
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.InterfaceID(): %v != %v",
+				i, tt.desc, want, got)
+		}
+	}
+}
+
 // TestOptionsIAPD verifies that Options.IAPD properly parses and
 // returns multiple IAPD values, if one or more are available with OptionIAPD.
 func TestOptionsIAPD(t *testing.T) {
