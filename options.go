@@ -274,6 +274,26 @@ func (o Options) ElapsedTime() (ElapsedTime, bool, error) {
 	return *t, true, err
 }
 
+// RelayMessageOption returns the Relay Message Option value, as described in RFC 3315,
+// Section 22.10.
+//
+// The RelayMessage option carries a DHCP message in a Relay-forward or
+// Relay-reply message.
+//
+// The boolean return value indicates if OptionRelayMsg was present in the
+// Options map.  The error return value indicates if a valid OptionRelayMsg could be
+// parsed from the option.
+func (o Options) RelayMessageOption() (RelayMessageOption, bool, error) {
+	v, ok := o.Get(OptionRelayMsg)
+	if !ok {
+		return nil, false, nil
+	}
+
+	r := new(RelayMessageOption)
+	err := r.UnmarshalBinary(v)
+	return *r, true, err
+}
+
 // Authentication returns the Authentication Option value, as described in RFC 3315,
 // Section 22.11.
 //

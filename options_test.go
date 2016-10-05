@@ -1136,6 +1136,49 @@ func TestOptionsElapsedTime(t *testing.T) {
 	}
 }
 
+// TestOptionsRelayMessage verifies that Options.RelayMessageOption properly parses and
+// returns an relay message option value, if one is available with RelayMessageOption.
+func TestOptionsRelayMessage(t *testing.T) {
+	var tests = []struct {
+		desc           string
+		options        Options
+		authentication RelayMessageOption
+		ok             bool
+		err            error
+	}{
+		{
+			desc: "RelayMessageOption not present in Options map",
+		},
+		{
+			desc: "RelayMessageOption present in Options map",
+			options: Options{
+				OptionRelayMsg: [][]byte{{1, 1, 2, 3}},
+			},
+			authentication: []byte{1, 1, 2, 3},
+			ok:             true,
+		},
+	}
+
+	for i, tt := range tests {
+		relayMsg, ok, err := tt.options.RelayMessageOption()
+		if want, got := tt.err, err; want != got {
+			t.Fatalf("[%02d] test %q, unexpected error for Options.RelayMessageOption\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+		}
+
+		if tt.err != nil {
+			continue
+		}
+
+		if want, got := tt.authentication, relayMsg; !reflect.DeepEqual(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.RelayMessageOption()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+		}
+
+		if want, got := tt.ok, ok; want != got {
+			t.Fatalf("[%02d] test %q, unexpected ok for Options.RelayMessageOption(): %v != %v", i, tt.desc, want, got)
+		}
+	}
+}
+
 // TestAuthentication verifies that Options.Authentication properly parses and
 // returns an authentication value, if one is available with Authentication.
 func TestAuthentication(t *testing.T) {
