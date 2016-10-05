@@ -1353,9 +1353,19 @@ func TestOptionsVendorClass(t *testing.T) {
 			err: io.ErrUnexpectedEOF,
 		},
 		{
+			desc: "OptionVendorClass present in Options map, zero item",
+			options: Options{
+				OptionVendorClass: [][]byte{{
+					0, 0, 5, 0x58,
+				}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
 			desc: "OptionVendorClass present in Options map, one item, zero length",
 			options: Options{
 				OptionVendorClass: [][]byte{{
+					0, 0, 5, 0x58,
 					0, 0,
 				}},
 			},
@@ -1366,6 +1376,7 @@ func TestOptionsVendorClass(t *testing.T) {
 			desc: "OptionVendorClass present in Options map, one item, extra byte",
 			options: Options{
 				OptionVendorClass: [][]byte{{
+					0, 0, 5, 0x58,
 					0, 1, 1, 255,
 				}},
 			},
@@ -1375,6 +1386,7 @@ func TestOptionsVendorClass(t *testing.T) {
 			desc: "OptionVendorClass present in Options map, one item",
 			options: Options{
 				OptionVendorClass: [][]byte{{
+					0, 0, 5, 0x58,
 					0, 1, 1,
 				}},
 			},
@@ -1385,6 +1397,7 @@ func TestOptionsVendorClass(t *testing.T) {
 			desc: "OptionVendorClass present in Options map, three items",
 			options: Options{
 				OptionVendorClass: [][]byte{{
+					0, 0, 5, 0x58,
 					0, 1, 1,
 					0, 2, 2, 2,
 					0, 3, 3, 3, 3,
@@ -1397,31 +1410,36 @@ func TestOptionsVendorClass(t *testing.T) {
 
 	for i, tt := range tests {
 		classes, ok, err := tt.options.VendorClass()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.VendorClass: %v != %v",
-					i, tt.desc, want, got)
-			}
 
-			continue
-		}
-
-		if want, got := len(tt.classes), len(classes); want != got {
-			t.Fatalf("[%02d] test %q, unexpected classes slice length: %v != %v",
+		if want, got := tt.err, err; want != got {
+			t.Fatalf("[%02d] test %q, unexpected error for Options.VendorClass: %v != %v",
 				i, tt.desc, want, got)
-
 		}
 
-		for j := range classes {
-			if want, got := tt.classes[j], classes[j]; !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.VendorClass()\n- want: %v\n-  got: %v",
-					i, j, tt.desc, want, got)
-			}
+		if err != nil {
+			continue
 		}
 
 		if want, got := tt.ok, ok; want != got {
 			t.Fatalf("[%02d] test %q, unexpected ok for Options.VendorClass(): %v != %v",
 				i, tt.desc, want, got)
+		}
+
+		if !ok {
+			continue
+		}
+
+		if want, got := len(tt.classes), len(classes.VendorClassData); want != got {
+			t.Fatalf("[%02d] test %q, unexpected classes slice length: %v != %v",
+				i, tt.desc, want, got)
+
+		}
+
+		for j := range classes.VendorClassData {
+			if want, got := tt.classes[j], classes.VendorClassData[j]; !bytes.Equal(want, got) {
+				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.VendorClass()\n- want: %v\n-  got: %v",
+					i, j, tt.desc, want, got)
+			}
 		}
 	}
 }
