@@ -380,21 +380,21 @@ func (o Options) UserClass() (Data, bool, error) {
 // VendorClass returns the Vendor Class Option value, described in RFC 3315,
 // Section 22.16.
 //
-// The Data structure returned contains any raw class data present in
+// The VendorClass structure returned contains VendorClass in
 // the option.
 //
 // The boolean return value indicates if OptionVendorClass was present in the
 // Options map.  The error return value indicates if any errors were present
-// in the class data.
-func (o Options) VendorClass() (Data, bool, error) {
+// in the VendorClass data.
+func (o Options) VendorClass() (*VendorClass, bool, error) {
 	v, ok := o.Get(OptionVendorClass)
 	if !ok {
 		return nil, false, nil
 	}
 
-	var d Data
-	err := d.UnmarshalBinary(v)
-	return d, true, err
+	vc := new(VendorClass)
+	err := vc.UnmarshalBinary(v)
+	return vc, true, err
 }
 
 // VendorOpts returns the Vendor-specific Information Option value, described in RFC 3315,
