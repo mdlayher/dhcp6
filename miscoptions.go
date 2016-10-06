@@ -294,3 +294,27 @@ func (r *RelayMessageOption) SetRelayMessage(p *RelayMessage) error {
 	*r = b
 	return nil
 }
+
+// ClientServerMessage gets the client server message (e.g. Solicit,
+// Advertise ...) into this option (when hopcount = 0 of outer RelayMessage).
+func (r *RelayMessageOption) ClientServerMessage() (*Packet, error) {
+	p := new(Packet)
+	err := p.UnmarshalBinary(*r)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// RelayMessage gets the relay message (e.g. Relay Forward, Relay Reply) into
+// this option (when hopcount > 0 of outer RelayMessage).
+func (r *RelayMessageOption) RelayMessage() (*RelayMessage, error) {
+	rm := new(RelayMessage)
+	err := rm.UnmarshalBinary(*r)
+	if err != nil {
+		return nil, err
+	}
+
+	return rm, nil
+}
