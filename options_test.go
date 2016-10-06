@@ -1493,38 +1493,12 @@ func TestInterfaceID(t *testing.T) {
 	var tests = []struct {
 		desc        string
 		options     Options
-		interfaceID [][]byte
+		interfaceID InterfaceID
 		ok          bool
 		err         error
 	}{
 		{
 			desc: "InterfaceID not present in Options map",
-		},
-		{
-			desc: "InterfaceID present in Options map, but empty",
-			options: Options{
-				OptionInterfaceID: [][]byte{{}},
-			},
-			err: io.ErrUnexpectedEOF,
-		},
-		{
-			desc: "InterfaceID present in Options map, one item, zero length",
-			options: Options{
-				OptionInterfaceID: [][]byte{{
-					0, 0,
-				}},
-			},
-			interfaceID: [][]byte{{}},
-			ok:          true,
-		},
-		{
-			desc: "InterfaceID present in Options map, one item, extra byte",
-			options: Options{
-				OptionInterfaceID: [][]byte{{
-					0, 1, 1, 255,
-				}},
-			},
-			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "InterfaceID present in Options map, one item",
@@ -1533,19 +1507,15 @@ func TestInterfaceID(t *testing.T) {
 					0, 1, 1,
 				}},
 			},
-			interfaceID: [][]byte{{1}},
+			interfaceID: []byte{0, 1, 1},
 			ok:          true,
 		},
 		{
-			desc: "InterfaceID present in Options map, three items",
+			desc: "InterfaceID present in Options map with no interface-id data",
 			options: Options{
-				OptionInterfaceID: [][]byte{{
-					0, 1, 1,
-					0, 2, 2, 2,
-					0, 3, 3, 3, 3,
-				}},
+				OptionInterfaceID: [][]byte{{}},
 			},
-			interfaceID: [][]byte{{1}, {2, 2}, {3, 3, 3}},
+			interfaceID: []byte{},
 			ok:          true,
 		},
 	}
@@ -1561,17 +1531,9 @@ func TestInterfaceID(t *testing.T) {
 			continue
 		}
 
-		if want, got := len(tt.interfaceID), len(interfaceID); want != got {
-			t.Fatalf("[%02d] test %q, unexpected interface-id slice length: %v != %v",
+		if want, got := tt.interfaceID, interfaceID; !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected value for Options.InterfaceID()\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
-
-		}
-
-		for j := range interfaceID {
-			if want, got := tt.interfaceID[j], interfaceID[j]; !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.InterfaceID()\n- want: %v\n-  got: %v",
-					i, j, tt.desc, want, got)
-			}
 		}
 
 		if want, got := tt.ok, ok; want != got {
