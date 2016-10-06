@@ -9,6 +9,42 @@ import (
 	"time"
 )
 
+// A OptionRequestOption is a list OptionCode, as defined in RFC 3315, Section 22.7.
+//
+// The Option Request option is used to identify a list of options in a
+// message between a client and a server.
+type OptionRequestOption []OptionCode
+
+// MarshalBinary allocates a byte slice containing the data from a OptionRequestOption.
+func (oro OptionRequestOption) MarshalBinary() ([]byte, error) {
+	b := make([]byte, 2*len(oro))
+	for i, j := range oro {
+		binary.BigEndian.PutUint16(b[2*i:], uint16(j))
+	}
+	return b, nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into a OptionRequestOption.
+//
+// If the length of byte slice is not be be divisible by 2,
+// errInvalidOptionRequest is returned.
+func (oro *OptionRequestOption) UnmarshalBinary(b []byte) error {
+	// Length must be divisible by 2
+	if len(b)%2 != 0 {
+		return errInvalidOptionRequest
+	}
+
+	// Fill slice by parsing every two bytes using index i.
+	opts := make(OptionRequestOption, len(b)/2)
+	for i := range opts {
+		opts[i] = OptionCode(binary.BigEndian.Uint16(b[2*i:]))
+	}
+
+	*oro = opts
+
+	return nil
+}
+
 // A Preference is a preference value, as defined in RFC 3315, Section 22.8.
 //
 // A preference value is sent by a server to a client to affect the selection

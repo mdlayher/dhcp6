@@ -212,26 +212,15 @@ func (o Options) IAAddr() ([]*IAAddr, bool, error) {
 // The boolean return value indicates if OptionORO was present in the Options
 // map.  The error return value indicates if a valid OptionCode slice could be
 // parsed from the option.
-func (o Options) OptionRequest() ([]OptionCode, bool, error) {
+func (o Options) OptionRequest() (OptionRequestOption, bool, error) {
 	v, ok := o.Get(OptionORO)
 	if !ok {
 		return nil, false, nil
 	}
 
-	// Length must be divisible by 2
-	if len(v)%2 != 0 {
-		return nil, false, errInvalidOptionRequest
-	}
-
-	// Fill slice by parsing every two bytes using index i,
-	// and using index j to insert options and track number
-	// of iterations until no more options exist
-	opts := make([]OptionCode, len(v)/2, len(v)/2)
-	for i, j := 0, 0; j < len(v)/2; i, j = i+2, j+1 {
-		opts[j] = OptionCode(binary.BigEndian.Uint16(v[i : i+2]))
-	}
-
-	return opts, true, nil
+	var oro OptionRequestOption
+	err := oro.UnmarshalBinary(v)
+	return oro, true, err
 }
 
 // Preference returns the Preference Option value, as described in RFC 3315,
