@@ -183,5 +183,14 @@ func TestIAAddrUnmarshalBinary(t *testing.T) {
 			t.Fatalf("[%02d] test %q, unexpected IAAddr bytes for parseIAAddr:\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
+
+		for _, v := range iaaddr.Options {
+			for ii := range v {
+				if want, got := len(v[ii]), cap(v[ii]); want != got {
+					t.Fatalf("[%02d] test %q, unexpected capacity option data:\n- want: %v\n-  got: %v",
+						i, tt.desc, want, got)
+				}
+			}
+		}
 	}
 }

@@ -669,6 +669,8 @@ func parseOptions(b []byte) (Options, error) {
 
 		// N bytes: option data
 		o.Data = buf.Next(length)
+		// Set slice's max for option's data
+		o.Data = o.Data[:len(o.Data):len(o.Data)]
 
 		// If option data has less bytes than indicated by length,
 		// return an error

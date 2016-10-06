@@ -2266,5 +2266,14 @@ func Test_parseOptions(t *testing.T) {
 			t.Fatalf("[%02d] test %q, unexpected Options map for parseOptions(%v):\n- want: %v\n-  got: %v",
 				i, tt.desc, tt.buf, want, got)
 		}
+
+		for k, v := range tt.options {
+			for ii := range v {
+				if want, got := cap(v[ii]), cap(options[k][ii]); want != got {
+					t.Fatalf("[%02d] test %q, unexpected capacity option data:\n- want: %v\n-  got: %v",
+						i, tt.desc, want, got)
+				}
+			}
+		}
 	}
 }
