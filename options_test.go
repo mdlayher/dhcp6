@@ -828,7 +828,7 @@ func TestOptionsOptionRequest(t *testing.T) {
 	var tests = []struct {
 		desc    string
 		options Options
-		codes   []OptionCode
+		codes   OptionRequestOption
 		ok      bool
 		err     error
 	}{
