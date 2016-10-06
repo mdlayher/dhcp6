@@ -318,3 +318,20 @@ func (r *RelayMessageOption) RelayMessage() (*RelayMessage, error) {
 
 	return rm, nil
 }
+
+// An InterfaceID is an opaque value of arbitrary length generated
+// by the relay agent to identify one of the
+// relay agent's interfaces.
+type InterfaceID []byte
+
+// MarshalBinary allocates a byte slice containing the data from a InterfaceID.
+func (i *InterfaceID) MarshalBinary() ([]byte, error) {
+	return *i, nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into a InterfaceID.
+func (i *InterfaceID) UnmarshalBinary(b []byte) error {
+	*i = make([]byte, len(b))
+	copy(*i, b)
+	return nil
+}

@@ -440,21 +440,21 @@ func (o Options) VendorOpts() (*VendorOpts, bool, error) {
 // InterfaceID returns the Interface-Id Option value, described in RFC 3315,
 // Section 22.18.
 //
-// The Data structure returned contains any raw class data present in
+// The InterfaceID structure returned contains any raw class data present in
 // the option.
 //
 // The boolean return value indicates if InterfaceID was present in the
 // Options map.  The error return value indicates if any errors were present
 // in the interface-id data.
-func (o Options) InterfaceID() (Data, bool, error) {
+func (o Options) InterfaceID() (InterfaceID, bool, error) {
 	v, ok := o.Get(OptionInterfaceID)
 	if !ok {
 		return nil, false, nil
 	}
 
-	var d Data
-	err := d.UnmarshalBinary(v)
-	return d, true, err
+	var i InterfaceID
+	err := i.UnmarshalBinary(v)
+	return i, true, err
 }
 
 // IAPD returns the Identity Association for Prefix Delegation Option value,
