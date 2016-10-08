@@ -24,7 +24,7 @@ type RemoteIdentifier struct {
 	RemoteId []byte
 }
 
-// MarshalBinary implements RemoteIdentifier, and allocates a byte slice containing the data
+// RemoteIdentifier allocates a byte slice containing the data
 // from a RemoteIdentifier.
 func (r *RemoteIdentifier) MarshalBinary() ([]byte, error) {
 	// 4 bytes: EnterpriseNumber
@@ -37,8 +37,8 @@ func (r *RemoteIdentifier) MarshalBinary() ([]byte, error) {
 	return b, nil
 }
 
-// UnmarshalBinary implements RemoteIdentifier, and unmarshals a raw byte slice into a
-// RemoteIdentifier.  If the byte slice does not contain enough data to form a valid
+// UnmarshalBinary unmarshals a raw byte slice into a RemoteIdentifier.
+// If the byte slice does not contain enough data to form a valid
 // RemoteIdentifier, io.ErrUnexpectedEOF is returned.
 func (r *RemoteIdentifier) UnmarshalBinary(b []byte) error {
 	// Too short to be valid RemoteIdentifier
