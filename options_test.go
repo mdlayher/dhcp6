@@ -1136,6 +1136,54 @@ func TestOptionsElapsedTime(t *testing.T) {
 	}
 }
 
+// TestElapsedTimeMarshalBinary verifies that Options.ElapsedTime properly
+// marsharls into bytes array.
+func TestElapsedTimeMarshalBinary(t *testing.T) {
+	var tests = []struct {
+		desc        string
+		elapsedTime ElapsedTime
+		buf         []byte
+		err         error
+	}{
+		{
+			desc: "OptionElapsedTime elapsed-time = 0",
+			buf:  []byte{0, 0},
+		},
+		{
+			desc: "OptionElapsedTime elapsed-time = 65534 hundredths of a second",
+			elapsedTime: ElapsedTime(655340 * time.Millisecond),
+			buf:  []byte{0xff, 0xfe},
+		},
+		{
+			desc: "OptionElapsedTime elapsed-time = 65535 hundredths of a second",
+			elapsedTime: ElapsedTime(655350 * time.Millisecond),
+			buf:  []byte{0xff, 0xff},
+		},
+		{
+			desc: "OptionElapsedTime elapsed-time = 65537 hundredths of a second",
+			elapsedTime: ElapsedTime(655370 * time.Millisecond),
+			buf:  []byte{0xff, 0xff},
+		},
+	}
+
+	for i, tt := range tests {
+		buf, err := tt.elapsedTime.MarshalBinary()
+		if want, got := tt.err, err; want != got {
+			t.Fatalf("[%02d] test %q, unexpected error for Options.ElapsedTime\n- want: %v\n-  got: %v",
+				i, tt.desc, want, got)
+		}
+
+		if tt.err != nil {
+			continue
+		}
+
+		if want, got := tt.buf, buf; !bytes.Equal(want, got) {
+			t.Fatalf("[%02d] test %q, unexpected error for Options.ElapsedTime\n- want: %v\n-  got: %v",
+				i, tt.desc, want, got)
+		}
+	}
+}
+
 // TestOptionsRelayMessage verifies that Options.RelayMessageOption properly parses and
 // returns an relay message option value, if one is available with RelayMessageOption.
 func TestOptionsRelayMessage(t *testing.T) {
