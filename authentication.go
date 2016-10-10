@@ -28,8 +28,7 @@ type Authentication struct {
 	AuthenticationInformation []byte
 }
 
-// MarshalBinary implements Authentication, and allocates a byte slice containing the data
-// from a Authentication.
+// MarshalBinary allocates a byte slice containing the data from a Authentication.
 func (a *Authentication) MarshalBinary() ([]byte, error) {
 	// 1 byte:  Protocol
 	// 1 byte:  Algorithm
@@ -44,8 +43,8 @@ func (a *Authentication) MarshalBinary() ([]byte, error) {
 	return b, nil
 }
 
-// UnmarshalBinary implements Authentication, and unmarshals a raw byte slice into a
-// Authentication.  If the byte slice does not contain enough data to form a valid
+// UnmarshalBinary unmarshals a raw byte slice into a Authentication.
+// If the byte slice does not contain enough data to form a valid
 // Authentication, io.ErrUnexpectedEOF is returned.
 func (a *Authentication) UnmarshalBinary(b []byte) error {
 	// Too short to be valid Authentication

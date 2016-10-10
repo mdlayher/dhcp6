@@ -142,8 +142,7 @@ func NewDUIDLLT(hardwareType uint16, time time.Time, hardwareAddr net.HardwareAd
 	}, nil
 }
 
-// MarshalBinary implements DUID, and allocates a byte slice containing the data
-// from a DUIDLLT.
+// MarshalBinary allocates a byte slice containing the data from a DUIDLLT.
 func (d *DUIDLLT) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 2 bytes: hardware type
@@ -159,8 +158,8 @@ func (d *DUIDLLT) MarshalBinary() ([]byte, error) {
 	return b, nil
 }
 
-// UnmarshalBinary implements DUID, and unmarshals a raw byte slice into a
-// DUIDLLT.  If the byte slice does not contain enough data to form a valid
+// UnmarshalBinary unmarshals a raw byte slice into a DUIDLLT.
+// If the byte slice does not contain enough data to form a valid
 // DUIDLLT, or another DUID type is indicated, errInvalidDUIDLLT is returned.
 func (d *DUIDLLT) UnmarshalBinary(b []byte) error {
 	// Too short to be valid DUIDLLT
@@ -211,8 +210,7 @@ func NewDUIDEN(enterpriseNumber uint32, identifier []byte) *DUIDEN {
 	}
 }
 
-// MarshalBinary implements DUID, and allocates a byte slice containing the data
-// from a DUIDEN.
+// MarshalBinary allocates a byte slice containing the data from a DUIDEN.
 func (d *DUIDEN) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 4 bytes: enterprise number
@@ -226,8 +224,8 @@ func (d *DUIDEN) MarshalBinary() ([]byte, error) {
 	return b, nil
 }
 
-// UnmarshalBinary implements DUID, and unmarshals a raw byte slice into a
-// DUIDEN.  If the byte slice does not contain enough data to form a valid
+// UnmarshalBinary unmarshals a raw byte slice into a DUIDEN.
+// If the byte slice does not contain enough data to form a valid
 // DUIDEN, or another DUID type is indicated, errInvalidDUIDEN is returned.
 func (d *DUIDEN) UnmarshalBinary(b []byte) error {
 	// Too short to be valid DUIDEN
@@ -286,8 +284,7 @@ func NewDUIDLL(hardwareType uint16, hardwareAddr net.HardwareAddr) *DUIDLL {
 	}
 }
 
-// MarshalBinary implements DUID, and allocates a byte slice containing the data
-// from a DUIDLL.
+// MarshalBinary allocates a byte slice containing the data from a DUIDLL.
 func (d *DUIDLL) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 2 bytes: hardware type
@@ -301,8 +298,8 @@ func (d *DUIDLL) MarshalBinary() ([]byte, error) {
 	return b, nil
 }
 
-// UnmarshalBinary implements DUID, and unmarshals a raw byte slice into a
-// DUIDLL.  If the byte slice does not contain enough data to form a valid
+// UnmarshalBinary unmarshals a raw byte slice into a DUIDLL.
+// If the byte slice does not contain enough data to form a valid
 // DUIDLL, or another DUID type is indicated, errInvalidDUIDLL is returned.
 func (d *DUIDLL) UnmarshalBinary(b []byte) error {
 	// Too short to be DUIDLL
@@ -345,8 +342,7 @@ func NewDUIDUUID(uuid [16]byte) *DUIDUUID {
 	}
 }
 
-// MarshalBinary implements DUID, and allocates a byte slice containing the data
-// from a DUIDUUID.
+// MarshalBinary allocates a byte slice containing the data from a DUIDUUID.
 func (d *DUIDUUID) MarshalBinary() ([]byte, error) {
 	//  2 bytes: DUID type
 	// 16 bytes: UUID
@@ -358,8 +354,8 @@ func (d *DUIDUUID) MarshalBinary() ([]byte, error) {
 	return b, nil
 }
 
-// UnmarshalBinary implements DUID, and unmarshals a raw byte slice into a
-// DUIDUUID.  If the byte slice does not contain the exact number of bytes
+// UnmarshalBinary unmarshals a raw byte slice into a DUIDUUID.
+// If the byte slice does not contain the exact number of bytes
 // needed to form a valid DUIDUUID, or another DUID type is indicated,
 // errInvalidDUIDUUID is returned.
 func (d *DUIDUUID) UnmarshalBinary(b []byte) error {
