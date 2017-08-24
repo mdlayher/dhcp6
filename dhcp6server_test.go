@@ -204,15 +204,15 @@ func newIAAddr(ia *IANA, ip net.IP, w ResponseSender, r *Request) error {
 	return err
 }
 
-// serve calls server.Serve() that servers a request from client
+// serve calls server.Serve() that serves a request from client
 func serve(r *testMessage) (*Packet, error) {
 	s := &Server{}
 	s.Iface = &net.Interface{
-		Name:  "foo",
+		Name:  "lo",
 		Index: 0,
 	}
 	s.Handler = &ClientHandler{
-		ip:      net.ParseIP("::0"),
+		ip:      net.ParseIP("::1"),
 		handler: handle,
 	}
 
@@ -239,11 +239,12 @@ func serve(r *testMessage) (*Packet, error) {
 	<-c.writeDoneC
 
 	if err == errClosing {
-		p := &Packet{}
-		if err0 := p.UnmarshalBinary(tc.w.b.Bytes()); err0 != nil {
-			return nil, err0
-		}
-		return p, nil
+		return nil, err
 	}
-	return nil, err
+
+	p := &Packet{}
+	if err0 := p.UnmarshalBinary(tc.w.b.Bytes()); err0 != nil {
+		return nil, err0
+	}
+	return p, nil
 }
