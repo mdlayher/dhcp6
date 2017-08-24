@@ -121,6 +121,10 @@ const (
 	OptionClientArchType OptionCode = 61
 	OptionNII            OptionCode = 62
 
+	// RFC 3646
+	OptionDNSServers OptionCode = 23
+	OptionDomainList OptionCode = 24
+
 	// BUG(mdlayher): add additional option code types defined by IANA
 )
 

@@ -8,11 +8,6 @@ import (
 	"github.com/google/netstack/tcpip/header"
 )
 
-const (
-	OptionDNSServers OptionCode = 23
-	OptionDomainList OptionCode = 24
-)
-
 func newSolicitOptions(mac net.HardwareAddr) (Options, error) {
 	options := make(Options)
 
