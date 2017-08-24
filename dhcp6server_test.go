@@ -5,9 +5,7 @@
 package dhcp6
 
 import (
-	"bytes"
 	"encoding/hex"
-	"errors"
 	"log"
 	"net"
 	"time"
@@ -15,24 +13,11 @@ import (
 	"golang.org/x/net/ipv6"
 )
 
-var errClosing = errors.New("use of closed network connection")
-
-type PacketConn dhcp6.PacketConn
-
-/**
-* testMessage that implements messages between server and client.
- */
-type testMessage struct {
-	b    bytes.Buffer
-	cm   *ipv6.ControlMessage
-	addr net.Addr
-}
-
 /**
 * testPacketConn that implement interface dhcp6.PacketConn.
  */
 
-type testPacketConn struct {
+type clientTestPacketConn struct {
 	r *testMessage
 	w *testMessage
 
@@ -42,27 +27,27 @@ type testPacketConn struct {
 	flags  map[ipv6.ControlFlags]bool
 }
 
-func (c *testPacketConn) Close() error {
+func (c *clientTestPacketConn) Close() error {
 	c.closed = true
 	return nil
 }
 
-func (c *testPacketConn) JoinGroup(iface *net.Interface, group net.Addr) error {
+func (c *clientTestPacketConn) JoinGroup(iface *net.Interface, group net.Addr) error {
 	c.joined = append(c.joined, group)
 	return nil
 }
 
-func (c *testPacketConn) LeaveGroup(iface *net.Interface, group net.Addr) error {
+func (c *clientTestPacketConn) LeaveGroup(iface *net.Interface, group net.Addr) error {
 	c.left = append(c.left, group)
 	return nil
 }
 
-func (c *testPacketConn) SetControlMessage(cf ipv6.ControlFlags, on bool) error {
+func (c *clientTestPacketConn) SetControlMessage(cf ipv6.ControlFlags, on bool) error {
 	c.flags[cf] = on
 	return nil
 }
 
-func (c *testPacketConn) ReadFrom(b []byte) (int, *ipv6.ControlMessage, net.Addr, error) {
+func (c *clientTestPacketConn) ReadFrom(b []byte) (int, *ipv6.ControlMessage, net.Addr, error) {
 	n, err := c.r.b.Read(b)
 	cm := c.r.cm
 	src := c.r.addr
@@ -70,7 +55,7 @@ func (c *testPacketConn) ReadFrom(b []byte) (int, *ipv6.ControlMessage, net.Addr
 	return n, cm, src, err
 }
 
-func (c *testPacketConn) WriteTo(b []byte, cm *ipv6.ControlMessage, dst net.Addr) (int, error) {
+func (c *clientTestPacketConn) WriteTo(b []byte, cm *ipv6.ControlMessage, dst net.Addr) (int, error) {
 	n, err := c.w.b.Write(b)
 	c.w.cm = cm
 	c.w.addr = dst
@@ -79,69 +64,38 @@ func (c *testPacketConn) WriteTo(b []byte, cm *ipv6.ControlMessage, dst net.Addr
 }
 
 /**
-* oneReadPacketConn that allows the server to read only once.
- */
-type oneReadPacketConn struct {
-	PacketConn
-
-	err    error
-	txDone bool
-
-	// Once the read/write is done, channel will close and stop blocking.
-	readDoneChan  chan struct{}
-	writeDoneChan chan struct{}
-}
-
-func (c *oneReadPacketConn) ReadFrom(b []byte) (int, *ipv6.ControlMessage, net.Addr, error) {
-	if c.txDone {
-		return 0, nil, nil, errClosing
-	}
-	c.txDone = true
-	n, cm, addr, err := c.PacketConn.ReadFrom(b)
-	close(c.readDoneChan)
-	log.Printf("read from: %v, %v, %v, %v\n", n, cm, addr, err)
-	return n, cm, addr, err
-}
-
-func (c *oneReadPacketConn) WriteTo(b []byte, cm *ipv6.ControlMessage, addr net.Addr) (int, error) {
-	n, err := c.PacketConn.WriteTo(b, cm, addr)
-	close(c.writeDoneChan)
-	return n, err
-}
-
-/**
 * Serve and Handle
  */
 // ServeDHCP is a dhcp6.Handler which invokes an internal handler that
 // allows errors to be returned and handled in one place.
-func (h *Handler) ServeDHCP(w dhcp6.ResponseSender, r *dhcp6.Request) {
+func (h *ClientHandler) ServeDHCP(w ResponseSender, r *Request) {
 	if err := h.handler(h.ip, w, r); err != nil {
 		log.Println(err)
 	}
 }
 
-type Handler struct {
+type ClientHandler struct {
 	ip      net.IP
-	handler handler
+	handler clienthandler
 }
 
-type handler func(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error
+type clienthandler func(ip net.IP, w ResponseSender, r *Request) error
 
 // handle is a handler which assigns IPv6 addresses using DHCPv6.
-func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
+func handle(ip net.IP, w ResponseSender, r *Request) error {
 	// Accept only Solicit, Request, or Confirm, since this server
 	// does not handle Information Request or other message types
-	valid := map[dhcp6.MessageType]struct{}{
-		dhcp6.MessageTypeSolicit: struct{}{},
-		dhcp6.MessageTypeRequest: struct{}{},
-		dhcp6.MessageTypeConfirm: struct{}{},
+	valid := map[MessageType]struct{}{
+		MessageTypeSolicit: struct{}{},
+		MessageTypeRequest: struct{}{},
+		MessageTypeConfirm: struct{}{},
 	}
 	if _, ok := valid[r.MessageType]; !ok {
 		return nil
 	}
 
 	// Make sure client sent a client ID
-	duid, ok := r.Options.Get(dhcp6.OptionClientID)
+	duid, ok := r.Options.Get(OptionClientID)
 	if !ok {
 		return nil
 	}
@@ -188,7 +142,7 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 	)
 
 	// Instruct client to prefer this server unconditionally
-	_ = w.Options().Add(dhcp6.OptionPreference, dhcp6.Preference(255))
+	_ = w.Options().Add(OptionPreference, Preference(255))
 
 	// IANA may already have an IAAddr if an address was already assigned.
 	// If not, assign a new one.
@@ -199,7 +153,7 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 
 	// Client did not indicate a previous address, and is soliciting.
 	// Advertise a new IPv6 address.
-	if !ok && r.MessageType == dhcp6.MessageTypeSolicit {
+	if !ok && r.MessageType == MessageTypeSolicit {
 		return newIAAddr(ia, ip, w, r)
 	} else if !ok {
 		// Client did not indicate an address and is not soliciting.  Ignore.
@@ -222,47 +176,47 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 	)
 
 	// Add IAAddr inside IANA, add IANA to options
-	_ = ia.Options.Add(dhcp6.OptionIAAddr, iaa)
-	_ = w.Options().Add(dhcp6.OptionIANA, ia)
+	_ = ia.Options.Add(OptionIAAddr, iaa)
+	_ = w.Options().Add(OptionIANA, ia)
 
 	// Send reply to client
-	_, err = w.Send(dhcp6.MessageTypeReply)
+	_, err = w.Send(MessageTypeReply)
 	return err
 }
 
 // newIAAddr creates a IAAddr for a IANA using the specified IPv6 address,
 // and advertises it to a client.
-func newIAAddr(ia *dhcp6.IANA, ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
+func newIAAddr(ia *IANA, ip net.IP, w ResponseSender, r *Request) error {
 	// Send IPv6 address with 60 second preferred lifetime,
 	// 90 second valid lifetime, no extra options
-	iaaddr, err := dhcp6.NewIAAddr(ip, 60*time.Second, 90*time.Second, nil)
+	iaaddr, err := NewIAAddr(ip, 60*time.Second, 90*time.Second, nil)
 	if err != nil {
 		return err
 	}
 
 	// Add IAAddr inside IANA, add IANA to options
-	_ = ia.Options.Add(dhcp6.OptionIAAddr, iaaddr)
-	_ = w.Options().Add(dhcp6.OptionIANA, ia)
+	_ = ia.Options.Add(OptionIAAddr, iaaddr)
+	_ = w.Options().Add(OptionIANA, ia)
 
 	// Advertise address to soliciting clients
 	log.Printf("advertising IP: %s", ip)
-	_, err = w.Send(dhcp6.MessageTypeAdvertise)
+	_, err = w.Send(MessageTypeAdvertise)
 	return err
 }
 
 // serve calls server.Serve() that servers a request from client
-func serve(r *testMessage) (*dhcp6.Packet, error) {
-	s := &dhcp6.Server{}
+func serve(r *testMessage) (*Packet, error) {
+	s := &Server{}
 	s.Iface = &net.Interface{
 		Name:  "foo",
 		Index: 0,
 	}
-	s.Handler = &Handler{
+	s.Handler = &ClientHandler{
 		ip:      net.ParseIP("::0"),
 		handler: handle,
 	}
 
-	tc := &testPacketConn{
+	tc := &clientTestPacketConn{
 		r: r,
 		w: &testMessage{},
 
@@ -276,16 +230,16 @@ func serve(r *testMessage) (*dhcp6.Packet, error) {
 		PacketConn: tc,
 		txDone:     false,
 
-		readDoneChan:  make(chan struct{}, 0),
-		writeDoneChan: make(chan struct{}, 0),
+		readDoneC:  make(chan struct{}, 0),
+		writeDoneC: make(chan struct{}, 0),
 	}
 
 	err := s.Serve(c)
-	<-c.readDoneChan
-	<-c.writeDoneChan
+	<-c.readDoneC
+	<-c.writeDoneC
 
 	if err == errClosing {
-		p := &dhcp6.Packet{}
+		p := &Packet{}
 		if err0 := p.UnmarshalBinary(tc.w.b.Bytes()); err0 != nil {
 			return nil, err0
 		}

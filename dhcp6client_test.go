@@ -26,8 +26,8 @@ func TestSolicitAndAdvertise(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	if reply.MessageType != dhcp6.MessageTypeAdvertise {
-		t.Fatalf("Reply does not have a correct type\nShould be MessageTypeAdvertise but %v instead\n", dhcp6.MessageType(reply.MessageType))
+	if reply.MessageType != MessageTypeAdvertise {
+		t.Fatalf("Reply does not have a correct type\nShould be MessageTypeAdvertise but %v instead\n", MessageType(reply.MessageType))
 	}
 	if !reflect.DeepEqual(reply.TransactionID, [3]byte{0x00, 0x01, 0x02}) {
 		t.Fatalf("Reply txID does not match\n")

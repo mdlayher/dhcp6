@@ -13,12 +13,12 @@ func TestNewSolicitOptions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error in newSolicitOptions: %v\n", err)
 	}
-	expected := dhcp6.Options(map[dhcp6.OptionCode][][]byte{
-		dhcp6.OptionIANA:        [][]byte{[]byte{0x72, 0x6f, 0x6f, 0x74, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
-		dhcp6.OptionRapidCommit: [][]byte{nil},
-		dhcp6.OptionElapsedTime: [][]byte{[]byte{0x00, 0x00}},
-		dhcp6.OptionORO:         [][]byte{[]byte{0x00, 0x17, 0x00, 0x18}},
-		dhcp6.OptionClientID:    [][]byte{[]byte{0x00, 0x03, 0x00, 0x06, 0xb8, 0xae, 0xed, 0x7a, 0x10, 0x66}},
+	expected := Options(map[OptionCode][][]byte{
+		OptionIANA:        [][]byte{[]byte{0x72, 0x6f, 0x6f, 0x74, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
+		OptionRapidCommit: [][]byte{nil},
+		OptionElapsedTime: [][]byte{[]byte{0x00, 0x00}},
+		OptionORO:         [][]byte{[]byte{0x00, 0x17, 0x00, 0x18}},
+		OptionClientID:    [][]byte{[]byte{0x00, 0x03, 0x00, 0x06, 0xb8, 0xae, 0xed, 0x7a, 0x10, 0x66}},
 	})
 
 	optionsIANA, optionsSuccess, _ := options.IANA()
@@ -90,8 +90,8 @@ func TestNewSolicitPacket(t *testing.T) {
 	}
 
 	options, err := newSolicitOptions(mac)
-	expected := &dhcp6.Packet{
-		MessageType:   dhcp6.MessageTypeSolicit,
+	expected := &Packet{
+		MessageType:   MessageTypeSolicit,
 		TransactionID: [3]byte{0x00, 0x01, 0x02},
 		Options:       options,
 	}
