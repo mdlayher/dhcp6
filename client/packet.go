@@ -1,4 +1,4 @@
-package dhcp6
+package client
 
 import (
 	"math/rand"
@@ -6,49 +6,50 @@ import (
 
 	"github.com/google/netstack/tcpip"
 	"github.com/google/netstack/tcpip/header"
+	"github.com/u-root/dhcp6"
 )
 
-func newSolicitOptions(mac net.HardwareAddr) (Options, error) {
-	options := make(Options)
+func newSolicitOptions(mac net.HardwareAddr) (dhcp6.Options, error) {
+	options := make(dhcp6.Options)
 
 	// TODO: This should be generated.
 	id := [4]byte{'r', 'o', 'o', 't'}
 	// IANA = requesting a non-temporary address.
-	if err := options.Add(OptionIANA, NewIANA(id, 0, 0, nil)); err != nil {
+	if err := options.Add(dhcp6.OptionIANA, dhcp6.NewIANA(id, 0, 0, nil)); err != nil {
 		return nil, err
 	}
 	// Request an immediate Reply with an IP instead of an Advertise packet.
-	if err := options.Add(OptionRapidCommit, nil); err != nil {
+	if err := options.Add(dhcp6.OptionRapidCommit, nil); err != nil {
 		return nil, err
 	}
-	if err := options.Add(OptionElapsedTime, ElapsedTime(0)); err != nil {
-		return nil, err
-	}
-
-	oro := OptionRequestOption{
-		OptionDNSServers,
-		OptionDomainList,
-		OptionBootFileURL,
-		OptionBootFileParam,
-	}
-	if err := options.Add(OptionORO, oro); err != nil {
+	if err := options.Add(dhcp6.OptionElapsedTime, dhcp6.ElapsedTime(0)); err != nil {
 		return nil, err
 	}
 
-	if err := options.Add(OptionClientID, NewDUIDLL(6, mac)); err != nil {
+	oro := dhcp6.OptionRequestOption{
+		dhcp6.OptionDNSServers,
+		dhcp6.OptionDomainList,
+		dhcp6.OptionBootFileURL,
+		dhcp6.OptionBootFileParam,
+	}
+	if err := options.Add(dhcp6.OptionORO, oro); err != nil {
+		return nil, err
+	}
+
+	if err := options.Add(dhcp6.OptionClientID, dhcp6.NewDUIDLL(6, mac)); err != nil {
 		return nil, err
 	}
 	return options, nil
 }
 
-func newSolicitPacket(mac net.HardwareAddr) (*Packet, error) {
+func newSolicitPacket(mac net.HardwareAddr) (*dhcp6.Packet, error) {
 	options, err := newSolicitOptions(mac)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Packet{
-		MessageType: MessageTypeSolicit,
+	return &dhcp6.Packet{
+		MessageType: dhcp6.MessageTypeSolicit,
 		// TODO: This should be random?
 		TransactionID: [3]byte{0x00, 0x01, 0x02},
 		Options:       options,
@@ -75,7 +76,7 @@ func mac2ipv6(mac net.HardwareAddr) []byte {
 
 // ipv6UDPPacket wraps a dhcp6 packet in a IPv6 and UDP packet for sending on a
 // packet socket.
-func ipv6UDPPacket(p *Packet, srcMAC net.HardwareAddr) ([]byte, error) {
+func ipv6UDPPacket(p *dhcp6.Packet, srcMAC net.HardwareAddr) ([]byte, error) {
 	pb, err := p.MarshalBinary()
 	if err != nil {
 		return nil, err

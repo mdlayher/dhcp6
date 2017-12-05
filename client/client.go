@@ -1,4 +1,4 @@
-package dhcp6
+package client
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/netstack/tcpip"
 	"github.com/google/netstack/tcpip/header"
+	"github.com/u-root/dhcp6"
 )
 
 const (
@@ -47,13 +48,13 @@ func New(haddr net.HardwareAddr, packetSock *packetSock, t time.Duration, r int)
 	}
 }
 
-func (c *Client) Solicit() ([]*IAAddr, *Packet, error) {
+func (c *Client) Solicit() ([]*dhcp6.IAAddr, *dhcp6.Packet, error) {
 	solicitPacket, err := newSolicitPacket(c.srcMAC)
 	if err != nil {
 		return nil, nil, fmt.Errorf("new solicit packet: %v", err)
 	}
 
-	var packet *Packet
+	var packet *dhcp6.Packet
 	for i := 0; i < c.retry || c.retry < 0; i++ { // each retry takes the amount of timeout at worst.
 		if err := c.SendPacket(solicitPacket); err != nil {
 			return nil, nil, fmt.Errorf("send solicit packet(%v) = err %v", solicitPacket, err)
@@ -87,7 +88,7 @@ func (c *Client) Solicit() ([]*IAAddr, *Packet, error) {
 	return iaAddrs, packet, nil
 }
 
-func (c *Client) SendPacket(p *Packet) error {
+func (c *Client) SendPacket(p *dhcp6.Packet) error {
 	pkt, err := ipv6UDPPacket(p, c.srcMAC)
 	if err != nil {
 		return err
@@ -112,7 +113,7 @@ func (p *buffer) remaining() []byte {
 
 // If the client fails to receive a valid DHCPv6 packet via socket,
 // it keeps listening until the time is out.
-func (c *Client) ReadReply() (*Packet, error) {
+func (c *Client) ReadReply() (*dhcp6.Packet, error) {
 	start := time.Now()
 
 	for {
@@ -137,7 +138,7 @@ func (c *Client) ReadReply() (*Packet, error) {
 			udp := header.UDP(p.consume(header.UDPMinimumSize))
 
 			if udp.DestinationPort() == srcPort {
-				dhcp6p := &Packet{}
+				dhcp6p := &dhcp6.Packet{}
 				if err := dhcp6p.UnmarshalBinary(p.remaining()); err != nil {
 					// Not a valid DHCPv6 reply; keep listening.
 					continue

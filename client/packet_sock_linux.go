@@ -1,4 +1,4 @@
-package dhcp6
+package client
 
 import (
 	"net"
