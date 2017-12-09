@@ -143,14 +143,11 @@ func (s *Server) ListenAndServe() error {
 // ResponseSender values, then calls s.Handler to handle the request.
 func (s *Server) Serve(p PacketConn) error {
 	// If no DUID was set for server previously, generate a DUID-LL
-	// now using the interface's hardware type and address
+	// now using the interface's hardware address, and just assume the
+	// "Ethernet 10Mb" hardware type since the caller probably doesn't care.
 	if s.ServerID == nil {
-		duid, err := interfaceDUID(s.Iface)
-		if err != nil {
-			return err
-		}
-
-		s.ServerID = duid
+		const ethernet10Mb uint16 = 1
+		s.ServerID = NewDUIDLL(ethernet10Mb, s.Iface.HardwareAddr)
 	}
 
 	// Filter any traffic which does not indicate the interface

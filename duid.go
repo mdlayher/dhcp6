@@ -9,12 +9,6 @@ import (
 	"time"
 )
 
-const (
-	// ethernet10Mb is the default IANA hardware type used in DUID generation,
-	// if a hardware type cannot be parsed from a network interface.
-	ethernet10Mb uint16 = 1
-)
-
 var (
 	// errInvalidDUIDLLT is returned when not enough bytes are present
 	// to parse a valid DUIDLLT from a byte slice, or when the DUID type
@@ -401,26 +395,4 @@ func parseDUID(b []byte) (DUID, error) {
 	}
 
 	return d, d.UnmarshalBinary(b)
-}
-
-// interfaceDUID generates a DUIDLL for an input net.Interface, using its
-// IANA-assigned hardware type and its hardware address.
-func interfaceDUID(ifi *net.Interface) (DUID, error) {
-	// Attempt to check for IANA hardware type, default to Ethernet (10Mb)
-	// on failure (this relies on syscalls which only work on Linux)
-	// Hardware types can be found here:
-	// http://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml.
-	htype, err := HardwareType(ifi)
-	if err != nil {
-		// Return syscall errors
-		if err != ErrParseHardwareType && err != ErrHardwareTypeNotImplemented {
-			return nil, err
-		}
-
-		// Use default value if hardware type can't be found or
-		// detection isn't implemented
-		htype = ethernet10Mb
-	}
-
-	return NewDUIDLL(htype, ifi.HardwareAddr), nil
 }
