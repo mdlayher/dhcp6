@@ -1,7 +1,9 @@
-package dhcp6
+package server
 
 import (
 	"sync"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // ServeMux is a DHCP request multiplexer, which implements Handler.  ServeMux
@@ -11,13 +13,13 @@ import (
 // DHCP servers.
 type ServeMux struct {
 	mu sync.RWMutex
-	m  map[MessageType]Handler
+	m  map[dhcp6.MessageType]Handler
 }
 
 // NewServeMux creates a new ServeMux which is ready to accept Handlers.
 func NewServeMux() *ServeMux {
 	return &ServeMux{
-		m: make(map[MessageType]Handler),
+		m: make(map[dhcp6.MessageType]Handler),
 	}
 }
 
@@ -38,7 +40,7 @@ func (mux *ServeMux) ServeDHCP(w ResponseSender, r *Request) {
 
 // Handle registers a MessageType and Handler with a ServeMux, so that
 // future requests with that MessageType will invoke the Handler.
-func (mux *ServeMux) Handle(mt MessageType, handler Handler) {
+func (mux *ServeMux) Handle(mt dhcp6.MessageType, handler Handler) {
 	mux.mu.Lock()
 	mux.m[mt] = handler
 	mux.mu.Unlock()
@@ -47,6 +49,6 @@ func (mux *ServeMux) Handle(mt MessageType, handler Handler) {
 // HandleFunc registers a MessageType and function as a HandlerFunc with a
 // ServeMux, so that future requests with that MessageType will invoke the
 // HandlerFunc.
-func (mux *ServeMux) HandleFunc(mt MessageType, handler func(ResponseSender, *Request)) {
+func (mux *ServeMux) HandleFunc(mt dhcp6.MessageType, handler func(ResponseSender, *Request)) {
 	mux.Handle(mt, HandlerFunc(handler))
 }

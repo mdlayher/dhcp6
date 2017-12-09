@@ -1,7 +1,9 @@
-package dhcp6
+package server
 
 import (
 	"net"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // Request represents a processed DHCP request received by a server.
@@ -9,7 +11,7 @@ import (
 // type, transaction ID, client ID, options, etc.
 type Request struct {
 	// DHCP message type, such as Solicit, Request, or Renew.
-	MessageType MessageType
+	MessageType dhcp6.MessageType
 
 	// Unique transaction ID, which should be preserved across
 	// multiple requests to the same DHCP server.  ServeDHCP
@@ -21,7 +23,7 @@ type Request struct {
 	// information or requesting additional information from
 	// the server.  Its methods can be used to check for and parse
 	// additional information relating to a request.
-	Options Options
+	Options dhcp6.Options
 
 	// Length of the DHCP request, in bytes.
 	Length int64
@@ -36,7 +38,7 @@ type Request struct {
 // If the input byte slice is not a valid DHCP packet, ErrInvalidPacket is
 // returned.
 func ParseRequest(b []byte, remoteAddr *net.UDPAddr) (*Request, error) {
-	p := new(Packet)
+	p := new(dhcp6.Packet)
 	if err := p.UnmarshalBinary(b); err != nil {
 		return nil, err
 	}

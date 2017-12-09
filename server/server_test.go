@@ -1,13 +1,15 @@
-package dhcp6
+package server
 
 import (
 	"bytes"
 	"io/ioutil"
 	"log"
 	"net"
+	"reflect"
 	"testing"
 	"time"
 
+	"github.com/mdlayher/dhcp6"
 	"golang.org/x/net/ipv6"
 )
 
@@ -75,8 +77,8 @@ func TestServeIPv6ControlParameters(t *testing.T) {
 // TestServeWithSetServerID verifies that Serve uses the server ID provided
 // instead of generating its own, when a server ID is set.
 func TestServeWithSetServerID(t *testing.T) {
-	p := &Packet{
-		MessageType:   MessageTypeSolicit,
+	p := &dhcp6.Packet{
+		MessageType:   dhcp6.MessageTypeSolicit,
 		TransactionID: [3]byte{0, 1, 2},
 	}
 
@@ -88,7 +90,7 @@ func TestServeWithSetServerID(t *testing.T) {
 	r := &testMessage{}
 	r.b.Write(pb)
 
-	duid, err := NewDUIDLLT(1, time.Now(), []byte{0, 1, 0, 1, 0, 1})
+	duid, err := dhcp6.NewDUIDLLT(1, time.Now(), []byte{0, 1, 0, 1, 0, 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +100,7 @@ func TestServeWithSetServerID(t *testing.T) {
 	}
 
 	// Expect a reply with type advertise
-	mt := MessageTypeAdvertise
+	mt := dhcp6.MessageTypeAdvertise
 	w, _, err := testServe(r, s, true, func(w ResponseSender, r *Request) {
 		w.Send(mt)
 	})
@@ -106,7 +108,7 @@ func TestServeWithSetServerID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wp := new(Packet)
+	wp := new(dhcp6.Packet)
 	if err := wp.UnmarshalBinary(w.b.Bytes()); err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +122,7 @@ func TestServeWithSetServerID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := wp.Options.GetOne(OptionServerID)
+	got, err := wp.Options.GetOne(dhcp6.OptionServerID)
 	if err != nil {
 		t.Fatal("server ID not found in reply")
 	}
@@ -135,19 +137,14 @@ func TestServeWithSetServerID(t *testing.T) {
 // it before a Handler is invoked.
 func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
-	duid := NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
+	duid := dhcp6.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
-	db, err := duid.MarshalBinary()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	p := &Packet{
-		MessageType:   MessageTypeSolicit,
+	p := &dhcp6.Packet{
+		MessageType:   dhcp6.MessageTypeSolicit,
 		TransactionID: txID,
-		Options:       make(Options),
+		Options:       make(dhcp6.Options),
 	}
-	p.Options.addRaw(OptionClientID, db)
+	p.Options.Add(dhcp6.OptionClientID, duid)
 
 	pb, err := p.MarshalBinary()
 	if err != nil {
@@ -164,11 +161,11 @@ func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 			t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 		}
 
-		cID, err := w.Options().GetOne(OptionClientID)
+		cID, err := w.Options().ClientID()
 		if err != nil {
 			t.Fatal("ResponseSender options did not contain client ID")
 		}
-		if want, got := db, cID; !bytes.Equal(want, got) {
+		if want, got := duid, cID; !reflect.DeepEqual(want, got) {
 			t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 		}
 
@@ -270,20 +267,15 @@ func TestServeIgnoreBadMessageType(t *testing.T) {
 // all of its options, and replies with expected values.
 func TestServeOK(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
-	duid := NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
-
-	db, err := duid.MarshalBinary()
-	if err != nil {
-		t.Fatal(err)
-	}
+	duid := dhcp6.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
 	// Perform an entire Solicit transaction
-	p := &Packet{
-		MessageType:   MessageTypeSolicit,
+	p := &dhcp6.Packet{
+		MessageType:   dhcp6.MessageTypeSolicit,
 		TransactionID: txID,
-		Options:       make(Options),
+		Options:       make(dhcp6.Options),
 	}
-	p.Options.addRaw(OptionClientID, db)
+	p.Options.Add(dhcp6.OptionClientID, duid)
 
 	pb, err := p.MarshalBinary()
 	if err != nil {
@@ -299,15 +291,15 @@ func TestServeOK(t *testing.T) {
 	r.b.Write(pb)
 
 	// Expect these option values set by server
-	var preference Preference = 255
-	sCode := StatusSuccess
+	var preference dhcp6.Preference = 255
+	sCode := dhcp6.StatusSuccess
 	sMsg := "success"
 
 	// Expect Advertise reply with several options added by server
-	mt := MessageTypeAdvertise
+	mt := dhcp6.MessageTypeAdvertise
 	w, _, err := testServe(r, nil, true, func(w ResponseSender, r *Request) {
-		w.Options().Add(OptionPreference, preference)
-		w.Options().Add(OptionStatusCode, NewStatusCode(sCode, sMsg))
+		w.Options().Add(dhcp6.OptionPreference, preference)
+		w.Options().Add(dhcp6.OptionStatusCode, dhcp6.NewStatusCode(sCode, sMsg))
 
 		w.Send(mt)
 	})
@@ -323,7 +315,7 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected client address: %v != %v", want, got)
 	}
 
-	wp := new(Packet)
+	wp := new(dhcp6.Packet)
 	if err := wp.UnmarshalBinary(w.b.Bytes()); err != nil {
 		t.Fatal(err)
 	}
@@ -336,11 +328,11 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 	}
 
-	cID, err := wp.Options.GetOne(OptionClientID)
+	cID, err := wp.Options.ClientID()
 	if err != nil {
 		t.Fatalf("response options did not contain client ID: %v", err)
 	}
-	if want, got := db, cID; !bytes.Equal(want, got) {
+	if want, got := duid, cID; !reflect.DeepEqual(want, got) {
 		t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 	}
 	if sID, err := wp.Options.ServerID(); err != nil || sID == nil {

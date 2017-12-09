@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/server"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 
 	// Bind DHCPv6 server to interface and use specified handler
 	log.Printf("binding DHCPv6 server to interface %s...", *iface)
-	if err := dhcp6.ListenAndServe(*iface, h); err != nil {
+	if err := server.ListenAndServe(*iface, h); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -45,7 +46,7 @@ type Handler struct {
 
 // ServeDHCP is a dhcp6.Handler which invokes an internal handler that
 // allows errors to be returned and handled in one place.
-func (h *Handler) ServeDHCP(w dhcp6.ResponseSender, r *dhcp6.Request) {
+func (h *Handler) ServeDHCP(w server.ResponseSender, r *server.Request) {
 	if err := h.handler(h.ip, w, r); err != nil {
 		log.Println(err)
 	}
@@ -53,10 +54,10 @@ func (h *Handler) ServeDHCP(w dhcp6.ResponseSender, r *dhcp6.Request) {
 
 // A handler is a DHCPv6 handler function which can assign a single IPv6
 // address and also return an error.
-type handler func(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error
+type handler func(ip net.IP, w server.ResponseSender, r *server.Request) error
 
 // handle is a handler which assigns IPv6 addresses using DHCPv6.
-func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
+func handle(ip net.IP, w server.ResponseSender, r *server.Request) error {
 	// Accept only Solicit, Request, or Confirm, since this server
 	// does not handle Information Request or other message types
 	valid := map[dhcp6.MessageType]struct{}{
@@ -164,7 +165,7 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 
 // newIAAddr creates a IAAddr for a IANA using the specified IPv6 address,
 // and advertises it to a client.
-func newIAAddr(ia *dhcp6.IANA, ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
+func newIAAddr(ia *dhcp6.IANA, ip net.IP, w server.ResponseSender, r *server.Request) error {
 	// Send IPv6 address with 60 second preferred lifetime,
 	// 90 second valid lifetime, no extra options
 	iaaddr, err := dhcp6.NewIAAddr(ip, 60*time.Second, 90*time.Second, nil)

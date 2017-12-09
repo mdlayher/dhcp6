@@ -1,10 +1,11 @@
-package dhcp6
+package server
 
 import (
 	"errors"
 	"log"
 	"net"
 
+	"github.com/mdlayher/dhcp6"
 	"golang.org/x/net/ipv6"
 )
 
@@ -73,7 +74,7 @@ type Server struct {
 	// generated using Iface's hardware type and address.  If possible,
 	// servers with persistent storage available should generate a DUID-LLT
 	// and store it for future use.
-	ServerID DUID
+	ServerID dhcp6.DUID
 
 	// ErrorLog is an optional logger which can be used to report errors and
 	// erroneous behavior while the server is accepting client requests.
@@ -147,7 +148,7 @@ func (s *Server) Serve(p PacketConn) error {
 	// "Ethernet 10Mb" hardware type since the caller probably doesn't care.
 	if s.ServerID == nil {
 		const ethernet10Mb uint16 = 1
-		s.ServerID = NewDUIDLL(ethernet10Mb, s.Iface.HardwareAddr)
+		s.ServerID = dhcp6.NewDUIDLL(ethernet10Mb, s.Iface.HardwareAddr)
 	}
 
 	// Filter any traffic which does not indicate the interface
@@ -237,21 +238,21 @@ type response struct {
 	remoteAddr *net.UDPAddr
 	req        *Request
 
-	options Options
+	options dhcp6.Options
 }
 
 // Options returns the Options map, which can be modified before a call
 // to Write.  When Write is called, the Options map is enumerated into an
 // ordered slice of option codes and values.
-func (r *response) Options() Options {
+func (r *response) Options() dhcp6.Options {
 	return r.options
 }
 
 // Send uses the input message typ, the transaction ID sent by a client,
 // and the options set by Options, to create and send a Packet to the
 // client's address.
-func (r *response) Send(mt MessageType) (int, error) {
-	p := &Packet{
+func (r *response) Send(mt dhcp6.MessageType) (int, error) {
+	p := &dhcp6.Packet{
 		MessageType:   mt,
 		TransactionID: r.req.TransactionID,
 		Options:       r.options,
@@ -273,7 +274,7 @@ func (c *conn) serve() {
 	r, err := ParseRequest(c.buf, c.remoteAddr)
 	if err != nil {
 		// Malformed packets get no response
-		if err == ErrInvalidPacket {
+		if err == dhcp6.ErrInvalidPacket {
 			return
 		}
 
@@ -284,7 +285,7 @@ func (c *conn) serve() {
 
 	// Filter out unknown/invalid message types, using the lowest and highest
 	// numbered types
-	if r.MessageType < MessageTypeSolicit || r.MessageType > MessageTypeDHCPv4Response {
+	if r.MessageType < dhcp6.MessageTypeSolicit || r.MessageType > dhcp6.MessageTypeDHCPv4Response {
 		c.server.logf("%s: unrecognized message type: %d", c.remoteAddr.String(), r.MessageType)
 		return
 	}
@@ -294,17 +295,17 @@ func (c *conn) serve() {
 		remoteAddr: c.remoteAddr,
 		conn:       c.conn,
 		req:        r,
-		options:    make(Options),
+		options:    make(dhcp6.Options),
 	}
 
 	// Add server ID to response
 	if sID := c.server.ServerID; sID != nil {
-		_ = w.options.Add(OptionServerID, sID)
+		_ = w.options.Add(dhcp6.OptionServerID, sID)
 	}
 
 	// If available in request, add client ID to response
-	if cID, err := r.Options.GetOne(OptionClientID); err == nil {
-		w.options.addRaw(OptionClientID, cID)
+	if cID, err := r.Options.ClientID(); err == nil {
+		w.options.Add(dhcp6.OptionClientID, cID)
 	}
 
 	// Enforce a valid Handler.

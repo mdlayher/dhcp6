@@ -1,26 +1,23 @@
-package dhcp6
+package server
 
 import (
 	"net"
 	"reflect"
 	"testing"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // TestParseRequest verifies that ParseRequest returns a consistent
 // Request struct for use in Handler types.
 func TestParseRequest(t *testing.T) {
-	opt := option{
-		Code: OptionClientID,
-		Data: []byte{0, 1},
-	}
-
-	p := &Packet{
-		MessageType:   MessageTypeSolicit,
+	p := &dhcp6.Packet{
+		MessageType:   dhcp6.MessageTypeSolicit,
 		TransactionID: [3]byte{1, 2, 3},
-		Options: Options{
-			opt.Code: [][]byte{opt.Data},
-		},
+		Options:       make(dhcp6.Options),
 	}
+	var uuid [16]byte
+	p.Options.Add(dhcp6.OptionClientID, dhcp6.NewDUIDUUID(uuid))
 
 	addr := &net.UDPAddr{
 		IP:   net.ParseIP("::1"),
@@ -35,11 +32,11 @@ func TestParseRequest(t *testing.T) {
 	r := &Request{
 		MessageType:   p.MessageType,
 		TransactionID: p.TransactionID,
-		Options:       make(Options),
+		Options:       make(dhcp6.Options),
 		Length:        int64(len(buf)),
 		RemoteAddr:    "[::1]:546",
 	}
-	r.Options.addRaw(opt.Code, opt.Data)
+	r.Options.Add(dhcp6.OptionClientID, dhcp6.NewDUIDUUID(uuid))
 
 	gotR, err := ParseRequest(buf, addr)
 	if err != nil {
