@@ -17,15 +17,15 @@ func TestRemoteIdentifierMarshalBinary(t *testing.T) {
 			desc: "all zero values",
 			buf:  bytes.Repeat([]byte{0}, 5),
 			remoteIdentifier: &RemoteIdentifier{
-				RemoteId: []byte{0},
+				RemoteID: []byte{0},
 			},
 		},
 		{
-			desc: "[0, 0, 5, 0x58] EnterpriseNumber, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf] RemoteId",
+			desc: "[0, 0, 5, 0x58] EnterpriseNumber, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf] RemoteID",
 			buf:  []byte{0, 0, 5, 0x58, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf},
 			remoteIdentifier: &RemoteIdentifier{
 				EnterpriseNumber: 1368,
-				RemoteId:         []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf},
+				RemoteID:         []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf},
 			},
 		},
 	}
@@ -53,7 +53,7 @@ func TestRemoteIdentifierUnmarshalBinary(t *testing.T) {
 			buf: []byte{0, 0, 5, 0x58, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf},
 			remoteIdentifier: &RemoteIdentifier{
 				EnterpriseNumber: 1368,
-				RemoteId:         []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf},
+				RemoteID:         []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf},
 			},
 		},
 		{
