@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"io"
 )
 
@@ -25,32 +24,22 @@ type VendorClass struct {
 
 // MarshalBinary allocates a byte slice containing the data from a VendorClass.
 func (vc *VendorClass) MarshalBinary() ([]byte, error) {
-	// 4 bytes: EnterpriseNumber
-	// N bytes: VendorClassData
-	vcb, err := vc.VendorClassData.MarshalBinary()
-	if err != nil {
-		return nil, err
-	}
-
-	b := make([]byte, 4, 4+len(vcb))
-	binary.BigEndian.PutUint32(b, vc.EnterpriseNumber)
-	b = append(b, vcb...)
-
-	return b, nil
+	b := newBuffer(nil)
+	b.Write32(vc.EnterpriseNumber)
+	vc.VendorClassData.marshal(b)
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a VendorClass.
 //
-// If the byte slice is less than 4 bytes in length,
-// or if VendorClassData is malformed, io.ErrUnexpectedEOF is
-// returned.
-func (vc *VendorClass) UnmarshalBinary(b []byte) error {
-	if len(b) < 4 {
+// If the byte slice is less than 4 bytes in length, or if VendorClassData is
+// malformed, io.ErrUnexpectedEOF is returned.
+func (vc *VendorClass) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
+	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF
 	}
 
-	// Extract EnterpriseNumber
-	vc.EnterpriseNumber = binary.BigEndian.Uint32(b[:4])
-
-	return vc.VendorClassData.UnmarshalBinary(b[4:])
+	vc.EnterpriseNumber = b.Read32()
+	return vc.VendorClassData.unmarshal(b)
 }

@@ -32,52 +32,48 @@ type RelayMessage struct {
 
 // MarshalBinary allocates a byte slice containing the data
 // from a RelayMessage.
-func (p *RelayMessage) MarshalBinary() ([]byte, error) {
+func (rm *RelayMessage) MarshalBinary() ([]byte, error) {
 	// 1 byte: message type
 	// 1 byte: hop-count
 	// 16 bytes: link-address
 	// 16 bytes: peer-address
 	// N bytes: options slice byte count
 
-	opts := p.Options.enumerate()
-	b := make([]byte, 34+opts.count())
+	opts := rm.Options.enumerate()
+	b := newBuffer(make([]byte, 0, 34+opts.count()))
 
-	b[0] = byte(p.MessageType)
-	b[1] = byte(p.HopCount)
-	copy(b[2:2+net.IPv6len], p.LinkAddress[:])
-	copy(b[18:18+net.IPv6len], p.PeerAddress[:])
-	opts.write(b[34:])
+	b.Write8(uint8(rm.MessageType))
+	b.Write8(rm.HopCount)
+	copy(b.WriteN(net.IPv6len), rm.LinkAddress)
+	copy(b.WriteN(net.IPv6len), rm.PeerAddress)
+	opts.marshal(b)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a RelayMessage.
 //
 // If the byte slice does not contain enough data to form a valid RelayMessage,
 // ErrInvalidPacket is returned.
-func (p *RelayMessage) UnmarshalBinary(b []byte) error {
+func (rm *RelayMessage) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// RelayMessage must contain at least message type, hop-count, link-address and peer-address
-	if len(b) < 34 {
+	if b.Len() < 34 {
 		return ErrInvalidPacket
 	}
 
-	p.MessageType = MessageType(b[0])
-	p.HopCount = uint8(b[1])
+	rm.MessageType = MessageType(b.Read8())
+	rm.HopCount = b.Read8()
 
-	link := [net.IPv6len]byte{}
-	copy(link[:], b[2:2+net.IPv6len])
-	p.LinkAddress = net.IP(link[:])
+	rm.LinkAddress = make(net.IP, net.IPv6len)
+	copy(rm.LinkAddress, b.Consume(net.IPv6len))
 
-	peer := [net.IPv6len]byte{}
-	copy(peer[:], b[18:18+net.IPv6len])
-	p.PeerAddress = net.IP(peer[:])
+	rm.PeerAddress = make(net.IP, net.IPv6len)
+	copy(rm.PeerAddress, b.Consume(net.IPv6len))
 
-	options, err := parseOptions(b[34:])
-	if err != nil {
+	if err := (&rm.Options).unmarshal(b); err != nil {
 		// Invalid options means an invalid RelayMessage
 		return ErrInvalidPacket
 	}
-	p.Options = options
-
 	return nil
 }

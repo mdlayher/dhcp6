@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"io"
 	"net"
 	"time"
@@ -89,15 +88,15 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 	// 16 bytes: IPv6 prefix
 	//  N bytes: options
 	opts := i.Options.enumerate()
-	b := make([]byte, 25+opts.count())
+	b := newBuffer(make([]byte, 0, 25+opts.count()))
 
-	binary.BigEndian.PutUint32(b[0:4], uint32(i.PreferredLifetime/time.Second))
-	binary.BigEndian.PutUint32(b[4:8], uint32(i.ValidLifetime/time.Second))
-	b[8] = i.PrefixLength
-	copy(b[9:25], i.Prefix)
-	opts.write(b[25:])
+	b.Write32(uint32(i.PreferredLifetime / time.Second))
+	b.Write32(uint32(i.ValidLifetime / time.Second))
+	b.Write8(i.PrefixLength)
+	copy(b.WriteN(net.IPv6len), i.Prefix)
+	opts.marshal(b)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a IAPrefix.
@@ -106,31 +105,24 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 // io.ErrUnexpectedEOF is returned.  If the preferred lifetime value in the
 // byte slice is less than the valid lifetime, ErrInvalidLifetimes is
 // returned.
-func (i *IAPrefix) UnmarshalBinary(b []byte) error {
+func (i *IAPrefix) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// IAPrefix must at least contain lifetimes, prefix length, and prefix
-	if len(b) < 25 {
+	if b.Len() < 25 {
 		return io.ErrUnexpectedEOF
 	}
 
-	i.PreferredLifetime = time.Duration(binary.BigEndian.Uint32(b[0:4])) * time.Second
-	i.ValidLifetime = time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second
+	i.PreferredLifetime = time.Duration(b.Read32()) * time.Second
+	i.ValidLifetime = time.Duration(b.Read32()) * time.Second
 
 	// Preferred lifetime must always be less than valid lifetime.
 	if i.PreferredLifetime > i.ValidLifetime {
 		return ErrInvalidLifetimes
 	}
 
-	i.PrefixLength = b[8]
+	i.PrefixLength = b.Read8()
+	i.Prefix = make(net.IP, net.IPv6len)
+	copy(i.Prefix, b.Consume(net.IPv6len))
 
-	prefix := make(net.IP, 16)
-	copy(prefix, b[9:25])
-	i.Prefix = prefix
-
-	options, err := parseOptions(b[25:])
-	if err != nil {
-		return err
-	}
-	i.Options = options
-
-	return nil
+	return (&i.Options).unmarshal(b)
 }

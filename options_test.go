@@ -2094,7 +2094,8 @@ func Test_parseOptions(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		options, err := parseOptions(tt.buf)
+		var options Options
+		err := (&options).unmarshal(newBuffer(tt.buf))
 		if want, got := tt.err, err; want != got {
 			t.Errorf("[%02d] test %q, unexpected error for parseOptions(%v): %v != %v",
 				i, tt.desc, tt.buf, want, got)
@@ -2110,8 +2111,8 @@ func Test_parseOptions(t *testing.T) {
 		for k, v := range tt.options {
 			for ii := range v {
 				if want, got := cap(v[ii]), cap(options[k][ii]); want != got {
-					t.Errorf("[%02d] test %q, unexpected capacity option data:\n- want: %v\n-  got: %v",
-						i, tt.desc, want, got)
+					t.Errorf("[%02d] test %q, option %d, unexpected capacity option data:\n- want: %v\n-  got: %v",
+						i, tt.desc, ii, want, got)
 				}
 			}
 		}

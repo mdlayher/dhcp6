@@ -27,36 +27,31 @@ func (p *Packet) MarshalBinary() ([]byte, error) {
 	// 3 bytes: transaction ID
 	// N bytes: options slice byte count
 	opts := p.Options.enumerate()
-	b := make([]byte, 4+opts.count())
+	b := newBuffer(make([]byte, 0, 4+opts.count()))
 
-	b[0] = byte(p.MessageType)
-	copy(b[1:4], p.TransactionID[:])
-	opts.write(b[4:])
+	b.Write8(uint8(p.MessageType))
+	b.WriteBytes(p.TransactionID[:])
+	opts.marshal(b)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a Packet.
 //
 // If the byte slice does not contain enough data to form a valid Packet,
 // ErrInvalidPacket is returned.
-func (p *Packet) UnmarshalBinary(b []byte) error {
+func (p *Packet) UnmarshalBinary(q []byte) error {
+	b := newBuffer(q)
 	// Packet must contain at least a message type and transaction ID
-	if len(b) < 4 {
+	if b.Len() < 4 {
 		return ErrInvalidPacket
 	}
-	p.MessageType = MessageType(b[0])
 
-	txID := [3]byte{}
-	copy(txID[:], b[1:4])
-	p.TransactionID = txID
+	p.MessageType = MessageType(b.Read8())
+	b.ReadBytes(p.TransactionID[:])
 
-	options, err := parseOptions(b[4:])
-	if err != nil {
-		// Invalid options means an invalid packet
+	if err := (&p.Options).unmarshal(b); err != nil {
 		return ErrInvalidPacket
 	}
-	p.Options = options
-
 	return nil
 }

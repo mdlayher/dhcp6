@@ -2,7 +2,6 @@ package dhcp6
 
 import (
 	"encoding"
-	"encoding/binary"
 	"errors"
 	"io"
 	"net"
@@ -142,38 +141,37 @@ func (d *DUIDLLT) MarshalBinary() ([]byte, error) {
 	// 2 bytes: hardware type
 	// 4 bytes: time duration
 	// N bytes: hardware address
-	b := make([]byte, 8+len(d.HardwareAddr))
+	b := newBuffer(make([]byte, 0, 8+len(d.HardwareAddr)))
 
-	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type))
-	binary.BigEndian.PutUint16(b[2:4], d.HardwareType)
-	binary.BigEndian.PutUint32(b[4:8], uint32(d.Time/time.Second))
-	copy(b[8:], d.HardwareAddr)
+	b.Write16(uint16(d.Type))
+	b.Write16(d.HardwareType)
+	b.Write32(uint32(d.Time / time.Second))
+	b.WriteBytes(d.HardwareAddr)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a DUIDLLT.
 // If the byte slice does not contain enough data to form a valid
 // DUIDLLT, or another DUID type is indicated, errInvalidDUIDLLT is returned.
-func (d *DUIDLLT) UnmarshalBinary(b []byte) error {
+func (d *DUIDLLT) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// Too short to be valid DUIDLLT
-	if len(b) < 8 {
+	if b.Len() < 8 {
 		return io.ErrUnexpectedEOF
 	}
 
 	// Verify DUID type
-	dType := DUIDType(binary.BigEndian.Uint16(b[0:2]))
+	dType := DUIDType(b.Read16())
 	if dType != DUIDTypeLLT {
 		return errInvalidDUIDLLT
 	}
 	d.Type = dType
+	d.HardwareType = b.Read16()
+	d.Time = time.Duration(b.Read32()) * time.Second
 
-	mac := make(net.HardwareAddr, len(b[8:]))
-	copy(mac, b[8:])
-	d.HardwareAddr = mac
+	d.HardwareAddr = b.Remaining()
 
-	d.HardwareType = binary.BigEndian.Uint16(b[2:4])
-	d.Time = time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second
 	return nil
 }
 
@@ -209,36 +207,33 @@ func (d *DUIDEN) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 4 bytes: enterprise number
 	// N bytes: identifier
-	b := make([]byte, 6+len(d.Identifier))
+	b := newBuffer(make([]byte, 0, 6+len(d.Identifier)))
 
-	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type))
-	binary.BigEndian.PutUint32(b[2:6], d.EnterpriseNumber)
-	copy(b[6:], d.Identifier)
+	b.Write16(uint16(d.Type))
+	b.Write32(d.EnterpriseNumber)
+	b.WriteBytes(d.Identifier)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a DUIDEN.
 // If the byte slice does not contain enough data to form a valid
 // DUIDEN, or another DUID type is indicated, errInvalidDUIDEN is returned.
-func (d *DUIDEN) UnmarshalBinary(b []byte) error {
+func (d *DUIDEN) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// Too short to be valid DUIDEN
-	if len(b) < 6 {
+	if b.Len() < 6 {
 		return io.ErrUnexpectedEOF
 	}
 
 	// Verify DUID type
-	dType := DUIDType(binary.BigEndian.Uint16(b[0:2]))
+	dType := DUIDType(b.Read16())
 	if dType != DUIDTypeEN {
 		return errInvalidDUIDEN
 	}
 	d.Type = dType
-
-	id := make([]byte, len(b[6:]))
-	copy(id, b[6:])
-	d.Identifier = id
-
-	d.EnterpriseNumber = binary.BigEndian.Uint32(b[2:6])
+	d.EnterpriseNumber = b.Read32()
+	d.Identifier = b.Remaining()
 	return nil
 }
 
@@ -283,36 +278,34 @@ func (d *DUIDLL) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 2 bytes: hardware type
 	// N bytes: hardware address
-	b := make([]byte, 4+len(d.HardwareAddr))
+	b := newBuffer(make([]byte, 0, 4+len(d.HardwareAddr)))
 
-	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type))
-	binary.BigEndian.PutUint16(b[2:4], d.HardwareType)
-	copy(b[4:], d.HardwareAddr)
+	b.Write16(uint16(d.Type))
+	b.Write16(d.HardwareType)
+	b.WriteBytes(d.HardwareAddr)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a DUIDLL.
 // If the byte slice does not contain enough data to form a valid
 // DUIDLL, or another DUID type is indicated, errInvalidDUIDLL is returned.
-func (d *DUIDLL) UnmarshalBinary(b []byte) error {
+func (d *DUIDLL) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// Too short to be DUIDLL
-	if len(b) < 4 {
+	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF
 	}
 
 	// Verify DUID type
-	dType := DUIDType(binary.BigEndian.Uint16(b[0:2]))
+	dType := DUIDType(b.Read16())
 	if dType != DUIDTypeLL {
 		return errInvalidDUIDLL
 	}
 	d.Type = dType
+	d.HardwareType = b.Read16()
+	d.HardwareAddr = b.Remaining()
 
-	mac := make(net.HardwareAddr, len(b[4:]))
-	copy(mac, b[4:])
-	d.HardwareAddr = mac
-
-	d.HardwareType = binary.BigEndian.Uint16(b[2:4])
 	return nil
 }
 
@@ -340,48 +333,46 @@ func NewDUIDUUID(uuid [16]byte) *DUIDUUID {
 func (d *DUIDUUID) MarshalBinary() ([]byte, error) {
 	//  2 bytes: DUID type
 	// 16 bytes: UUID
-	b := make([]byte, 18)
+	b := newBuffer(make([]byte, 0, 18))
 
-	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type))
-	copy(b[2:18], d.UUID[:])
+	b.Write16(uint16(d.Type))
+	b.WriteBytes(d.UUID[:])
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a DUIDUUID.
 // If the byte slice does not contain the exact number of bytes
 // needed to form a valid DUIDUUID, or another DUID type is indicated,
 // errInvalidDUIDUUID is returned.
-func (d *DUIDUUID) UnmarshalBinary(b []byte) error {
+func (d *DUIDUUID) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// DUIDUUIDs are fixed-length structures
-	if len(b) != 18 {
+	if b.Len() != 18 {
 		return io.ErrUnexpectedEOF
 	}
 
 	// Verify DUID type
-	dType := DUIDType(binary.BigEndian.Uint16(b[0:2]))
+	dType := DUIDType(b.Read16())
 	if dType != DUIDTypeUUID {
 		return errInvalidDUIDUUID
 	}
 	d.Type = dType
-
-	uuid := [16]byte{}
-	copy(uuid[:], b[2:])
-	d.UUID = uuid
-
+	b.ReadBytes(d.UUID[:])
 	return nil
 }
 
 // parseDUID returns the correct DUID type of the input byte slice as a
 // DUID interface type.
-func parseDUID(b []byte) (DUID, error) {
+func parseDUID(p []byte) (DUID, error) {
+	b := newBuffer(p)
 	// DUID must have enough bytes to determine its type
-	if len(b) < 2 {
+	if b.Len() < 2 {
 		return nil, io.ErrUnexpectedEOF
 	}
 
 	var d DUID
-	switch DUIDType(binary.BigEndian.Uint16(b[0:2])) {
+	switch DUIDType(b.Read16()) {
 	case DUIDTypeLLT:
 		d = new(DUIDLLT)
 	case DUIDTypeEN:
@@ -394,5 +385,5 @@ func parseDUID(b []byte) (DUID, error) {
 		return nil, errUnknownDUID
 	}
 
-	return d, d.UnmarshalBinary(b)
+	return d, d.UnmarshalBinary(p)
 }

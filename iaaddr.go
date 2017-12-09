@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"io"
 	"net"
 	"time"
@@ -80,14 +79,14 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 	//  4 bytes: valid lifetime
 	//  N bytes: options
 	opts := i.Options.enumerate()
-	b := make([]byte, 24+opts.count())
+	b := newBuffer(make([]byte, 0, 24+opts.count()))
 
-	copy(b[0:16], i.IP)
-	binary.BigEndian.PutUint32(b[16:20], uint32(i.PreferredLifetime/time.Second))
-	binary.BigEndian.PutUint32(b[20:24], uint32(i.ValidLifetime/time.Second))
-	opts.write(b[24:])
+	copy(b.WriteN(net.IPv6len), i.IP)
+	b.Write32(uint32(i.PreferredLifetime / time.Second))
+	b.Write32(uint32(i.ValidLifetime / time.Second))
+	opts.marshal(b)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a IAAddr.
@@ -95,28 +94,22 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid IAAddr,
 // io.ErrUnexpectedEOF is returned.  If the preferred lifetime value in the
 // byte slice is less than the valid lifetime, ErrInvalidLifetimes is returned.
-func (i *IAAddr) UnmarshalBinary(b []byte) error {
-	if len(b) < 24 {
+func (i *IAAddr) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
+	if b.Len() < 24 {
 		return io.ErrUnexpectedEOF
 	}
 
-	ip := make(net.IP, 16)
-	copy(ip, b[0:16])
-	i.IP = ip
+	i.IP = make(net.IP, net.IPv6len)
+	copy(i.IP, b.Consume(net.IPv6len))
 
-	i.PreferredLifetime = time.Duration(binary.BigEndian.Uint32(b[16:20])) * time.Second
-	i.ValidLifetime = time.Duration(binary.BigEndian.Uint32(b[20:24])) * time.Second
+	i.PreferredLifetime = time.Duration(b.Read32()) * time.Second
+	i.ValidLifetime = time.Duration(b.Read32()) * time.Second
 
 	// Preferred lifetime must always be less than valid lifetime.
 	if i.PreferredLifetime > i.ValidLifetime {
 		return ErrInvalidLifetimes
 	}
 
-	options, err := parseOptions(b[24:])
-	if err != nil {
-		return err
-	}
-	i.Options = options
-
-	return nil
+	return (&i.Options).unmarshal(b)
 }

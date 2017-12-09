@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"io"
 )
 
@@ -32,26 +31,24 @@ func NewStatusCode(code Status, message string) *StatusCode {
 func (s *StatusCode) MarshalBinary() ([]byte, error) {
 	// 2 bytes: status code
 	// N bytes: message
-	b := make([]byte, 2+len(s.Message))
-
-	binary.BigEndian.PutUint16(b[0:2], uint16(s.Code))
-	copy(b[2:], []byte(s.Message))
-
-	return b, nil
+	b := newBuffer(make([]byte, 0, 2+len(s.Message)))
+	b.Write16(uint16(s.Code))
+	b.WriteBytes([]byte(s.Message))
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a StatusCode.
 //
 // If the byte slice does not contain enough data to form a valid StatusCode,
 // errInvalidStatusCode is returned.
-func (s *StatusCode) UnmarshalBinary(b []byte) error {
+func (s *StatusCode) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// Too short to contain valid StatusCode
-	if len(b) < 2 {
+	if b.Len() < 2 {
 		return io.ErrUnexpectedEOF
 	}
 
-	s.Code = Status(binary.BigEndian.Uint16(b[0:2]))
-	s.Message = string(b[2:])
-
+	s.Code = Status(b.Read16())
+	s.Message = string(b.Remaining())
 	return nil
 }

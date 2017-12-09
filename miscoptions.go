@@ -1,9 +1,8 @@
 package dhcp6
 
 import (
-	"bytes"
-	"encoding/binary"
 	"io"
+	"math"
 	"net"
 	"net/url"
 	"time"
@@ -17,31 +16,29 @@ type OptionRequestOption []OptionCode
 
 // MarshalBinary allocates a byte slice containing the data from a OptionRequestOption.
 func (oro OptionRequestOption) MarshalBinary() ([]byte, error) {
-	b := make([]byte, 2*len(oro))
-	for i, j := range oro {
-		binary.BigEndian.PutUint16(b[2*i:], uint16(j))
+	b := newBuffer(make([]byte, 0, 2*len(oro)))
+	for _, opt := range oro {
+		b.Write16(uint16(opt))
 	}
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a OptionRequestOption.
 //
 // If the length of byte slice is not be be divisible by 2,
 // errInvalidOptionRequest is returned.
-func (oro *OptionRequestOption) UnmarshalBinary(b []byte) error {
-	// Length must be divisible by 2
-	if len(b)%2 != 0 {
+func (oro *OptionRequestOption) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
+	// Length must be divisible by 2.
+	if b.Len()%2 != 0 {
 		return errInvalidOptionRequest
 	}
 
 	// Fill slice by parsing every two bytes using index i.
-	opts := make(OptionRequestOption, len(b)/2)
-	for i := range opts {
-		opts[i] = OptionCode(binary.BigEndian.Uint16(b[2*i:]))
+	*oro = make(OptionRequestOption, 0, b.Len()/2)
+	for b.Len() > 1 {
+		*oro = append(*oro, OptionCode(b.Read16()))
 	}
-
-	*oro = opts
-
 	return nil
 }
 
@@ -79,31 +76,33 @@ type ElapsedTime time.Duration
 // MarshalBinary allocates a byte slice containing the data from an
 // ElapsedTime.
 func (t ElapsedTime) MarshalBinary() ([]byte, error) {
-	b := make([]byte, 2)
+	b := newBuffer(make([]byte, 0, 2))
 
+	unit := 10 * time.Millisecond
 	// The elapsed time value is an unsigned, 16 bit integer.
 	// The client uses the value 0xffff to represent any
 	// elapsed time values greater than the largest time value
 	// that can be represented in the Elapsed Time option.
-	if time.Duration(t) > 655350*time.Millisecond {
-		t = ElapsedTime(655350 * time.Millisecond)
+	if max := time.Duration(math.MaxUint16) * unit; time.Duration(t) > max {
+		t = ElapsedTime(max)
 	}
-	binary.BigEndian.PutUint16(b, uint16(time.Duration(t)/10/time.Millisecond))
-	return b, nil
+	b.Write16(uint16(time.Duration(t) / unit))
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a ElapsedTime.
 //
 // If the byte slice is not exactly 2 bytes in length, io.ErrUnexpectedEOF is
 // returned.
-func (t *ElapsedTime) UnmarshalBinary(b []byte) error {
-	if len(b) != 2 {
+func (t *ElapsedTime) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
+	if b.Len() != 2 {
 		return io.ErrUnexpectedEOF
 	}
 
 	// Time is reported in hundredths of seconds, so we convert it to a more
 	// manageable milliseconds
-	*t = ElapsedTime(time.Duration(binary.BigEndian.Uint16(b)) * 10 * time.Millisecond)
+	*t = ElapsedTime(time.Duration(b.Read16()) * 10 * time.Millisecond)
 	return nil
 }
 
@@ -150,33 +149,40 @@ func (d Data) MarshalBinary() ([]byte, error) {
 		c += 2 + len(dd)
 	}
 
-	b := make([]byte, c)
-	var i int
+	b := newBuffer(make([]byte, 0, c))
+	d.marshal(b)
+	return b.Data(), nil
+}
 
+func (d Data) marshal(b *buffer) {
 	for _, dd := range d {
 		// 2 byte: length of data
-		binary.BigEndian.PutUint16(b[i:i+2], uint16(len(dd)))
-		i += 2
+		b.Write16(uint16(len(dd)))
 
 		// N bytes: actual raw data
-		copy(b[i:i+len(dd)], dd)
-		i += len(dd)
+		b.WriteBytes(dd)
 	}
-
-	return b, nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a Data structure.
 // Data is packed in the form:
 //   - 2 bytes: data length
 //   - N bytes: raw data
-func (d *Data) UnmarshalBinary(b []byte) error {
-	data := make(Data, 0)
+func (d *Data) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
+	return d.unmarshal(b)
+}
+
+func (d *Data) unmarshal(b *buffer) error {
+	data := make(Data, 0, b.Len())
 
 	// Iterate until not enough bytes remain to parse another length value
-	buf := bytes.NewBuffer(b)
-	for buf.Len() > 1 {
-		data = append(data, buf.Next(int(binary.BigEndian.Uint16(buf.Next(2)))))
+	for b.Len() > 1 {
+		// 2 bytes: length of data.
+		length := int(b.Read16())
+
+		// N bytes: actual data.
+		data = append(data, b.Consume(length))
 	}
 
 	// At least one instance of class data must be present
@@ -185,7 +191,7 @@ func (d *Data) UnmarshalBinary(b []byte) error {
 	}
 
 	// If we encounter any trailing bytes, report an error
-	if buf.Len() != 0 {
+	if b.Len() != 0 {
 		return io.ErrUnexpectedEOF
 	}
 
@@ -224,30 +230,29 @@ type ArchTypes []ArchType
 
 // MarshalBinary allocates a byte slice containing the data from ArchTypes.
 func (a ArchTypes) MarshalBinary() ([]byte, error) {
-	// Allocate a single byte slice at once and pack every two bytes
-	// with an element from the ArchTypes slice
-	b := make([]byte, len(a)*2)
-	for i, j := 0, 0; j < len(a); i, j = i+2, j+1 {
-		binary.BigEndian.PutUint16(b[i:i+2], uint16(a[j]))
+	b := newBuffer(make([]byte, 0, len(a)*2))
+	for _, aType := range a {
+		b.Write16(uint16(aType))
 	}
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into an ArchTypes slice.
 //
 // If the byte slice is less than 2 bytes in length, or is not a length that
 // is divisible by 2, io.ErrUnexpectedEOF is returned.
-func (a *ArchTypes) UnmarshalBinary(b []byte) error {
-	// Length must be at least 2, and divisible by 2
-	if len(b) < 2 || len(b)%2 != 0 {
+func (a *ArchTypes) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
+	// Length must be at least 2, and divisible by 2.
+	if b.Len() < 2 || b.Len()%2 != 0 {
 		return io.ErrUnexpectedEOF
 	}
 
 	// Allocate ArchTypes at once and unpack every two bytes into an element
-	arch := make(ArchTypes, len(b)/2)
-	for i, j := 0, 0; j < len(b)/2; i, j = i+2, j+1 {
-		arch[j] = ArchType(binary.BigEndian.Uint16(b[i : i+2]))
+	arch := make(ArchTypes, 0, b.Len()/2)
+	for b.Len() > 1 {
+		arch = append(arch, ArchType(b.Read16()))
 	}
 
 	*a = arch

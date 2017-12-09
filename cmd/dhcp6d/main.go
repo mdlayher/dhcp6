@@ -10,7 +10,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/u-root/dhcp6"
+	"github.com/mdlayher/dhcp6"
 )
 
 func main() {

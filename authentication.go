@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"io"
 )
 
@@ -21,10 +20,8 @@ type Authentication struct {
 	// The replay detection information for the RDM
 	ReplayDetection uint64
 
-	// The authentication information,
-	// as specified by the protocol and
-	// algorithm used in this authentication
-	// option
+	// The authentication information, as specified by the protocol and
+	// algorithm used in this authentication option.
 	AuthenticationInformation []byte
 }
 
@@ -35,29 +32,30 @@ func (a *Authentication) MarshalBinary() ([]byte, error) {
 	// 1 byte:  RDM
 	// 8 bytes: ReplayDetection
 	// N bytes: AuthenticationInformation (can have 0 len byte)
-	b := make([]byte, 11+len(a.AuthenticationInformation))
-	_ = append(b[:0], a.Protocol, a.Algorithm, a.RDM)
-	binary.BigEndian.PutUint64(b[3:11], a.ReplayDetection)
-	copy(b[11:], a.AuthenticationInformation)
+	b := newBuffer(make([]byte, 0, 11+len(a.AuthenticationInformation)))
+	b.Write8(a.Protocol)
+	b.Write8(a.Algorithm)
+	b.Write8(a.RDM)
+	b.Write64(a.ReplayDetection)
+	b.WriteBytes(a.AuthenticationInformation)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a Authentication.
 // If the byte slice does not contain enough data to form a valid
 // Authentication, io.ErrUnexpectedEOF is returned.
-func (a *Authentication) UnmarshalBinary(b []byte) error {
+func (a *Authentication) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// Too short to be valid Authentication
-	if len(b) < 11 {
+	if b.Len() < 11 {
 		return io.ErrUnexpectedEOF
 	}
 
-	a.Protocol = b[0]
-	a.Algorithm = b[1]
-	a.RDM = b[2]
-	a.ReplayDetection = binary.BigEndian.Uint64(b[3:])
-	a.AuthenticationInformation = make([]byte, len(b[11:]))
-	copy(a.AuthenticationInformation, b[11:])
-
+	a.Protocol = b.Read8()
+	a.Algorithm = b.Read8()
+	a.RDM = b.Read8()
+	a.ReplayDetection = b.Read64()
+	a.AuthenticationInformation = b.Remaining()
 	return nil
 }

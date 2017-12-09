@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"io"
 )
 
@@ -30,29 +29,23 @@ type RemoteIdentifier struct {
 func (r *RemoteIdentifier) MarshalBinary() ([]byte, error) {
 	// 4 bytes: EnterpriseNumber
 	// N bytes: RemoteId
-	b := make([]byte, 4, 4+len(r.RemoteID))
-
-	binary.BigEndian.PutUint32(b, r.EnterpriseNumber)
-	b = append(b, r.RemoteID...)
-
-	return b, nil
+	b := newBuffer(make([]byte, 0, 4+len(r.RemoteID)))
+	b.Write32(r.EnterpriseNumber)
+	b.WriteBytes(r.RemoteID)
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a RemoteIdentifier.
 // If the byte slice does not contain enough data to form a valid
 // RemoteIdentifier, io.ErrUnexpectedEOF is returned.
-func (r *RemoteIdentifier) UnmarshalBinary(b []byte) error {
+func (r *RemoteIdentifier) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// Too short to be valid RemoteIdentifier
-	if len(b) < 5 {
+	if b.Len() < 5 {
 		return io.ErrUnexpectedEOF
 	}
 
-	// Extract EnterpriseNumber
-	r.EnterpriseNumber = binary.BigEndian.Uint32(b[:4])
-
-	// Extract opaque value as remote-id
-	r.RemoteID = make([]byte, len(b[4:]))
-	copy(r.RemoteID, b[4:])
-
+	r.EnterpriseNumber = b.Read32()
+	r.RemoteID = b.Remaining()
 	return nil
 }

@@ -1,9 +1,7 @@
 package dhcp6
 
 import (
-	"bytes"
 	"encoding"
-	"encoding/binary"
 	"errors"
 	"sort"
 )
@@ -531,45 +529,34 @@ func (o Options) enumerate() optslice {
 // slice.  It is used with various different types to enable parsing of both
 // top-level options, and options embedded within other options.  If options
 // data is malformed, it returns errInvalidOptions.
-func parseOptions(b []byte) (Options, error) {
-	var length int
-	options := make(Options)
+func (o *Options) unmarshal(buf *buffer) error {
+	*o = make(Options)
 
-	buf := bytes.NewBuffer(b)
-
-	for buf.Len() > 3 {
+	for buf.Len() >= 4 {
 		// 2 bytes: option code
-		o := option{}
-		o.Code = OptionCode(binary.BigEndian.Uint16(buf.Next(2)))
-
-		// 2 bytes: option length
-		length = int(binary.BigEndian.Uint16(buf.Next(2)))
-
-		// If length indicated is zero, skip to next iteration
+		// 2 bytes: option length n
+		// n bytes: data
+		code := OptionCode(buf.Read16())
+		length := buf.Read16()
 		if length == 0 {
 			continue
 		}
 
 		// N bytes: option data
-		o.Data = buf.Next(length)
-		// Set slice's max for option's data
-		o.Data = o.Data[:len(o.Data):len(o.Data)]
-
-		// If option data has less bytes than indicated by length,
-		// return an error
-		if len(o.Data) < length {
-			return nil, errInvalidOptions
+		data := buf.Consume(int(length))
+		if data == nil {
+			return errInvalidOptions
 		}
+		data = data[:int(length):int(length)]
 
-		options.addRaw(o.Code, o.Data)
+		o.addRaw(code, data)
 	}
 
 	// Report error for any trailing bytes
 	if buf.Len() != 0 {
-		return nil, errInvalidOptions
+		return errInvalidOptions
 	}
-
-	return options, nil
+	return nil
 }
 
 // option represents an individual DHCP Option, as defined in RFC 3315, Section
@@ -598,21 +585,17 @@ func (o optslice) count() int {
 	return c
 }
 
-// write writes the option slice into the provided buffer.  The caller must
+// write writes the option slice into the provided buffer. The caller must
 // ensure that a large enough buffer is provided to write to avoid panics.
-func (o optslice) write(p []byte) {
-	var i int
+func (o optslice) marshal(b *buffer) {
 	for _, oo := range o {
 		// 2 bytes: option code
-		binary.BigEndian.PutUint16(p[i:i+2], uint16(oo.Code))
-		i += 2
+		b.Write16(uint16(oo.Code))
 
 		// 2 bytes: option length
-		binary.BigEndian.PutUint16(p[i:i+2], uint16(len(oo.Data)))
-		i += 2
+		b.Write16(uint16(len(oo.Data)))
 
 		// N bytes: option data
-		copy(p[i:i+len(oo.Data)], oo.Data)
-		i += len(oo.Data)
+		copy(b.WriteN(len(oo.Data)), oo.Data)
 	}
 }

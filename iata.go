@@ -37,33 +37,25 @@ func (i *IATA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: IAID
 	// N bytes: options slice byte count
 	opts := i.Options.enumerate()
-	b := make([]byte, 4+opts.count())
+	b := newBuffer(make([]byte, 0, 4+opts.count()))
 
-	copy(b[0:4], i.IAID[:])
-	opts.write(b[4:])
+	b.WriteBytes(i.IAID[:])
+	opts.marshal(b)
 
-	return b, nil
+	return b.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a IATA.
 //
 // If the byte slice does not contain enough data to form a valid IATA,
 // io.ErrUnexpectedEOF is returned.
-func (i *IATA) UnmarshalBinary(b []byte) error {
+func (i *IATA) UnmarshalBinary(p []byte) error {
+	b := newBuffer(p)
 	// IATA must contain at least an IAID.
-	if len(b) < 4 {
+	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF
 	}
 
-	iaid := [4]byte{}
-	copy(iaid[:], b[0:4])
-	i.IAID = iaid
-
-	options, err := parseOptions(b[4:])
-	if err != nil {
-		return err
-	}
-	i.Options = options
-
-	return nil
+	b.ReadBytes(i.IAID[:])
+	return (&i.Options).unmarshal(b)
 }

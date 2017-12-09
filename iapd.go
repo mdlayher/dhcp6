@@ -1,7 +1,6 @@
 package dhcp6
 
 import (
-	"encoding/binary"
 	"io"
 	"time"
 )
@@ -54,14 +53,14 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 	// 4 bytes: T2
 	// N bytes: options slice byte count
 	opts := i.Options.enumerate()
-	b := make([]byte, 12+opts.count())
+	buf := newBuffer(make([]byte, 0, 12+opts.count()))
 
-	copy(b[0:4], i.IAID[:])
-	binary.BigEndian.PutUint32(b[4:8], uint32(i.T1/time.Second))
-	binary.BigEndian.PutUint32(b[8:12], uint32(i.T2/time.Second))
-	opts.write(b[12:])
+	buf.WriteBytes(i.IAID[:])
+	buf.Write32(uint32(i.T1 / time.Second))
+	buf.Write32(uint32(i.T2 / time.Second))
+	opts.marshal(buf)
 
-	return b, nil
+	return buf.Data(), nil
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a IAPD.
@@ -70,22 +69,14 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 // io.ErrUnexpectedEOF is returned.
 func (i *IAPD) UnmarshalBinary(b []byte) error {
 	// IAPD must contain at least an IAID, T1, and T2.
-	if len(b) < 12 {
+	buf := newBuffer(b)
+	if buf.Len() < 12 {
 		return io.ErrUnexpectedEOF
 	}
 
-	iaid := [4]byte{}
-	copy(iaid[:], b[0:4])
-	i.IAID = iaid
+	copy(i.IAID[:], buf.Consume(4))
+	i.T1 = time.Duration(buf.Read32()) * time.Second
+	i.T2 = time.Duration(buf.Read32()) * time.Second
 
-	i.T1 = time.Duration(binary.BigEndian.Uint32(b[4:8])) * time.Second
-	i.T2 = time.Duration(binary.BigEndian.Uint32(b[8:12])) * time.Second
-
-	options, err := parseOptions(b[12:])
-	if err != nil {
-		return err
-	}
-	i.Options = options
-
-	return nil
+	return (&i.Options).unmarshal(buf)
 }
