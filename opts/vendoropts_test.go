@@ -1,10 +1,12 @@
-package dhcp6
+package opts
 
 import (
 	"bytes"
 	"io"
 	"reflect"
 	"testing"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // TestVendorOptsMarshalBinary verifies that VendorOpts marshals properly for the input values.
@@ -28,7 +30,7 @@ func TestVendorOptsMarshalBinary(t *testing.T) {
 			},
 			vendorOpts: &VendorOpts{
 				EnterpriseNumber: 1368,
-				Options: Options{
+				Options: dhcp6.Options{
 					1: [][]byte{
 						{3, 4},
 					},
@@ -69,7 +71,7 @@ func TestVendorOptsUnmarshalBinary(t *testing.T) {
 				0, 0, 5, 0x58,
 				0, 1, 0, 0xa,
 			},
-			err: ErrInvalidPacket,
+			err: dhcp6.ErrInvalidPacket,
 		},
 		{
 			buf: []byte{
@@ -79,7 +81,7 @@ func TestVendorOptsUnmarshalBinary(t *testing.T) {
 			},
 			vendorOpts: &VendorOpts{
 				EnterpriseNumber: 1368,
-				Options: Options{
+				Options: dhcp6.Options{
 					1: [][]byte{
 						{3, 4},
 					},

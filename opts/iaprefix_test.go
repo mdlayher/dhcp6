@@ -1,4 +1,4 @@
-package dhcp6
+package opts
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"net"
 	"testing"
 	"time"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // TestNewIAPrefix verifies that NewIAPrefix creates a proper IAPrefix value
@@ -17,7 +19,7 @@ func TestNewIAPrefix(t *testing.T) {
 		valid     time.Duration
 		pLength   uint8
 		prefix    net.IP
-		options   Options
+		options   dhcp6.Options
 		iaprefix  *IAPrefix
 		err       error
 	}{
@@ -55,16 +57,16 @@ func TestNewIAPrefix(t *testing.T) {
 			valid:     2 * time.Second,
 			pLength:   64,
 			prefix:    net.ParseIP("2001:db8::6:1"),
-			options: Options{
-				OptionClientID: [][]byte{{0, 1}},
+			options: dhcp6.Options{
+				dhcp6.OptionClientID: [][]byte{{0, 1}},
 			},
 			iaprefix: &IAPrefix{
 				PreferredLifetime: 1 * time.Second,
 				ValidLifetime:     2 * time.Second,
 				PrefixLength:      64,
 				Prefix:            net.ParseIP("2001:db8::6:1"),
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},
@@ -134,7 +136,7 @@ func TestIAPrefixUnmarshalBinary(t *testing.T) {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 1, 0, 1,
 			},
-			err: errInvalidOptions,
+			err: dhcp6.ErrInvalidOptions,
 		},
 		{
 			desc: "1s preferred, 2s valid, '2001:db8::/32', no options",
@@ -167,8 +169,8 @@ func TestIAPrefixUnmarshalBinary(t *testing.T) {
 				ValidLifetime:     2 * time.Second,
 				PrefixLength:      64,
 				Prefix:            net.ParseIP("2001:db8::6:1"),
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},

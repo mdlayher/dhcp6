@@ -1,4 +1,4 @@
-package dhcp6
+package opts
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // TestNewIANA verifies that NewIANA creates a proper IANA value for
@@ -16,7 +18,7 @@ func TestNewIANA(t *testing.T) {
 		iaid    [4]byte
 		t1      time.Duration
 		t2      time.Duration
-		options Options
+		options dhcp6.Options
 		iana    *IANA
 	}{
 		{
@@ -28,15 +30,15 @@ func TestNewIANA(t *testing.T) {
 			iaid: [4]byte{0, 1, 2, 3},
 			t1:   30 * time.Second,
 			t2:   60 * time.Second,
-			options: Options{
-				OptionClientID: [][]byte{{0, 1}},
+			options: dhcp6.Options{
+				dhcp6.OptionClientID: [][]byte{{0, 1}},
 			},
 			iana: &IANA{
 				IAID: [4]byte{0, 1, 2, 3},
 				T1:   30 * time.Second,
 				T2:   60 * time.Second,
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},
@@ -108,8 +110,8 @@ func TestIANAMarshalBinary(t *testing.T) {
 				IAID: [4]byte{1, 2, 3, 4},
 				T1:   30 * time.Second,
 				T2:   60 * time.Second,
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 			buf: []byte{
@@ -140,7 +142,7 @@ func TestIANAUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		buf     []byte
 		iana    *IANA
-		options Options
+		options dhcp6.Options
 		err     error
 	}{
 		{
@@ -158,7 +160,7 @@ func TestIANAUnmarshalBinary(t *testing.T) {
 				0, 0, 2, 0,
 				0, 1, 0, 1,
 			},
-			err: errInvalidOptions,
+			err: dhcp6.ErrInvalidOptions,
 		},
 		{
 			buf: []byte{
@@ -171,8 +173,8 @@ func TestIANAUnmarshalBinary(t *testing.T) {
 				IAID: [4]byte{1, 2, 3, 4},
 				T1:   (4 * time.Minute) + 16*time.Second,
 				T2:   (8 * time.Minute) + 32*time.Second,
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},

@@ -1,7 +1,9 @@
-package dhcp6
+package opts
 
 import (
 	"io"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // A VendorOpts is used by clients and servers to exchange
@@ -14,17 +16,16 @@ type VendorOpts struct {
 	// An opaque object of option-len octets,
 	// interpreted by vendor-specific code on the
 	// clients and servers
-	Options Options
+	Options dhcp6.Options
 }
 
 // MarshalBinary allocates a byte slice containing the data from a VendorOpts.
 func (v *VendorOpts) MarshalBinary() ([]byte, error) {
 	// 4 bytes: EnterpriseNumber
 	// N bytes: options slice byte count
-	opts := v.Options.enumerate()
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 	b.Write32(v.EnterpriseNumber)
-	opts.marshal(b)
+	v.Options.Marshal(b)
 
 	return b.Data(), nil
 }
@@ -34,16 +35,16 @@ func (v *VendorOpts) MarshalBinary() ([]byte, error) {
 // VendorOpts, io.ErrUnexpectedEOF is returned.
 // If option-data are invalid, then ErrInvalidPacket is returned.
 func (v *VendorOpts) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	// Too short to be valid VendorOpts
 	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF
 	}
 
 	v.EnterpriseNumber = b.Read32()
-	if err := (&v.Options).unmarshal(b); err != nil {
+	if err := (&v.Options).Unmarshal(b); err != nil {
 		// Invalid options means an invalid RelayMessage
-		return ErrInvalidPacket
+		return dhcp6.ErrInvalidPacket
 	}
 	return nil
 }

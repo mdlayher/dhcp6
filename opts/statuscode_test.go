@@ -1,25 +1,27 @@
-package dhcp6
+package opts
 
 import (
 	"bytes"
 	"io"
 	"reflect"
 	"testing"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // TestNewStatusCode verifies that NewStatusCode creates a proper StatusCode
 // value for the input values.
 func TestNewStatusCode(t *testing.T) {
 	var tests = []struct {
-		status  Status
+		status  dhcp6.Status
 		message string
 		sc      *StatusCode
 	}{
 		{
-			status:  StatusSuccess,
+			status:  dhcp6.StatusSuccess,
 			message: "Success",
 			sc: &StatusCode{
-				Code:    StatusSuccess,
+				Code:    dhcp6.StatusSuccess,
 				Message: "Success",
 			},
 		},
@@ -48,13 +50,13 @@ func TestStatusCodeUnmarshalBinary(t *testing.T) {
 		{
 			buf: []byte{0, 0},
 			sc: &StatusCode{
-				Code: StatusSuccess,
+				Code: dhcp6.StatusSuccess,
 			},
 		},
 		{
 			buf: append([]byte{0, 1}, []byte("deadbeef")...),
 			sc: &StatusCode{
-				Code:    StatusUnspecFail,
+				Code:    dhcp6.StatusUnspecFail,
 				Message: "deadbeef",
 			},
 		},

@@ -1,9 +1,11 @@
-package dhcp6
+package opts
 
 import (
 	"io"
 	"net"
 	"time"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // IAPrefix represents an Identity Association Prefix, as defined in RFC 3633,
@@ -43,7 +45,7 @@ type IAPrefix struct {
 	// Options specifies a map of DHCP options specific to this IAPrefix.
 	// Its methods can be used to retrieve data from an incoming IAPrefix, or
 	// send data with an outgoing IAPrefix.
-	Options Options
+	Options dhcp6.Options
 }
 
 // NewIAPrefix creates a new IAPrefix from preferred and valid lifetime
@@ -55,7 +57,7 @@ type IAPrefix struct {
 // for an IPv6 address.  Failure to meet either of these conditions will result
 // in an error.  If an Options map is not specified, a new one will be
 // allocated.
-func NewIAPrefix(preferred time.Duration, valid time.Duration, prefixLength uint8, prefix net.IP, options Options) (*IAPrefix, error) {
+func NewIAPrefix(preferred time.Duration, valid time.Duration, prefixLength uint8, prefix net.IP, options dhcp6.Options) (*IAPrefix, error) {
 	// Preferred lifetime must always be less than valid lifetime.
 	if preferred > valid {
 		return nil, ErrInvalidLifetimes
@@ -68,7 +70,7 @@ func NewIAPrefix(preferred time.Duration, valid time.Duration, prefixLength uint
 
 	// If no options set, make empty map
 	if options == nil {
-		options = make(Options)
+		options = make(dhcp6.Options)
 	}
 
 	return &IAPrefix{
@@ -87,14 +89,13 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 	//  1 byte : prefix length
 	// 16 bytes: IPv6 prefix
 	//  N bytes: options
-	opts := i.Options.enumerate()
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 
 	b.Write32(uint32(i.PreferredLifetime / time.Second))
 	b.Write32(uint32(i.ValidLifetime / time.Second))
 	b.Write8(i.PrefixLength)
 	copy(b.WriteN(net.IPv6len), i.Prefix)
-	opts.marshal(b)
+	i.Options.Marshal(b)
 
 	return b.Data(), nil
 }
@@ -106,7 +107,7 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 // byte slice is less than the valid lifetime, ErrInvalidLifetimes is
 // returned.
 func (i *IAPrefix) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	// IAPrefix must at least contain lifetimes, prefix length, and prefix
 	if b.Len() < 25 {
 		return io.ErrUnexpectedEOF
@@ -124,5 +125,5 @@ func (i *IAPrefix) UnmarshalBinary(p []byte) error {
 	i.Prefix = make(net.IP, net.IPv6len)
 	copy(i.Prefix, b.Consume(net.IPv6len))
 
-	return (&i.Options).unmarshal(b)
+	return (&i.Options).Unmarshal(b)
 }

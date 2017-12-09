@@ -1,8 +1,10 @@
-package dhcp6
+package opts
 
 import (
 	"io"
 	"time"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // IANA represents an Identity Association for Non-temporary Addresses, as
@@ -27,15 +29,15 @@ type IANA struct {
 	// Options specifies a map of DHCP options specific to this IANA.
 	// Its methods can be used to retrieve data from an incoming IANA, or send
 	// data with an outgoing IANA.
-	Options Options
+	Options dhcp6.Options
 }
 
 // NewIANA creates a new IANA from an IAID, T1 and T2 durations, and an
 // Options map.  If an Options map is not specified, a new one will be
 // allocated.
-func NewIANA(iaid [4]byte, t1 time.Duration, t2 time.Duration, options Options) *IANA {
+func NewIANA(iaid [4]byte, t1 time.Duration, t2 time.Duration, options dhcp6.Options) *IANA {
 	if options == nil {
-		options = make(Options)
+		options = make(dhcp6.Options)
 	}
 
 	return &IANA{
@@ -52,13 +54,12 @@ func (i IANA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: T1
 	// 4 bytes: T2
 	// N bytes: options slice byte count
-	opts := i.Options.enumerate()
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 
 	b.WriteBytes(i.IAID[:])
 	b.Write32(uint32(i.T1 / time.Second))
 	b.Write32(uint32(i.T2 / time.Second))
-	opts.marshal(b)
+	i.Options.Marshal(b)
 
 	return b.Data(), nil
 }
@@ -69,7 +70,7 @@ func (i IANA) MarshalBinary() ([]byte, error) {
 // io.ErrUnexpectedEOF is returned.
 func (i *IANA) UnmarshalBinary(p []byte) error {
 	// IANA must contain at least an IAID, T1, and T2.
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	if b.Len() < 12 {
 		return io.ErrUnexpectedEOF
 	}
@@ -78,5 +79,5 @@ func (i *IANA) UnmarshalBinary(p []byte) error {
 	i.T1 = time.Duration(b.Read32()) * time.Second
 	i.T2 = time.Duration(b.Read32()) * time.Second
 
-	return (&i.Options).unmarshal(b)
+	return (&i.Options).Unmarshal(b)
 }

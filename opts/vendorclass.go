@@ -1,7 +1,9 @@
-package dhcp6
+package opts
 
 import (
 	"io"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // VendorClass is used by a client to identify the vendor that
@@ -24,9 +26,9 @@ type VendorClass struct {
 
 // MarshalBinary allocates a byte slice containing the data from a VendorClass.
 func (vc *VendorClass) MarshalBinary() ([]byte, error) {
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 	b.Write32(vc.EnterpriseNumber)
-	vc.VendorClassData.marshal(b)
+	vc.VendorClassData.Marshal(b)
 	return b.Data(), nil
 }
 
@@ -35,11 +37,11 @@ func (vc *VendorClass) MarshalBinary() ([]byte, error) {
 // If the byte slice is less than 4 bytes in length, or if VendorClassData is
 // malformed, io.ErrUnexpectedEOF is returned.
 func (vc *VendorClass) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF
 	}
 
 	vc.EnterpriseNumber = b.Read32()
-	return vc.VendorClassData.unmarshal(b)
+	return vc.VendorClassData.Unmarshal(b)
 }

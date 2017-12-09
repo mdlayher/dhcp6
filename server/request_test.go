@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/opts"
 )
 
 // TestParseRequest verifies that ParseRequest returns a consistent
@@ -17,7 +18,7 @@ func TestParseRequest(t *testing.T) {
 		Options:       make(dhcp6.Options),
 	}
 	var uuid [16]byte
-	p.Options.Add(dhcp6.OptionClientID, dhcp6.NewDUIDUUID(uuid))
+	p.Options.Add(dhcp6.OptionClientID, opts.NewDUIDUUID(uuid))
 
 	addr := &net.UDPAddr{
 		IP:   net.ParseIP("::1"),
@@ -36,7 +37,7 @@ func TestParseRequest(t *testing.T) {
 		Length:        int64(len(buf)),
 		RemoteAddr:    "[::1]:546",
 	}
-	r.Options.Add(dhcp6.OptionClientID, dhcp6.NewDUIDUUID(uuid))
+	r.Options.Add(dhcp6.OptionClientID, opts.NewDUIDUUID(uuid))
 
 	gotR, err := ParseRequest(buf, addr)
 	if err != nil {

@@ -1,10 +1,12 @@
-package dhcp6
+package opts
 
 import (
 	"bytes"
 	"io"
 	"reflect"
 	"testing"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // TestNewIATA verifies that NewIATA creates a proper IATA value for
@@ -13,7 +15,7 @@ func TestNewIATA(t *testing.T) {
 	var tests = []struct {
 		desc    string
 		iaid    [4]byte
-		options Options
+		options dhcp6.Options
 		iata    *IATA
 	}{
 		{
@@ -23,13 +25,13 @@ func TestNewIATA(t *testing.T) {
 		{
 			desc: "[0 1 2 3] IAID, option client ID [0 1]",
 			iaid: [4]byte{0, 1, 2, 3},
-			options: Options{
-				OptionClientID: [][]byte{{0, 1}},
+			options: dhcp6.Options{
+				dhcp6.OptionClientID: [][]byte{{0, 1}},
 			},
 			iata: &IATA{
 				IAID: [4]byte{0, 1, 2, 3},
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},
@@ -60,7 +62,7 @@ func TestIATAUnmarshalBinary(t *testing.T) {
 	var tests = []struct {
 		buf     []byte
 		iata    *IATA
-		options Options
+		options dhcp6.Options
 		err     error
 	}{
 		{
@@ -76,7 +78,7 @@ func TestIATAUnmarshalBinary(t *testing.T) {
 				1, 2, 3, 4,
 				0, 1, 0, 1,
 			},
-			err: errInvalidOptions,
+			err: dhcp6.ErrInvalidOptions,
 		},
 		{
 			buf: []byte{
@@ -85,8 +87,8 @@ func TestIATAUnmarshalBinary(t *testing.T) {
 			},
 			iata: &IATA{
 				IAID: [4]byte{1, 2, 3, 4},
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},

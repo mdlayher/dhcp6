@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/opts"
 	"golang.org/x/net/ipv6"
 )
 
@@ -90,7 +91,7 @@ func TestServeWithSetServerID(t *testing.T) {
 	r := &testMessage{}
 	r.b.Write(pb)
 
-	duid, err := dhcp6.NewDUIDLLT(1, time.Now(), []byte{0, 1, 0, 1, 0, 1})
+	duid, err := opts.NewDUIDLLT(1, time.Now(), []byte{0, 1, 0, 1, 0, 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +138,7 @@ func TestServeWithSetServerID(t *testing.T) {
 // it before a Handler is invoked.
 func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
-	duid := dhcp6.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
+	duid := opts.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
 	p := &dhcp6.Packet{
 		MessageType:   dhcp6.MessageTypeSolicit,
@@ -161,7 +162,7 @@ func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 			t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 		}
 
-		cID, err := w.Options().ClientID()
+		cID, err := opts.GetClientID(w.Options())
 		if err != nil {
 			t.Fatal("ResponseSender options did not contain client ID")
 		}
@@ -169,7 +170,7 @@ func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 			t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 		}
 
-		if sID, err := w.Options().ServerID(); err != nil || sID == nil {
+		if sID, err := opts.GetServerID(w.Options()); err != nil || sID == nil {
 			t.Fatal("ResponseSender options did not contain server ID")
 		}
 	})
@@ -267,7 +268,7 @@ func TestServeIgnoreBadMessageType(t *testing.T) {
 // all of its options, and replies with expected values.
 func TestServeOK(t *testing.T) {
 	txID := [3]byte{0, 1, 2}
-	duid := dhcp6.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
+	duid := opts.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
 	// Perform an entire Solicit transaction
 	p := &dhcp6.Packet{
@@ -291,7 +292,7 @@ func TestServeOK(t *testing.T) {
 	r.b.Write(pb)
 
 	// Expect these option values set by server
-	var preference dhcp6.Preference = 255
+	var preference opts.Preference = 255
 	sCode := dhcp6.StatusSuccess
 	sMsg := "success"
 
@@ -299,7 +300,7 @@ func TestServeOK(t *testing.T) {
 	mt := dhcp6.MessageTypeAdvertise
 	w, _, err := testServe(r, nil, true, func(w ResponseSender, r *Request) {
 		w.Options().Add(dhcp6.OptionPreference, preference)
-		w.Options().Add(dhcp6.OptionStatusCode, dhcp6.NewStatusCode(sCode, sMsg))
+		w.Options().Add(dhcp6.OptionStatusCode, opts.NewStatusCode(sCode, sMsg))
 
 		w.Send(mt)
 	})
@@ -328,18 +329,18 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 	}
 
-	cID, err := wp.Options.ClientID()
+	cID, err := opts.GetClientID(wp.Options)
 	if err != nil {
 		t.Fatalf("response options did not contain client ID: %v", err)
 	}
 	if want, got := duid, cID; !reflect.DeepEqual(want, got) {
 		t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 	}
-	if sID, err := wp.Options.ServerID(); err != nil || sID == nil {
+	if sID, err := opts.GetServerID(wp.Options); err != nil || sID == nil {
 		t.Fatal("ResponseSender options did not contain server ID")
 	}
 
-	pr, err := wp.Options.Preference()
+	pr, err := opts.GetPreference(wp.Options)
 	if err != nil {
 		t.Fatal("response Options did not contain preference")
 	}
@@ -347,7 +348,7 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected preference value: %v != %v", want, got)
 	}
 
-	st, err := wp.Options.StatusCode()
+	st, err := opts.GetStatusCode(wp.Options)
 	if err != nil {
 		t.Fatal("response Options did not contain status code")
 	}

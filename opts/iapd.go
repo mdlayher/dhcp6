@@ -1,8 +1,10 @@
-package dhcp6
+package opts
 
 import (
 	"io"
 	"time"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // IAPD represents an Identity Association for Prefix Delegation, as
@@ -27,15 +29,15 @@ type IAPD struct {
 	// Options specifies a map of DHCP options specific to this IAPD.
 	// Its methods can be used to retrieve data from an incoming IAPD, or send
 	// data with an outgoing IAPD.
-	Options Options
+	Options dhcp6.Options
 }
 
 // NewIAPD creates a new IAPD from an IAID, T1 and T2 durations, and an
 // Options map.  If an Options map is not specified, a new one will be
 // allocated.
-func NewIAPD(iaid [4]byte, t1 time.Duration, t2 time.Duration, options Options) *IAPD {
+func NewIAPD(iaid [4]byte, t1 time.Duration, t2 time.Duration, options dhcp6.Options) *IAPD {
 	if options == nil {
-		options = make(Options)
+		options = make(dhcp6.Options)
 	}
 
 	return &IAPD{
@@ -52,13 +54,12 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 	// 4 bytes: T1
 	// 4 bytes: T2
 	// N bytes: options slice byte count
-	opts := i.Options.enumerate()
-	buf := newBuffer(nil)
+	buf := dhcp6.NewBuffer(nil)
 
 	buf.WriteBytes(i.IAID[:])
 	buf.Write32(uint32(i.T1 / time.Second))
 	buf.Write32(uint32(i.T2 / time.Second))
-	opts.marshal(buf)
+	i.Options.Marshal(buf)
 
 	return buf.Data(), nil
 }
@@ -69,7 +70,7 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 // io.ErrUnexpectedEOF is returned.
 func (i *IAPD) UnmarshalBinary(b []byte) error {
 	// IAPD must contain at least an IAID, T1, and T2.
-	buf := newBuffer(b)
+	buf := dhcp6.NewBuffer(b)
 	if buf.Len() < 12 {
 		return io.ErrUnexpectedEOF
 	}
@@ -78,5 +79,5 @@ func (i *IAPD) UnmarshalBinary(b []byte) error {
 	i.T1 = time.Duration(buf.Read32()) * time.Second
 	i.T2 = time.Duration(buf.Read32()) * time.Second
 
-	return (&i.Options).unmarshal(buf)
+	return (&i.Options).Unmarshal(buf)
 }

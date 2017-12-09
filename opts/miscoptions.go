@@ -1,4 +1,4 @@
-package dhcp6
+package opts
 
 import (
 	"io"
@@ -6,17 +6,19 @@ import (
 	"net"
 	"net/url"
 	"time"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // A OptionRequestOption is a list OptionCode, as defined in RFC 3315, Section 22.7.
 //
 // The Option Request option is used to identify a list of options in a
 // message between a client and a server.
-type OptionRequestOption []OptionCode
+type OptionRequestOption []dhcp6.OptionCode
 
 // MarshalBinary allocates a byte slice containing the data from a OptionRequestOption.
 func (oro OptionRequestOption) MarshalBinary() ([]byte, error) {
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 	for _, opt := range oro {
 		b.Write16(uint16(opt))
 	}
@@ -28,16 +30,16 @@ func (oro OptionRequestOption) MarshalBinary() ([]byte, error) {
 // If the length of byte slice is not be be divisible by 2,
 // errInvalidOptionRequest is returned.
 func (oro *OptionRequestOption) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	// Length must be divisible by 2.
 	if b.Len()%2 != 0 {
-		return errInvalidOptionRequest
+		return io.ErrUnexpectedEOF
 	}
 
 	// Fill slice by parsing every two bytes using index i.
 	*oro = make(OptionRequestOption, 0, b.Len()/2)
 	for b.Len() > 1 {
-		*oro = append(*oro, OptionCode(b.Read16()))
+		*oro = append(*oro, dhcp6.OptionCode(b.Read16()))
 	}
 	return nil
 }
@@ -76,7 +78,7 @@ type ElapsedTime time.Duration
 // MarshalBinary allocates a byte slice containing the data from an
 // ElapsedTime.
 func (t ElapsedTime) MarshalBinary() ([]byte, error) {
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 
 	unit := 10 * time.Millisecond
 	// The elapsed time value is an unsigned, 16 bit integer.
@@ -95,7 +97,7 @@ func (t ElapsedTime) MarshalBinary() ([]byte, error) {
 // If the byte slice is not exactly 2 bytes in length, io.ErrUnexpectedEOF is
 // returned.
 func (t *ElapsedTime) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	if b.Len() != 2 {
 		return io.ErrUnexpectedEOF
 	}
@@ -149,12 +151,13 @@ func (d Data) MarshalBinary() ([]byte, error) {
 		c += 2 + len(dd)
 	}
 
-	b := newBuffer(nil)
-	d.marshal(b)
+	b := dhcp6.NewBuffer(nil)
+	d.Marshal(b)
 	return b.Data(), nil
 }
 
-func (d Data) marshal(b *buffer) {
+// Marshal marshals to a given buffer from a Data structure.
+func (d Data) Marshal(b *dhcp6.Buffer) {
 	for _, dd := range d {
 		// 2 byte: length of data
 		b.Write16(uint16(len(dd)))
@@ -165,15 +168,16 @@ func (d Data) marshal(b *buffer) {
 }
 
 // UnmarshalBinary unmarshals a raw byte slice into a Data structure.
+func (d *Data) UnmarshalBinary(p []byte) error {
+	b := dhcp6.NewBuffer(p)
+	return d.Unmarshal(b)
+}
+
+// Unmarshal marshals from a given buffer into a Data structure.
 // Data is packed in the form:
 //   - 2 bytes: data length
 //   - N bytes: raw data
-func (d *Data) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
-	return d.unmarshal(b)
-}
-
-func (d *Data) unmarshal(b *buffer) error {
+func (d *Data) Unmarshal(b *dhcp6.Buffer) error {
 	data := make(Data, 0, b.Len())
 
 	// Iterate until not enough bytes remain to parse another length value
@@ -226,11 +230,11 @@ func (u *URL) UnmarshalBinary(b []byte) error {
 // ArchTypes is a slice of ArchType values.  It is provided for convenient
 // marshaling and unmarshaling of a slice of ArchType values from an Options
 // map.
-type ArchTypes []ArchType
+type ArchTypes []dhcp6.ArchType
 
 // MarshalBinary allocates a byte slice containing the data from ArchTypes.
 func (a ArchTypes) MarshalBinary() ([]byte, error) {
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 	for _, aType := range a {
 		b.Write16(uint16(aType))
 	}
@@ -243,7 +247,7 @@ func (a ArchTypes) MarshalBinary() ([]byte, error) {
 // If the byte slice is less than 2 bytes in length, or is not a length that
 // is divisible by 2, io.ErrUnexpectedEOF is returned.
 func (a *ArchTypes) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	// Length must be at least 2, and divisible by 2.
 	if b.Len() < 2 || b.Len()%2 != 0 {
 		return io.ErrUnexpectedEOF
@@ -252,7 +256,7 @@ func (a *ArchTypes) UnmarshalBinary(p []byte) error {
 	// Allocate ArchTypes at once and unpack every two bytes into an element
 	arch := make(ArchTypes, 0, b.Len()/2)
 	for b.Len() > 1 {
-		arch = append(arch, ArchType(b.Read16()))
+		arch = append(arch, dhcp6.ArchType(b.Read16()))
 	}
 
 	*a = arch
@@ -323,7 +327,7 @@ func (r *RelayMessageOption) UnmarshalBinary(b []byte) error {
 }
 
 // SetClientServerMessage sets a Packet (e.g. Solicit, Advertise ...) into this option.
-func (r *RelayMessageOption) SetClientServerMessage(p *Packet) error {
+func (r *RelayMessageOption) SetClientServerMessage(p *dhcp6.Packet) error {
 	b, err := p.MarshalBinary()
 	if err != nil {
 		return err
@@ -346,8 +350,8 @@ func (r *RelayMessageOption) SetRelayMessage(p *RelayMessage) error {
 
 // ClientServerMessage gets the client server message (e.g. Solicit,
 // Advertise ...) into this option (when hopcount = 0 of outer RelayMessage).
-func (r *RelayMessageOption) ClientServerMessage() (*Packet, error) {
-	p := new(Packet)
+func (r *RelayMessageOption) ClientServerMessage() (*dhcp6.Packet, error) {
+	p := new(dhcp6.Packet)
 	err := p.UnmarshalBinary(*r)
 	if err != nil {
 		return nil, err

@@ -1,9 +1,11 @@
-package dhcp6
+package opts
 
 import (
 	"io"
 	"net"
 	"time"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // IAAddr represents an Identity Association Address, as defined in RFC 3315,
@@ -38,7 +40,7 @@ type IAAddr struct {
 	// Options specifies a map of DHCP options specific to this IAAddr.
 	// Its methods can be used to retrieve data from an incoming IAAddr, or
 	// send data with an outgoing IAAddr.
-	Options Options
+	Options dhcp6.Options
 }
 
 // NewIAAddr creates a new IAAddr from an IPv6 address, preferred and valid lifetime
@@ -48,7 +50,7 @@ type IAAddr struct {
 // The preferred lifetime duration must be less than the valid lifetime
 // duration.  Failure to meet either of these conditions will result in an error.
 // If an Options map is not specified, a new one will be allocated.
-func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options Options) (*IAAddr, error) {
+func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options dhcp6.Options) (*IAAddr, error) {
 	// From documentation: If ip is not an IPv4 address, To4 returns nil.
 	if ip.To4() != nil {
 		return nil, ErrInvalidIP
@@ -61,7 +63,7 @@ func NewIAAddr(ip net.IP, preferred time.Duration, valid time.Duration, options 
 
 	// If no options set, make empty map
 	if options == nil {
-		options = make(Options)
+		options = make(dhcp6.Options)
 	}
 
 	return &IAAddr{
@@ -78,13 +80,12 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 	//  4 bytes: preferred lifetime
 	//  4 bytes: valid lifetime
 	//  N bytes: options
-	opts := i.Options.enumerate()
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 
 	copy(b.WriteN(net.IPv6len), i.IP)
 	b.Write32(uint32(i.PreferredLifetime / time.Second))
 	b.Write32(uint32(i.ValidLifetime / time.Second))
-	opts.marshal(b)
+	i.Options.Marshal(b)
 
 	return b.Data(), nil
 }
@@ -95,7 +96,7 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 // io.ErrUnexpectedEOF is returned.  If the preferred lifetime value in the
 // byte slice is less than the valid lifetime, ErrInvalidLifetimes is returned.
 func (i *IAAddr) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	if b.Len() < 24 {
 		return io.ErrUnexpectedEOF
 	}
@@ -111,5 +112,5 @@ func (i *IAAddr) UnmarshalBinary(p []byte) error {
 		return ErrInvalidLifetimes
 	}
 
-	return (&i.Options).unmarshal(b)
+	return (&i.Options).Unmarshal(b)
 }

@@ -1,7 +1,9 @@
-package dhcp6
+package opts
 
 import (
 	"io"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // IATA represents an Identity Association for Temporary Addresses, as
@@ -16,14 +18,14 @@ type IATA struct {
 	// Options specifies a map of DHCP options specific to this IATA.
 	// Its methods can be used to retrieve data from an incoming IATA, or send
 	// data with an outgoing IATA.
-	Options Options
+	Options dhcp6.Options
 }
 
 // NewIATA creates a new IATA from an IAID and an Options map.  If an Options
 // map is not specified, a new one will be allocated.
-func NewIATA(iaid [4]byte, options Options) *IATA {
+func NewIATA(iaid [4]byte, options dhcp6.Options) *IATA {
 	if options == nil {
-		options = make(Options)
+		options = make(dhcp6.Options)
 	}
 
 	return &IATA{
@@ -36,11 +38,10 @@ func NewIATA(iaid [4]byte, options Options) *IATA {
 func (i *IATA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: IAID
 	// N bytes: options slice byte count
-	opts := i.Options.enumerate()
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 
 	b.WriteBytes(i.IAID[:])
-	opts.marshal(b)
+	i.Options.Marshal(b)
 
 	return b.Data(), nil
 }
@@ -50,12 +51,12 @@ func (i *IATA) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid IATA,
 // io.ErrUnexpectedEOF is returned.
 func (i *IATA) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	// IATA must contain at least an IAID.
 	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF
 	}
 
 	b.ReadBytes(i.IAID[:])
-	return (&i.Options).unmarshal(b)
+	return (&i.Options).Unmarshal(b)
 }

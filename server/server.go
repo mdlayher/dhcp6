@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/opts"
 	"golang.org/x/net/ipv6"
 )
 
@@ -74,7 +75,7 @@ type Server struct {
 	// generated using Iface's hardware type and address.  If possible,
 	// servers with persistent storage available should generate a DUID-LLT
 	// and store it for future use.
-	ServerID dhcp6.DUID
+	ServerID opts.DUID
 
 	// ErrorLog is an optional logger which can be used to report errors and
 	// erroneous behavior while the server is accepting client requests.
@@ -148,7 +149,7 @@ func (s *Server) Serve(p PacketConn) error {
 	// "Ethernet 10Mb" hardware type since the caller probably doesn't care.
 	if s.ServerID == nil {
 		const ethernet10Mb uint16 = 1
-		s.ServerID = dhcp6.NewDUIDLL(ethernet10Mb, s.Iface.HardwareAddr)
+		s.ServerID = opts.NewDUIDLL(ethernet10Mb, s.Iface.HardwareAddr)
 	}
 
 	// Filter any traffic which does not indicate the interface
@@ -304,7 +305,7 @@ func (c *conn) serve() {
 	}
 
 	// If available in request, add client ID to response
-	if cID, err := r.Options.ClientID(); err == nil {
+	if cID, err := opts.GetClientID(r.Options); err == nil {
 		w.options.Add(dhcp6.OptionClientID, cID)
 	}
 

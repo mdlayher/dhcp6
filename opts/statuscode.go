@@ -1,7 +1,9 @@
-package dhcp6
+package opts
 
 import (
 	"io"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // StatusCode represents a Status Code, as defined in RFC 3315, Section 5.4.
@@ -11,7 +13,7 @@ import (
 type StatusCode struct {
 	// Code specifies the Status value stored within this StatusCode, such as
 	// StatusSuccess, StatusUnspecFail, etc.
-	Code Status
+	Code dhcp6.Status
 
 	// Message specifies a human-readable message within this StatusCode, useful
 	// for providing information about successes or failures.
@@ -20,7 +22,7 @@ type StatusCode struct {
 
 // NewStatusCode creates a new StatusCode from an input Status value and a
 // string message.
-func NewStatusCode(code Status, message string) *StatusCode {
+func NewStatusCode(code dhcp6.Status, message string) *StatusCode {
 	return &StatusCode{
 		Code:    code,
 		Message: message,
@@ -31,7 +33,7 @@ func NewStatusCode(code Status, message string) *StatusCode {
 func (s *StatusCode) MarshalBinary() ([]byte, error) {
 	// 2 bytes: status code
 	// N bytes: message
-	b := newBuffer(nil)
+	b := dhcp6.NewBuffer(nil)
 	b.Write16(uint16(s.Code))
 	b.WriteBytes([]byte(s.Message))
 	return b.Data(), nil
@@ -42,13 +44,13 @@ func (s *StatusCode) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid StatusCode,
 // errInvalidStatusCode is returned.
 func (s *StatusCode) UnmarshalBinary(p []byte) error {
-	b := newBuffer(p)
+	b := dhcp6.NewBuffer(p)
 	// Too short to contain valid StatusCode
 	if b.Len() < 2 {
 		return io.ErrUnexpectedEOF
 	}
 
-	s.Code = Status(b.Read16())
+	s.Code = dhcp6.Status(b.Read16())
 	s.Message = string(b.Remaining())
 	return nil
 }

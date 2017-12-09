@@ -1,4 +1,4 @@
-package dhcp6
+package opts
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"net"
 	"testing"
 	"time"
+
+	"github.com/mdlayher/dhcp6"
 )
 
 // TestNewIAAddr verifies that NewIAAddr creates a proper IAAddr value or returns
@@ -16,7 +18,7 @@ func TestNewIAAddr(t *testing.T) {
 		ip        net.IP
 		preferred time.Duration
 		valid     time.Duration
-		options   Options
+		options   dhcp6.Options
 		iaaddr    *IAAddr
 		err       error
 	}{
@@ -52,15 +54,15 @@ func TestNewIAAddr(t *testing.T) {
 			ip:        net.IPv6loopback,
 			preferred: 1 * time.Second,
 			valid:     2 * time.Second,
-			options: Options{
-				OptionClientID: [][]byte{{0, 1}},
+			options: dhcp6.Options{
+				dhcp6.OptionClientID: [][]byte{{0, 1}},
 			},
 			iaaddr: &IAAddr{
 				IP:                net.IPv6loopback,
 				PreferredLifetime: 1 * time.Second,
 				ValidLifetime:     2 * time.Second,
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},
@@ -127,7 +129,7 @@ func TestIAAddrUnmarshalBinary(t *testing.T) {
 				0, 0, 0, 2,
 				0, 1, 0, 1,
 			}...),
-			err: errInvalidOptions,
+			err: dhcp6.ErrInvalidOptions,
 		},
 		{
 			desc: "IPv6 loopback, 1s preferred, 2s valid, no options",
@@ -152,8 +154,8 @@ func TestIAAddrUnmarshalBinary(t *testing.T) {
 				IP:                net.IPv6loopback,
 				PreferredLifetime: 1 * time.Second,
 				ValidLifetime:     2 * time.Second,
-				Options: Options{
-					OptionClientID: [][]byte{{0, 1}},
+				Options: dhcp6.Options{
+					dhcp6.OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},
