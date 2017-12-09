@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/util"
 )
 
 // IANA represents an Identity Association for Non-temporary Addresses, as
@@ -54,7 +55,7 @@ func (i IANA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: T1
 	// 4 bytes: T2
 	// N bytes: options slice byte count
-	b := dhcp6.NewBuffer(nil)
+	b := util.NewBuffer(nil)
 
 	b.WriteBytes(i.IAID[:])
 	b.Write32(uint32(i.T1 / time.Second))
@@ -70,7 +71,7 @@ func (i IANA) MarshalBinary() ([]byte, error) {
 // io.ErrUnexpectedEOF is returned.
 func (i *IANA) UnmarshalBinary(p []byte) error {
 	// IANA must contain at least an IAID, T1, and T2.
-	b := dhcp6.NewBuffer(p)
+	b := util.NewBuffer(p)
 	if b.Len() < 12 {
 		return io.ErrUnexpectedEOF
 	}

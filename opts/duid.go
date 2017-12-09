@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/util"
 )
 
 var (
@@ -143,7 +143,7 @@ func (d *DUIDLLT) MarshalBinary() ([]byte, error) {
 	// 2 bytes: hardware type
 	// 4 bytes: time duration
 	// N bytes: hardware address
-	b := dhcp6.NewBuffer(nil)
+	b := util.NewBuffer(nil)
 
 	b.Write16(uint16(d.Type))
 	b.Write16(d.HardwareType)
@@ -157,7 +157,7 @@ func (d *DUIDLLT) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid
 // DUIDLLT, or another DUID type is indicated, errInvalidDUIDLLT is returned.
 func (d *DUIDLLT) UnmarshalBinary(p []byte) error {
-	b := dhcp6.NewBuffer(p)
+	b := util.NewBuffer(p)
 	// Too short to be valid DUIDLLT
 	if b.Len() < 8 {
 		return io.ErrUnexpectedEOF
@@ -209,7 +209,7 @@ func (d *DUIDEN) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 4 bytes: enterprise number
 	// N bytes: identifier
-	b := dhcp6.NewBuffer(nil)
+	b := util.NewBuffer(nil)
 
 	b.Write16(uint16(d.Type))
 	b.Write32(d.EnterpriseNumber)
@@ -222,7 +222,7 @@ func (d *DUIDEN) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid
 // DUIDEN, or another DUID type is indicated, errInvalidDUIDEN is returned.
 func (d *DUIDEN) UnmarshalBinary(p []byte) error {
-	b := dhcp6.NewBuffer(p)
+	b := util.NewBuffer(p)
 	// Too short to be valid DUIDEN
 	if b.Len() < 6 {
 		return io.ErrUnexpectedEOF
@@ -280,7 +280,7 @@ func (d *DUIDLL) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 2 bytes: hardware type
 	// N bytes: hardware address
-	b := dhcp6.NewBuffer(nil)
+	b := util.NewBuffer(nil)
 
 	b.Write16(uint16(d.Type))
 	b.Write16(d.HardwareType)
@@ -293,7 +293,7 @@ func (d *DUIDLL) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid
 // DUIDLL, or another DUID type is indicated, errInvalidDUIDLL is returned.
 func (d *DUIDLL) UnmarshalBinary(p []byte) error {
-	b := dhcp6.NewBuffer(p)
+	b := util.NewBuffer(p)
 	// Too short to be DUIDLL
 	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF
@@ -335,7 +335,7 @@ func NewDUIDUUID(uuid [16]byte) *DUIDUUID {
 func (d *DUIDUUID) MarshalBinary() ([]byte, error) {
 	//  2 bytes: DUID type
 	// 16 bytes: UUID
-	b := dhcp6.NewBuffer(nil)
+	b := util.NewBuffer(nil)
 
 	b.Write16(uint16(d.Type))
 	b.WriteBytes(d.UUID[:])
@@ -348,7 +348,7 @@ func (d *DUIDUUID) MarshalBinary() ([]byte, error) {
 // needed to form a valid DUIDUUID, or another DUID type is indicated,
 // errInvalidDUIDUUID is returned.
 func (d *DUIDUUID) UnmarshalBinary(p []byte) error {
-	b := dhcp6.NewBuffer(p)
+	b := util.NewBuffer(p)
 	// DUIDUUIDs are fixed-length structures
 	if b.Len() != 18 {
 		return io.ErrUnexpectedEOF
@@ -367,7 +367,7 @@ func (d *DUIDUUID) UnmarshalBinary(p []byte) error {
 // parseDUID returns the correct DUID type of the input byte slice as a
 // DUID interface type.
 func parseDUID(p []byte) (DUID, error) {
-	b := dhcp6.NewBuffer(p)
+	b := util.NewBuffer(p)
 	// DUID must have enough bytes to determine its type
 	if b.Len() < 2 {
 		return nil, io.ErrUnexpectedEOF

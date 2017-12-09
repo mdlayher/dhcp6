@@ -1,5 +1,9 @@
 package dhcp6
 
+import (
+	"github.com/mdlayher/dhcp6/util"
+)
+
 // Packet represents a raw DHCPv6 packet, using the format described in RFC 3315,
 // Section 6.
 //
@@ -26,7 +30,7 @@ func (p *Packet) MarshalBinary() ([]byte, error) {
 	// 1 byte: message type
 	// 3 bytes: transaction ID
 	// N bytes: options slice byte count
-	b := NewBuffer(nil)
+	b := util.NewBuffer(nil)
 
 	b.Write8(uint8(p.MessageType))
 	b.WriteBytes(p.TransactionID[:])
@@ -40,7 +44,7 @@ func (p *Packet) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid Packet,
 // ErrInvalidPacket is returned.
 func (p *Packet) UnmarshalBinary(q []byte) error {
-	b := NewBuffer(q)
+	b := util.NewBuffer(q)
 	// Packet must contain at least a message type and transaction ID
 	if b.Len() < 4 {
 		return ErrInvalidPacket

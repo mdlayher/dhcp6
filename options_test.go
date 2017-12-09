@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
+
+	"github.com/mdlayher/dhcp6/util"
 )
 
 // TestOptionsAddRaw verifies that Options.AddRaw correctly creates or appends
@@ -281,7 +283,7 @@ func Test_parseOptions(t *testing.T) {
 
 	for i, tt := range tests {
 		var options Options
-		err := (&options).Unmarshal(NewBuffer(tt.buf))
+		err := (&options).Unmarshal(util.NewBuffer(tt.buf))
 		if want, got := tt.err, err; want != got {
 			t.Errorf("[%02d] test %q, unexpected error for parseOptions(%v): %v != %v",
 				i, tt.desc, tt.buf, want, got)

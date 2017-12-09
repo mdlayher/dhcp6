@@ -3,7 +3,7 @@ package opts
 import (
 	"io"
 
-	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/util"
 )
 
 // A RemoteIdentifier carries vendor-specific options.
@@ -31,7 +31,7 @@ type RemoteIdentifier struct {
 func (r *RemoteIdentifier) MarshalBinary() ([]byte, error) {
 	// 4 bytes: EnterpriseNumber
 	// N bytes: RemoteId
-	b := dhcp6.NewBuffer(nil)
+	b := util.NewBuffer(nil)
 	b.Write32(r.EnterpriseNumber)
 	b.WriteBytes(r.RemoteID)
 	return b.Data(), nil
@@ -41,7 +41,7 @@ func (r *RemoteIdentifier) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid
 // RemoteIdentifier, io.ErrUnexpectedEOF is returned.
 func (r *RemoteIdentifier) UnmarshalBinary(p []byte) error {
-	b := dhcp6.NewBuffer(p)
+	b := util.NewBuffer(p)
 	// Too short to be valid RemoteIdentifier
 	if b.Len() < 5 {
 		return io.ErrUnexpectedEOF

@@ -3,6 +3,8 @@ package dhcp6
 import (
 	"encoding"
 	"sort"
+
+	"github.com/mdlayher/dhcp6/util"
 )
 
 // Options is a map of OptionCode keys with a slice of byte slice values.
@@ -74,7 +76,7 @@ func (o Options) GetOne(key OptionCode) ([]byte, error) {
 }
 
 // Marshal writes options into the provided Buffer sorted by option codes.
-func (o Options) Marshal(buf *Buffer) {
+func (o Options) Marshal(buf *util.Buffer) {
 	o.enumerate().marshal(buf)
 }
 
@@ -84,7 +86,7 @@ func (o Options) Marshal(buf *Buffer) {
 // It is used with various different types to enable parsing of both top-level
 // options, and options embedded within other options. If options data is
 // malformed, it returns ErrInvalidOptions.
-func (o *Options) Unmarshal(buf *Buffer) error {
+func (o *Options) Unmarshal(buf *util.Buffer) error {
 	*o = make(Options)
 
 	for buf.Len() >= 4 {
@@ -127,7 +129,7 @@ type option struct {
 type optslice []option
 
 // marshal writes the option slice into the provided Buffer.
-func (o optslice) marshal(b *Buffer) {
+func (o optslice) marshal(b *util.Buffer) {
 	for _, oo := range o {
 		// 2 bytes: option code
 		b.Write16(uint16(oo.Code))
