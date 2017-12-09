@@ -141,7 +141,7 @@ func (d *DUIDLLT) MarshalBinary() ([]byte, error) {
 	// 2 bytes: hardware type
 	// 4 bytes: time duration
 	// N bytes: hardware address
-	b := newBuffer(make([]byte, 0, 8+len(d.HardwareAddr)))
+	b := newBuffer(nil)
 
 	b.Write16(uint16(d.Type))
 	b.Write16(d.HardwareType)
@@ -207,7 +207,7 @@ func (d *DUIDEN) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 4 bytes: enterprise number
 	// N bytes: identifier
-	b := newBuffer(make([]byte, 0, 6+len(d.Identifier)))
+	b := newBuffer(nil)
 
 	b.Write16(uint16(d.Type))
 	b.Write32(d.EnterpriseNumber)
@@ -278,7 +278,7 @@ func (d *DUIDLL) MarshalBinary() ([]byte, error) {
 	// 2 bytes: DUID type
 	// 2 bytes: hardware type
 	// N bytes: hardware address
-	b := newBuffer(make([]byte, 0, 4+len(d.HardwareAddr)))
+	b := newBuffer(nil)
 
 	b.Write16(uint16(d.Type))
 	b.Write16(d.HardwareType)
@@ -333,7 +333,7 @@ func NewDUIDUUID(uuid [16]byte) *DUIDUUID {
 func (d *DUIDUUID) MarshalBinary() ([]byte, error) {
 	//  2 bytes: DUID type
 	// 16 bytes: UUID
-	b := newBuffer(make([]byte, 0, 18))
+	b := newBuffer(nil)
 
 	b.Write16(uint16(d.Type))
 	b.WriteBytes(d.UUID[:])

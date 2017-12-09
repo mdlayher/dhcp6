@@ -40,7 +40,7 @@ func (rm *RelayMessage) MarshalBinary() ([]byte, error) {
 	// N bytes: options slice byte count
 
 	opts := rm.Options.enumerate()
-	b := newBuffer(make([]byte, 0, 34+opts.count()))
+	b := newBuffer(nil)
 
 	b.Write8(uint8(rm.MessageType))
 	b.Write8(rm.HopCount)

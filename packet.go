@@ -27,7 +27,7 @@ func (p *Packet) MarshalBinary() ([]byte, error) {
 	// 3 bytes: transaction ID
 	// N bytes: options slice byte count
 	opts := p.Options.enumerate()
-	b := newBuffer(make([]byte, 0, 4+opts.count()))
+	b := newBuffer(nil)
 
 	b.Write8(uint8(p.MessageType))
 	b.WriteBytes(p.TransactionID[:])

@@ -88,7 +88,7 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 	// 16 bytes: IPv6 prefix
 	//  N bytes: options
 	opts := i.Options.enumerate()
-	b := newBuffer(make([]byte, 0, 25+opts.count()))
+	b := newBuffer(nil)
 
 	b.Write32(uint32(i.PreferredLifetime / time.Second))
 	b.Write32(uint32(i.ValidLifetime / time.Second))

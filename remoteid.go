@@ -29,7 +29,7 @@ type RemoteIdentifier struct {
 func (r *RemoteIdentifier) MarshalBinary() ([]byte, error) {
 	// 4 bytes: EnterpriseNumber
 	// N bytes: RemoteId
-	b := newBuffer(make([]byte, 0, 4+len(r.RemoteID)))
+	b := newBuffer(nil)
 	b.Write32(r.EnterpriseNumber)
 	b.WriteBytes(r.RemoteID)
 	return b.Data(), nil

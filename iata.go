@@ -37,7 +37,7 @@ func (i *IATA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: IAID
 	// N bytes: options slice byte count
 	opts := i.Options.enumerate()
-	b := newBuffer(make([]byte, 0, 4+opts.count()))
+	b := newBuffer(nil)
 
 	b.WriteBytes(i.IAID[:])
 	opts.marshal(b)

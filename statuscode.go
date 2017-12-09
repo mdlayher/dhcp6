@@ -31,7 +31,7 @@ func NewStatusCode(code Status, message string) *StatusCode {
 func (s *StatusCode) MarshalBinary() ([]byte, error) {
 	// 2 bytes: status code
 	// N bytes: message
-	b := newBuffer(make([]byte, 0, 2+len(s.Message)))
+	b := newBuffer(nil)
 	b.Write16(uint16(s.Code))
 	b.WriteBytes([]byte(s.Message))
 	return b.Data(), nil

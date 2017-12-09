@@ -22,7 +22,7 @@ func (v *VendorOpts) MarshalBinary() ([]byte, error) {
 	// 4 bytes: EnterpriseNumber
 	// N bytes: options slice byte count
 	opts := v.Options.enumerate()
-	b := newBuffer(make([]byte, 0, 4+opts.count()))
+	b := newBuffer(nil)
 	b.Write32(v.EnterpriseNumber)
 	opts.marshal(b)
 

@@ -16,7 +16,7 @@ type OptionRequestOption []OptionCode
 
 // MarshalBinary allocates a byte slice containing the data from a OptionRequestOption.
 func (oro OptionRequestOption) MarshalBinary() ([]byte, error) {
-	b := newBuffer(make([]byte, 0, 2*len(oro)))
+	b := newBuffer(nil)
 	for _, opt := range oro {
 		b.Write16(uint16(opt))
 	}
@@ -76,7 +76,7 @@ type ElapsedTime time.Duration
 // MarshalBinary allocates a byte slice containing the data from an
 // ElapsedTime.
 func (t ElapsedTime) MarshalBinary() ([]byte, error) {
-	b := newBuffer(make([]byte, 0, 2))
+	b := newBuffer(nil)
 
 	unit := 10 * time.Millisecond
 	// The elapsed time value is an unsigned, 16 bit integer.
@@ -149,7 +149,7 @@ func (d Data) MarshalBinary() ([]byte, error) {
 		c += 2 + len(dd)
 	}
 
-	b := newBuffer(make([]byte, 0, c))
+	b := newBuffer(nil)
 	d.marshal(b)
 	return b.Data(), nil
 }
@@ -230,7 +230,7 @@ type ArchTypes []ArchType
 
 // MarshalBinary allocates a byte slice containing the data from ArchTypes.
 func (a ArchTypes) MarshalBinary() ([]byte, error) {
-	b := newBuffer(make([]byte, 0, len(a)*2))
+	b := newBuffer(nil)
 	for _, aType := range a {
 		b.Write16(uint16(aType))
 	}

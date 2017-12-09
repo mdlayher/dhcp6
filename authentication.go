@@ -32,7 +32,7 @@ func (a *Authentication) MarshalBinary() ([]byte, error) {
 	// 1 byte:  RDM
 	// 8 bytes: ReplayDetection
 	// N bytes: AuthenticationInformation (can have 0 len byte)
-	b := newBuffer(make([]byte, 0, 11+len(a.AuthenticationInformation)))
+	b := newBuffer(nil)
 	b.Write8(a.Protocol)
 	b.Write8(a.Algorithm)
 	b.Write8(a.RDM)

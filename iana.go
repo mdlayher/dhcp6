@@ -53,7 +53,7 @@ func (i IANA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: T2
 	// N bytes: options slice byte count
 	opts := i.Options.enumerate()
-	b := newBuffer(make([]byte, 0, 12+opts.count()))
+	b := newBuffer(nil)
 
 	b.WriteBytes(i.IAID[:])
 	b.Write32(uint32(i.T1 / time.Second))

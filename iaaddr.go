@@ -79,7 +79,7 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 	//  4 bytes: valid lifetime
 	//  N bytes: options
 	opts := i.Options.enumerate()
-	b := newBuffer(make([]byte, 0, 24+opts.count()))
+	b := newBuffer(nil)
 
 	copy(b.WriteN(net.IPv6len), i.IP)
 	b.Write32(uint32(i.PreferredLifetime / time.Second))

@@ -53,7 +53,7 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 	// 4 bytes: T2
 	// N bytes: options slice byte count
 	opts := i.Options.enumerate()
-	buf := newBuffer(make([]byte, 0, 12+opts.count()))
+	buf := newBuffer(nil)
 
 	buf.WriteBytes(i.IAID[:])
 	buf.Write32(uint32(i.T1 / time.Second))
