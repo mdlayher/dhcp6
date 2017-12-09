@@ -10,7 +10,7 @@ import (
 // IAPrefix represents an Identity Association Prefix, as defined in RFC 3633,
 // Section 10.
 //
-// Routers may use identity assocation prefixes (IAPrefixes) to request IPv6
+// Routers may use identity association prefixes (IAPrefixes) to request IPv6
 // prefixes to assign individual address to IPv6 clients, using the lifetimes
 // specified in the preferred lifetime and valid lifetime fields.  Multiple
 // IAPrefixes may be present in a single DHCP request, but only enscapsulated

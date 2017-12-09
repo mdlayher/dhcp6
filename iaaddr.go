@@ -10,7 +10,7 @@ import (
 // IAAddr represents an Identity Association Address, as defined in RFC 3315,
 // Section 22.6.
 //
-// DHCP clients use identity assocation addresses (IAAddrs) to request IPv6
+// DHCP clients use identity association addresses (IAAddrs) to request IPv6
 // addresses from a DHCP server, using the lifetimes specified in the preferred
 // lifetime and valid lifetime fields.  Multiple IAAddrs may be present in a
 // single DHCP request, but only enscapsulated within an IANA or IATA options
