@@ -89,6 +89,10 @@ func TestServeWithSetServerID(t *testing.T) {
 	r.b.Write(pb)
 
 	duid, err := NewDUIDLLT(1, time.Now(), []byte{0, 1, 0, 1, 0, 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	s := &Server{
 		ServerID: duid,
 	}

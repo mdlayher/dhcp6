@@ -39,7 +39,6 @@ func HardwareType(ifi *net.Interface) (uint16, error) {
 		switch m.Header.Type {
 		// No more messages
 		case syscall.NLMSG_DONE:
-			break
 		// Network interface message
 		case syscall.RTM_NEWLINK:
 			ifim := (*syscall.IfInfomsg)(unsafe.Pointer(&m.Data[0]))
