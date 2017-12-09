@@ -2,6 +2,7 @@ package dhcp6
 
 import (
 	"bytes"
+	"io"
 	"reflect"
 	"testing"
 )
@@ -42,7 +43,7 @@ func TestStatusCodeUnmarshalBinary(t *testing.T) {
 	}{
 		{
 			buf: []byte{0},
-			err: errInvalidStatusCode,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			buf: []byte{0, 0},

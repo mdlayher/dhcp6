@@ -120,8 +120,8 @@ func TestServeWithSetServerID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, ok := wp.Options.Get(OptionServerID)
-	if !ok {
+	got, err := wp.Options.GetOne(OptionServerID)
+	if err != nil {
 		t.Fatal("server ID not found in reply")
 	}
 
@@ -164,15 +164,15 @@ func TestServeCreateResponseSenderWithCorrectParameters(t *testing.T) {
 			t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 		}
 
-		cID, ok := w.Options().Get(OptionClientID)
-		if !ok {
+		cID, err := w.Options().GetOne(OptionClientID)
+		if err != nil {
 			t.Fatal("ResponseSender options did not contain client ID")
 		}
 		if want, got := db, cID; !bytes.Equal(want, got) {
 			t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 		}
 
-		if sID, ok, err := w.Options().ServerID(); !ok || err != nil || sID == nil {
+		if sID, err := w.Options().ServerID(); err != nil || sID == nil {
 			t.Fatal("ResponseSender options did not contain server ID")
 		}
 	})
@@ -336,27 +336,27 @@ func TestServeOK(t *testing.T) {
 		t.Fatalf("unexpected transaction ID:\n- want: %v\n-  got: %v", want, got)
 	}
 
-	cID, ok := wp.Options.Get(OptionClientID)
-	if !ok {
-		t.Fatal("response options did not contain client ID")
+	cID, err := wp.Options.GetOne(OptionClientID)
+	if err != nil {
+		t.Fatalf("response options did not contain client ID: %v", err)
 	}
 	if want, got := db, cID; !bytes.Equal(want, got) {
 		t.Fatalf("unexpected client ID bytes:\n- want: %v\n-  got: %v", want, got)
 	}
-	if sID, ok, err := wp.Options.ServerID(); !ok || err != nil || sID == nil {
+	if sID, err := wp.Options.ServerID(); err != nil || sID == nil {
 		t.Fatal("ResponseSender options did not contain server ID")
 	}
 
-	pr, ok, err := wp.Options.Preference()
-	if !ok || err != nil {
+	pr, err := wp.Options.Preference()
+	if err != nil {
 		t.Fatal("response Options did not contain preference")
 	}
 	if want, got := preference, pr; want != got {
 		t.Fatalf("unexpected preference value: %v != %v", want, got)
 	}
 
-	st, ok, err := wp.Options.StatusCode()
-	if !ok || err != nil {
+	st, err := wp.Options.StatusCode()
+	if err != nil {
 		t.Fatal("response Options did not contain status code")
 	}
 	if want, got := sCode, st.Code; want != got {

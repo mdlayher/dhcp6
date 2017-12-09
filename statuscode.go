@@ -2,13 +2,7 @@ package dhcp6
 
 import (
 	"encoding/binary"
-	"errors"
-)
-
-var (
-	// errInvalidStatusCode is returned when a byte slice does not contain
-	// enough bytes to parse a valid StatusCode value.
-	errInvalidStatusCode = errors.New("not enough bytes for valid StatusCode")
+	"io"
 )
 
 // StatusCode represents a Status Code, as defined in RFC 3315, Section 5.4.
@@ -53,7 +47,7 @@ func (s *StatusCode) MarshalBinary() ([]byte, error) {
 func (s *StatusCode) UnmarshalBinary(b []byte) error {
 	// Too short to contain valid StatusCode
 	if len(b) < 2 {
-		return errInvalidStatusCode
+		return io.ErrUnexpectedEOF
 	}
 
 	s.Code = Status(binary.BigEndian.Uint16(b[0:2]))

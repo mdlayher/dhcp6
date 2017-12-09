@@ -48,7 +48,7 @@ func NewIANA(iaid [4]byte, t1 time.Duration, t2 time.Duration, options Options) 
 }
 
 // MarshalBinary allocates a byte slice containing the data from a IANA.
-func (i *IANA) MarshalBinary() ([]byte, error) {
+func (i IANA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: IAID
 	// 4 bytes: T1
 	// 4 bytes: T2

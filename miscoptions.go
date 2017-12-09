@@ -379,3 +379,31 @@ func (i *InterfaceID) UnmarshalBinary(b []byte) error {
 	copy(*i, b)
 	return nil
 }
+
+// A BootFileParam are boot file parameters.
+type BootFileParam []string
+
+// MarshalBinary allocates a byte slice containing the data from a
+// BootFileParam.
+func (bfp BootFileParam) MarshalBinary() ([]byte, error) {
+	// Convert []string to [][]byte.
+	bb := make(Data, 0, len(bfp))
+	for _, param := range bfp {
+		bb = append(bb, []byte(param))
+	}
+	return bb.MarshalBinary()
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into a BootFileParam.
+func (bfp *BootFileParam) UnmarshalBinary(b []byte) error {
+	var d Data
+	if err := (&d).UnmarshalBinary(b); err != nil {
+		return err
+	}
+	// Convert [][]byte to []string.
+	*bfp = make([]string, 0, len(d))
+	for _, param := range d {
+		*bfp = append(*bfp, string(param))
+	}
+	return nil
+}

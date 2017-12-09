@@ -10,7 +10,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/mdlayher/dhcp6"
+	"github.com/u-root/dhcp6"
 )
 
 func main() {
@@ -68,9 +68,9 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 		return nil
 	}
 
-	// Make sure client sent a client ID
-	duid, ok := r.Options.Get(dhcp6.OptionClientID)
-	if !ok {
+	// Make sure client sent a client ID.
+	duid, err := r.Options.GetOne(dhcp6.OptionClientID)
+	if err != nil {
 		return nil
 	}
 
@@ -84,7 +84,7 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 	)
 
 	// Print out options the client has requested
-	if opts, ok, err := r.Options.OptionRequest(); err == nil && ok {
+	if opts, err := r.Options.OptionRequest(); err == nil {
 		log.Println("\t- requested:")
 		for _, o := range opts {
 			log.Printf("\t\t - %s", o)
@@ -92,13 +92,13 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 	}
 
 	// Client must send a IANA to retrieve an IPv6 address
-	ianas, ok, err := r.Options.IANA()
-	if err != nil {
-		return err
-	}
-	if !ok {
+	ianas, err := r.Options.IANA()
+	if err == dhcp6.ErrOptionNotPresent {
 		log.Println("no IANAs provided")
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 
 	// Only accept one IANA
@@ -120,18 +120,22 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 
 	// IANA may already have an IAAddr if an address was already assigned.
 	// If not, assign a new one.
-	iaaddrs, ok, err := ia.Options.IAAddr()
-	if err != nil {
-		return err
-	}
-
-	// Client did not indicate a previous address, and is soliciting.
-	// Advertise a new IPv6 address.
-	if !ok && r.MessageType == dhcp6.MessageTypeSolicit {
-		return newIAAddr(ia, ip, w, r)
-	} else if !ok {
+	iaaddrs, err := ia.Options.IAAddr()
+	switch err {
+	case dhcp6.ErrOptionNotPresent:
+		// Client did not indicate a previous address, and is soliciting.
+		// Advertise a new IPv6 address.
+		if r.MessageType == dhcp6.MessageTypeSolicit {
+			return newIAAddr(ia, ip, w, r)
+		}
 		// Client did not indicate an address and is not soliciting.  Ignore.
 		return nil
+
+	case nil:
+		// Fall through below.
+
+	default:
+		return err
 	}
 
 	// Confirm or renew an existing IPv6 address

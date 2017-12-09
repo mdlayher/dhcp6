@@ -31,12 +31,9 @@ func TestRecorder(t *testing.T) {
 		t.Fatalf("unexpected transaction ID: %v != %v", want, got)
 	}
 
-	duid, ok, err := r.Options().ClientID()
+	duid, err := r.Options().ClientID()
 	if err != nil {
 		t.Fatal(err)
-	}
-	if !ok {
-		t.Fatal("empty client ID option")
 	}
 	if want, got := clientID, duid; !reflect.DeepEqual(want, got) {
 		t.Fatalf("unexpected client ID: %v != %v", want, got)

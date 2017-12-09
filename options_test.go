@@ -284,7 +284,7 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 		}
 
 		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected Options map:\n- want: %v\n-  got: %v",
+			t.Errorf("[%02d] test %q, unexpected Options map:\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -357,7 +357,7 @@ func TestOptions_addRaw(t *testing.T) {
 		}
 
 		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected Options map:\n- want: %v\n-  got: %v",
+			t.Errorf("[%02d] test %q, unexpected Options map:\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -371,14 +371,16 @@ func TestOptionsGet(t *testing.T) {
 		options Options
 		key     OptionCode
 		value   []byte
-		ok      bool
+		err     error
 	}{
 		{
 			desc: "nil Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc:    "empty Options map",
 			options: Options{},
+			err:     ErrOptionNotPresent,
 		},
 		{
 			desc: "value not present in Options map",
@@ -386,6 +388,7 @@ func TestOptionsGet(t *testing.T) {
 				2: [][]byte{[]byte("foo")},
 			},
 			key: 1,
+			err: ErrOptionNotPresent,
 		},
 		{
 			desc: "value present in Options map, but zero length value for key",
@@ -393,7 +396,6 @@ func TestOptionsGet(t *testing.T) {
 				1: [][]byte{},
 			},
 			key: 1,
-			ok:  true,
 		},
 		{
 			desc: "value present in Options map",
@@ -402,29 +404,28 @@ func TestOptionsGet(t *testing.T) {
 			},
 			key:   1,
 			value: []byte("foo"),
-			ok:    true,
 		},
 		{
 			desc: "value present in Options map, with multiple values",
 			options: Options{
 				1: [][]byte{[]byte("foo"), []byte("bar")},
 			},
-			key:   1,
-			value: []byte("foo"),
-			ok:    true,
+			key: 1,
+			err: ErrInvalidPacket,
 		},
 	}
 
 	for i, tt := range tests {
-		value, ok := tt.options.Get(tt.key)
-
-		if want, got := tt.value, value; !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.Get(%v):\n- want: %v\n-  got: %v",
+		value, err := tt.options.GetOne(tt.key)
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected err for Options.GetOne(%v): %v != %v",
 				i, tt.desc, tt.key, want, got)
+		} else if err != nil {
+			continue
 		}
 
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.Get(%v): %v != %v",
+		if want, got := tt.value, value; !bytes.Equal(want, got) {
+			t.Errorf("[%02d] test %q, unexpected value for Options.GetOne(%v):\n- want: %v\n-  got: %v",
 				i, tt.desc, tt.key, want, got)
 		}
 	}
@@ -437,10 +438,11 @@ func TestOptionsClientID(t *testing.T) {
 		desc    string
 		options Options
 		duid    DUID
-		ok      bool
+		err     error
 	}{
 		{
 			desc: "OptionClientID not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionClientID present in Options map",
@@ -456,25 +458,22 @@ func TestOptionsClientID(t *testing.T) {
 				HardwareType: 1,
 				HardwareAddr: []byte{0, 1, 0, 1, 0, 1},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
 		// DUID parsing is tested elsewhere, so errors should automatically fail
 		// test here
-		duid, ok, err := tt.options.ClientID()
-		if err != nil {
-			t.Fatal(err)
+		duid, err := tt.options.ClientID()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected err for Options.ClientID(): %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
+			continue
 		}
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.ClientID():\n- want: %v\n-  got: %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.ClientID(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.ClientID():\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -487,10 +486,11 @@ func TestOptionsServerID(t *testing.T) {
 		desc    string
 		options Options
 		duid    DUID
-		ok      bool
+		err     error
 	}{
 		{
 			desc: "OptionServerID not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionServerID present in Options map",
@@ -506,25 +506,22 @@ func TestOptionsServerID(t *testing.T) {
 				HardwareType: 1,
 				HardwareAddr: []byte{0, 1, 0, 1, 0, 1},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
 		// DUID parsing is tested elsewhere, so errors should automatically fail
 		// test here
-		duid, ok, err := tt.options.ServerID()
-		if err != nil {
-			t.Fatal(err)
+		duid, err := tt.options.ServerID()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected err for Options.ServerID(): %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
+			continue
 		}
 
 		if want, got := tt.duid, duid; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.ServerID():\n- want: %v\n-  got: %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.ServerID(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.ServerID():\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -537,11 +534,11 @@ func TestOptionsIANA(t *testing.T) {
 		desc    string
 		options Options
 		iana    []*IANA
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionIANA not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionIANA present in Options map, but too short",
@@ -566,7 +563,6 @@ func TestOptionsIANA(t *testing.T) {
 					T2:   60 * time.Second,
 				},
 			},
-			ok: true,
 		},
 		{
 			desc: "two OptionIANA present in Options map",
@@ -588,18 +584,15 @@ func TestOptionsIANA(t *testing.T) {
 					},
 				},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		iana, ok, err := tt.options.IANA()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.IANA: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		iana, err := tt.options.IANA()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.IANA: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
@@ -614,14 +607,9 @@ func TestOptionsIANA(t *testing.T) {
 			}
 
 			if !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IANA():\n- want: %v\n-  got: %v",
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.IANA():\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.IANA(): %v != %v",
-				i, tt.desc, want, got)
 		}
 	}
 }
@@ -633,11 +621,11 @@ func TestOptionsIATA(t *testing.T) {
 		desc    string
 		options Options
 		iata    []*IATA
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionIATA not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionIATA present in Options map, but too short",
@@ -658,7 +646,6 @@ func TestOptionsIATA(t *testing.T) {
 					IAID: [4]byte{1, 2, 3, 4},
 				},
 			},
-			ok: true,
 		},
 		{
 			desc: "two OptionIATA present in Options map",
@@ -682,18 +669,15 @@ func TestOptionsIATA(t *testing.T) {
 					},
 				},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		iata, ok, err := tt.options.IATA()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.IATA: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		iata, err := tt.options.IATA()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.IATA: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
@@ -708,14 +692,9 @@ func TestOptionsIATA(t *testing.T) {
 			}
 
 			if !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IATA():\n- want: %v\n-  got: %v",
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.IATA():\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.IATA(): %v != %v",
-				i, tt.desc, want, got)
 		}
 	}
 }
@@ -728,11 +707,11 @@ func TestOptionsIAAddr(t *testing.T) {
 		desc    string
 		options Options
 		iaaddr  []*IAAddr
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionIAAddr not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionIAAddr present in Options map, but too short",
@@ -765,7 +744,6 @@ func TestOptionsIAAddr(t *testing.T) {
 					ValidLifetime:     60 * time.Second,
 				},
 			},
-			ok: true,
 		},
 		{
 			desc: "two OptionIAAddr present in Options map",
@@ -783,18 +761,15 @@ func TestOptionsIAAddr(t *testing.T) {
 					IP: net.IPv6zero,
 				},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		iaaddr, ok, err := tt.options.IAAddr()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.IAAddr: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		iaaddr, err := tt.options.IAAddr()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.IAAddr: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
@@ -809,14 +784,9 @@ func TestOptionsIAAddr(t *testing.T) {
 			}
 
 			if !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAAddr():\n- want: %v\n-  got: %v",
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.IAAddr():\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAAddr(): %v != %v",
-				i, tt.desc, want, got)
 		}
 	}
 }
@@ -829,11 +799,11 @@ func TestOptionsOptionRequest(t *testing.T) {
 		desc    string
 		options Options
 		codes   OptionRequestOption
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionORO not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionORO present in Options map, but not even length",
@@ -848,7 +818,6 @@ func TestOptionsOptionRequest(t *testing.T) {
 				OptionORO: [][]byte{{0, 1}},
 			},
 			codes: []OptionCode{1},
-			ok:    true,
 		},
 		{
 			desc: "OptionORO present in Options map, with multiple values",
@@ -856,28 +825,20 @@ func TestOptionsOptionRequest(t *testing.T) {
 				OptionORO: [][]byte{{0, 1, 0, 2, 0, 3}},
 			},
 			codes: []OptionCode{1, 2, 3},
-			ok:    true,
 		},
 	}
 
 	for i, tt := range tests {
-		codes, ok, err := tt.options.OptionRequest()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.OptionRequest(): %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		codes, err := tt.options.OptionRequest()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.OptionRequest(): %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := tt.codes, codes; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.OptionRequest():\n- want: %v\n-  got: %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.OptionRequest(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.OptionRequest():\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -890,11 +851,11 @@ func TestOptionsPreference(t *testing.T) {
 		desc       string
 		options    Options
 		preference Preference
-		ok         bool
 		err        error
 	}{
 		{
 			desc: "OptionPreference not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionPreference present in Options map, but too short length",
@@ -916,28 +877,20 @@ func TestOptionsPreference(t *testing.T) {
 				OptionPreference: [][]byte{{255}},
 			},
 			preference: 255,
-			ok:         true,
 		},
 	}
 
 	for i, tt := range tests {
-		preference, ok, err := tt.options.Preference()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.Preference(): %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		preference, err := tt.options.Preference()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.Preference(): %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := tt.preference, preference; want != got {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.Preference(): %v != %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.Preference(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.Preference(): %v != %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -950,11 +903,11 @@ func TestOptionsUnicast(t *testing.T) {
 		desc    string
 		options Options
 		ip      IP
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionUnicast not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionUnicast present in Options map, but too short length",
@@ -983,28 +936,20 @@ func TestOptionsUnicast(t *testing.T) {
 				OptionUnicast: [][]byte{net.IPv6loopback},
 			},
 			ip: IP(net.IPv6loopback),
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		ip, ok, err := tt.options.Unicast()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.Unicast(): %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		ip, err := tt.options.Unicast()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.Unicast(): %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := tt.ip, ip; !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.Unicast():\n- want: %v\n-  got: %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.Unicast(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.Unicast():\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -1017,18 +962,18 @@ func TestOptionsStatusCode(t *testing.T) {
 		desc    string
 		options Options
 		sc      *StatusCode
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionStatusCode not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionStatusCode present in Options map, but too short length",
 			options: Options{
 				OptionStatusCode: [][]byte{{}},
 			},
-			err: errInvalidStatusCode,
+			err: io.ErrUnexpectedEOF,
 		},
 		{
 			desc: "OptionStatusCode present in Options map, no message",
@@ -1038,7 +983,6 @@ func TestOptionsStatusCode(t *testing.T) {
 			sc: &StatusCode{
 				Code: StatusSuccess,
 			},
-			ok: true,
 		},
 		{
 			desc: "OptionStatusCode present in Options map, with message",
@@ -1049,28 +993,20 @@ func TestOptionsStatusCode(t *testing.T) {
 				Code:    StatusSuccess,
 				Message: "deadbeef",
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		sc, ok, err := tt.options.StatusCode()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.StatusCode(): %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		sc, err := tt.options.StatusCode()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.StatusCode(): %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := tt.sc, sc; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.StatusCode():\n- want: %v\n-  got: %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.StatusCode(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.StatusCode():\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -1083,11 +1019,11 @@ func TestOptionsElapsedTime(t *testing.T) {
 		desc     string
 		options  Options
 		duration ElapsedTime
-		ok       bool
 		err      error
 	}{
 		{
 			desc: "OptionElapsedTime not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionElapsedTime present in Options map, but too short",
@@ -1109,28 +1045,20 @@ func TestOptionsElapsedTime(t *testing.T) {
 				OptionElapsedTime: [][]byte{{1, 1}},
 			},
 			duration: ElapsedTime(2570 * time.Millisecond),
-			ok:       true,
 		},
 	}
 
 	for i, tt := range tests {
-		duration, ok, err := tt.options.ElapsedTime()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.ElapsedTime: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		duration, err := tt.options.ElapsedTime()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.ElapsedTime: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := tt.duration, duration; want != got {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.ElapsedTime(): %v != %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.ElapsedTime(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.ElapsedTime(): %v != %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -1169,7 +1097,7 @@ func TestElapsedTimeMarshalBinary(t *testing.T) {
 	for i, tt := range tests {
 		buf, err := tt.elapsedTime.MarshalBinary()
 		if want, got := tt.err, err; want != got {
-			t.Fatalf("[%02d] test %q, unexpected error for Options.ElapsedTime\n- want: %v\n-  got: %v",
+			t.Errorf("[%02d] test %q, unexpected error for Options.ElapsedTime\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 
@@ -1178,7 +1106,7 @@ func TestElapsedTimeMarshalBinary(t *testing.T) {
 		}
 
 		if want, got := tt.buf, buf; !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected error for Options.ElapsedTime\n- want: %v\n-  got: %v",
+			t.Errorf("[%02d] test %q, unexpected error for Options.ElapsedTime\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -1191,11 +1119,11 @@ func TestOptionsRelayMessage(t *testing.T) {
 		desc           string
 		options        Options
 		authentication RelayMessageOption
-		ok             bool
 		err            error
 	}{
 		{
 			desc: "RelayMessageOption not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "RelayMessageOption present in Options map",
@@ -1203,14 +1131,13 @@ func TestOptionsRelayMessage(t *testing.T) {
 				OptionRelayMsg: [][]byte{{1, 1, 2, 3}},
 			},
 			authentication: []byte{1, 1, 2, 3},
-			ok:             true,
 		},
 	}
 
 	for i, tt := range tests {
-		relayMsg, ok, err := tt.options.RelayMessageOption()
+		relayMsg, err := tt.options.RelayMessageOption()
 		if want, got := tt.err, err; want != got {
-			t.Fatalf("[%02d] test %q, unexpected error for Options.RelayMessageOption\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+			t.Errorf("[%02d] test %q, unexpected error for Options.RelayMessageOption\n- want: %v\n-  got: %v", i, tt.desc, want, got)
 		}
 
 		if tt.err != nil {
@@ -1218,11 +1145,11 @@ func TestOptionsRelayMessage(t *testing.T) {
 		}
 
 		if want, got := tt.authentication, relayMsg; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.RelayMessageOption()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+			t.Errorf("[%02d] test %q, unexpected value for Options.RelayMessageOption()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
 		}
 
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.RelayMessageOption(): %v != %v", i, tt.desc, want, got)
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected err for Options.RelayMessageOption(): %v != %v", i, tt.desc, want, got)
 		}
 	}
 }
@@ -1234,11 +1161,11 @@ func TestAuthentication(t *testing.T) {
 		desc           string
 		options        Options
 		authentication *Authentication
-		ok             bool
 		err            error
 	}{
 		{
 			desc: "Authentication not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "Authentication present in Options map, but too short",
@@ -1259,14 +1186,13 @@ func TestAuthentication(t *testing.T) {
 				ReplayDetection:           binary.BigEndian.Uint64([]byte{3, 4, 5, 6, 7, 8, 9, 0xa}),
 				AuthenticationInformation: []byte{0xb, 0xc, 0xd, 0xe, 0xf},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		authentication, ok, err := tt.options.Authentication()
+		authentication, err := tt.options.Authentication()
 		if want, got := tt.err, err; want != got {
-			t.Fatalf("[%02d] test %q, unexpected error for Options.Authentication\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+			t.Errorf("[%02d] test %q, unexpected error for Options.Authentication\n- want: %v\n-  got: %v", i, tt.desc, want, got)
 		}
 
 		if tt.err != nil {
@@ -1274,11 +1200,11 @@ func TestAuthentication(t *testing.T) {
 		}
 
 		if want, got := tt.authentication, authentication; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.Authentication()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+			t.Errorf("[%02d] test %q, unexpected value for Options.Authentication()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
 		}
 
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.Authentication(): %v != %v", i, tt.desc, want, got)
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected err for Options.Authentication(): %v != %v", i, tt.desc, want, got)
 		}
 	}
 }
@@ -1289,41 +1215,31 @@ func TestOptionsRapidCommit(t *testing.T) {
 	var tests = []struct {
 		desc    string
 		options Options
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionRapidCommit not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionRapidCommit present in Options map, but non-empty",
 			options: Options{
 				OptionRapidCommit: [][]byte{{1}},
 			},
-			err: io.ErrUnexpectedEOF,
+			err: ErrInvalidPacket,
 		},
 		{
 			desc: "OptionRapidCommit present in Options map, empty",
 			options: Options{
 				OptionRapidCommit: [][]byte{},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		ok, err := tt.options.RapidCommit()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.RapidCommit: %v != %v",
-					i, tt.desc, want, got)
-			}
-
-			continue
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.RapidCommit(): %v != %v",
+		err := tt.options.RapidCommit()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.RapidCommit: %v != %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -1336,11 +1252,11 @@ func TestOptionsUserClass(t *testing.T) {
 		desc    string
 		options Options
 		classes [][]byte
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionUserClass not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionUserClass present in Options map, but empty",
@@ -1357,7 +1273,6 @@ func TestOptionsUserClass(t *testing.T) {
 				}},
 			},
 			classes: [][]byte{{}},
-			ok:      true,
 		},
 		{
 			desc: "OptionUserClass present in Options map, one item, extra byte",
@@ -1376,7 +1291,6 @@ func TestOptionsUserClass(t *testing.T) {
 				}},
 			},
 			classes: [][]byte{{1}},
-			ok:      true,
 		},
 		{
 			desc: "OptionUserClass present in Options map, three items",
@@ -1388,37 +1302,29 @@ func TestOptionsUserClass(t *testing.T) {
 				}},
 			},
 			classes: [][]byte{{1}, {2, 2}, {3, 3, 3}},
-			ok:      true,
 		},
 	}
 
 	for i, tt := range tests {
-		classes, ok, err := tt.options.UserClass()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.UserClass: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		classes, err := tt.options.UserClass()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.UserClass: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := len(tt.classes), len(classes); want != got {
-			t.Fatalf("[%02d] test %q, unexpected classes slice length: %v != %v",
+			t.Errorf("[%02d] test %q, unexpected classes slice length: %v != %v",
 				i, tt.desc, want, got)
 
 		}
 
 		for j := range classes {
 			if want, got := tt.classes[j], classes[j]; !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.UserClass()\n- want: %v\n-  got: %v",
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.UserClass()\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.UserClass(): %v != %v",
-				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1430,11 +1336,11 @@ func TestOptionsVendorClass(t *testing.T) {
 		desc    string
 		options Options
 		classes [][]byte
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionVendorClass not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionVendorClass present in Options map, but empty",
@@ -1461,7 +1367,6 @@ func TestOptionsVendorClass(t *testing.T) {
 				}},
 			},
 			classes: [][]byte{{}},
-			ok:      true,
 		},
 		{
 			desc: "OptionVendorClass present in Options map, one item, extra byte",
@@ -1482,7 +1387,6 @@ func TestOptionsVendorClass(t *testing.T) {
 				}},
 			},
 			classes: [][]byte{{1}},
-			ok:      true,
 		},
 		{
 			desc: "OptionVendorClass present in Options map, three items",
@@ -1495,40 +1399,27 @@ func TestOptionsVendorClass(t *testing.T) {
 				}},
 			},
 			classes: [][]byte{{1}, {2, 2}, {3, 3, 3}},
-			ok:      true,
 		},
 	}
 
 	for i, tt := range tests {
-		classes, ok, err := tt.options.VendorClass()
-
+		classes, err := tt.options.VendorClass()
 		if want, got := tt.err, err; want != got {
-			t.Fatalf("[%02d] test %q, unexpected error for Options.VendorClass: %v != %v",
+			t.Errorf("[%02d] test %q, unexpected error for Options.VendorClass: %v != %v",
 				i, tt.desc, want, got)
-		}
-
-		if err != nil {
-			continue
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.VendorClass(): %v != %v",
-				i, tt.desc, want, got)
-		}
-
-		if !ok {
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := len(tt.classes), len(classes.VendorClassData); want != got {
-			t.Fatalf("[%02d] test %q, unexpected classes slice length: %v != %v",
+			t.Errorf("[%02d] test %q, unexpected classes slice length: %v != %v",
 				i, tt.desc, want, got)
 
 		}
 
 		for j := range classes.VendorClassData {
 			if want, got := tt.classes[j], classes.VendorClassData[j]; !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.VendorClass()\n- want: %v\n-  got: %v",
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.VendorClass()\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
 		}
@@ -1542,11 +1433,11 @@ func TestInterfaceID(t *testing.T) {
 		desc        string
 		options     Options
 		interfaceID InterfaceID
-		ok          bool
 		err         error
 	}{
 		{
 			desc: "InterfaceID not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "InterfaceID present in Options map, one item",
@@ -1556,7 +1447,6 @@ func TestInterfaceID(t *testing.T) {
 				}},
 			},
 			interfaceID: []byte{0, 1, 1},
-			ok:          true,
 		},
 		{
 			desc: "InterfaceID present in Options map with no interface-id data",
@@ -1564,28 +1454,20 @@ func TestInterfaceID(t *testing.T) {
 				OptionInterfaceID: [][]byte{{}},
 			},
 			interfaceID: []byte{},
-			ok:          true,
 		},
 	}
 
 	for i, tt := range tests {
-		interfaceID, ok, err := tt.options.InterfaceID()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.InterfaceID: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		interfaceID, err := tt.options.InterfaceID()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.InterfaceID: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := tt.interfaceID, interfaceID; !bytes.Equal(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.InterfaceID()\n- want: %v\n-  got: %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.InterfaceID(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.InterfaceID()\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -1598,11 +1480,11 @@ func TestOptionsIAPD(t *testing.T) {
 		desc    string
 		options Options
 		iapd    []*IAPD
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionIAPD not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionIAPD present in Options map, but too short",
@@ -1627,7 +1509,6 @@ func TestOptionsIAPD(t *testing.T) {
 					T2:   60 * time.Second,
 				},
 			},
-			ok: true,
 		},
 		{
 			desc: "two OptionIAPD present in Options map",
@@ -1649,18 +1530,15 @@ func TestOptionsIAPD(t *testing.T) {
 					},
 				},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		iapd, ok, err := tt.options.IAPD()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.IAPD: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		iapd, err := tt.options.IAPD()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.IAPD: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
@@ -1675,14 +1553,9 @@ func TestOptionsIAPD(t *testing.T) {
 			}
 
 			if !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAPD():\n- want: %v\n-  got: %v",
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.IAPD():\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAPD(): %v != %v",
-				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1695,11 +1568,11 @@ func TestOptionsIAPrefix(t *testing.T) {
 		desc     string
 		options  Options
 		iaprefix []*IAPrefix
-		ok       bool
 		err      error
 	}{
 		{
 			desc: "OptionIAPrefix not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionIAPrefix present in Options map, but too short",
@@ -1730,7 +1603,6 @@ func TestOptionsIAPrefix(t *testing.T) {
 					},
 				},
 			},
-			ok: true,
 		},
 		{
 			desc: "two OptionIAPrefix present in Options map",
@@ -1748,18 +1620,15 @@ func TestOptionsIAPrefix(t *testing.T) {
 					Prefix: net.IPv6zero,
 				},
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		iaprefix, ok, err := tt.options.IAPrefix()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.IAPrefix: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		iaprefix, err := tt.options.IAPrefix()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.IAPrefix: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
@@ -1774,14 +1643,9 @@ func TestOptionsIAPrefix(t *testing.T) {
 			}
 
 			if !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.IAPrefix():\n- want: %v\n-  got: %v",
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.IAPrefix():\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.IAPrefix(): %v != %v",
-				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1793,11 +1657,11 @@ func TestOptionsRemoteIdentifier(t *testing.T) {
 		desc             string
 		options          Options
 		remoteIdentifier *RemoteIdentifier
-		ok               bool
 		err              error
 	}{
 		{
 			desc: "OptionsRemoteIdentifier not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionsRemoteIdentifier present in Options map, but too short",
@@ -1820,13 +1684,12 @@ func TestOptionsRemoteIdentifier(t *testing.T) {
 				EnterpriseNumber: 1368,
 				RemoteID:         []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xe, 0xf},
 			},
-			ok: true,
 		},
 	}
 	for i, tt := range tests {
-		remoteIdentifier, ok, err := tt.options.RemoteIdentifier()
+		remoteIdentifier, err := tt.options.RemoteIdentifier()
 		if want, got := tt.err, err; want != got {
-			t.Fatalf("[%02d] test %q, unexpected error for Options.RemoteIdentifier\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+			t.Errorf("[%02d] test %q, unexpected error for Options.RemoteIdentifier\n- want: %v\n-  got: %v", i, tt.desc, want, got)
 		}
 
 		if tt.err != nil {
@@ -1834,11 +1697,11 @@ func TestOptionsRemoteIdentifier(t *testing.T) {
 		}
 
 		if want, got := tt.remoteIdentifier, remoteIdentifier; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.RemoteIdentifier()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
+			t.Errorf("[%02d] test %q, unexpected value for Options.RemoteIdentifier()\n- want: %v\n-  got: %v", i, tt.desc, want, got)
 		}
 
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.RemoteIdentifier(): %v != %v", i, tt.desc, want, got)
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected err for Options.RemoteIdentifier(): %v != %v", i, tt.desc, want, got)
 		}
 	}
 }
@@ -1850,10 +1713,11 @@ func TestOptionsBootFileURL(t *testing.T) {
 		desc    string
 		options Options
 		u       *url.URL
-		ok      bool
+		err     error
 	}{
 		{
 			desc: "OptionBootFileURL not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionBootFileURL present in Options map",
@@ -1864,28 +1728,22 @@ func TestOptionsBootFileURL(t *testing.T) {
 				Scheme: "tftp",
 				Host:   "192.168.1.1:69",
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		u, ok, err := tt.options.BootFileURL()
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.BootFileURL(): %v != %v",
+		u, err := tt.options.BootFileURL()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected err for Options.BootFileURL(): %v != %v",
 				i, tt.desc, want, got)
-		}
-		if !ok {
+		} else if err != nil {
 			continue
 		}
 
 		ttuu := url.URL(*tt.u)
 		uu := url.URL(*u)
 		if want, got := ttuu.String(), uu.String(); want != got {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.BootFileURL(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.BootFileURL(): %v != %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -1898,12 +1756,12 @@ func TestOptionsBootFileParam(t *testing.T) {
 	var tests = []struct {
 		desc    string
 		options Options
-		param   Data
-		ok      bool
+		param   BootFileParam
 		err     error
 	}{
 		{
 			desc: "OptionBootFileParam not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionBootFileParam present in Options map, but empty",
@@ -1919,8 +1777,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 					0, 0,
 				}},
 			},
-			param: Data{{}},
-			ok:    true,
+			param: []string{""},
 		},
 		{
 			desc: "OptionBootFileParam present in Options map, one item, extra byte",
@@ -1938,8 +1795,7 @@ func TestOptionsBootFileParam(t *testing.T) {
 					0, 3, 'f', 'o', 'o',
 				}},
 			},
-			param: Data{[]byte("foo")},
-			ok:    true,
+			param: []string{"foo"},
 		},
 		{
 			desc: "OptionBootFileParam present in Options map, three items",
@@ -1950,38 +1806,30 @@ func TestOptionsBootFileParam(t *testing.T) {
 					0, 3, 'a', 'b', 'c',
 				}},
 			},
-			param: Data{[]byte("a"), []byte("ab"), []byte("abc")},
-			ok:    true,
+			param: []string{"a", "ab", "abc"},
 		},
 	}
 
 	for i, tt := range tests {
-		param, ok, err := tt.options.BootFileParam()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.BootFileParam: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		param, err := tt.options.BootFileParam()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.BootFileParam: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := len(tt.param), len(param); want != got {
-			t.Fatalf("[%02d] test %q, unexpected param slice length: %v != %v",
+			t.Errorf("[%02d] test %q, unexpected param slice length: %v != %v",
 				i, tt.desc, want, got)
 
 		}
 
 		for j := range param {
-			if want, got := tt.param[j], param[j]; !bytes.Equal(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.BootFileParam()\n- want: %v\n-  got: %v",
+			if want, got := tt.param[j], param[j]; want != got {
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.BootFileParam()\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.BootFileParam(): %v != %v",
-				i, tt.desc, want, got)
 		}
 	}
 }
@@ -1994,11 +1842,11 @@ func TestOptionsClientArchType(t *testing.T) {
 		desc    string
 		options Options
 		arch    ArchTypes
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionClientArchType not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionClientArchType present in Options map, but empty",
@@ -2020,7 +1868,6 @@ func TestOptionsClientArchType(t *testing.T) {
 				OptionClientArchType: [][]byte{{0, 9}},
 			},
 			arch: ArchTypes{ArchTypeEFIx8664},
-			ok:   true,
 		},
 		{
 			desc: "OptionClientArchType present in Options map, three architectures",
@@ -2032,36 +1879,28 @@ func TestOptionsClientArchType(t *testing.T) {
 				ArchTypeEFIx8664,
 				ArchTypeIntelx86PC,
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		arch, ok, err := tt.options.ClientArchType()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.ClientArchType: %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		arch, err := tt.options.ClientArchType()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.ClientArchType: %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := len(tt.arch), len(arch); want != got {
-			t.Fatalf("[%02d] test %q, unexpected arch slice length: %v != %v",
+			t.Errorf("[%02d] test %q, unexpected arch slice length: %v != %v",
 				i, tt.desc, want, got)
 		}
 
 		for j := range arch {
 			if want, got := tt.arch[j], arch[j]; !reflect.DeepEqual(want, got) {
-				t.Fatalf("[%02d:%02d] test %q, unexpected value for Options.ClientArchType()\n- want: %v\n-  got: %v",
+				t.Errorf("[%02d:%02d] test %q, unexpected value for Options.ClientArchType()\n- want: %v\n-  got: %v",
 					i, j, tt.desc, want, got)
 			}
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.ClientArchType(): %v != %v",
-				i, tt.desc, want, got)
 		}
 	}
 }
@@ -2073,11 +1912,11 @@ func TestOptionsNII(t *testing.T) {
 		desc    string
 		options Options
 		nii     *NII
-		ok      bool
 		err     error
 	}{
 		{
 			desc: "OptionNII not present in Options map",
+			err:  ErrOptionNotPresent,
 		},
 		{
 			desc: "OptionNII present in Options map, but too short length",
@@ -2103,28 +1942,20 @@ func TestOptionsNII(t *testing.T) {
 				Major: 2,
 				Minor: 3,
 			},
-			ok: true,
 		},
 	}
 
 	for i, tt := range tests {
-		nii, ok, err := tt.options.NII()
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for Options.NII(): %v != %v",
-					i, tt.desc, want, got)
-			}
-
+		nii, err := tt.options.NII()
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for Options.NII(): %v != %v",
+				i, tt.desc, want, got)
+		} else if err != nil {
 			continue
 		}
 
 		if want, got := tt.nii, nii; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected value for Options.NII(): %v != %v",
-				i, tt.desc, want, got)
-		}
-
-		if want, got := tt.ok, ok; want != got {
-			t.Fatalf("[%02d] test %q, unexpected ok for Options.NII(): %v != %v",
+			t.Errorf("[%02d] test %q, unexpected value for Options.NII(): %v != %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -2197,7 +2028,7 @@ func TestOptions_enumerate(t *testing.T) {
 
 	for i, tt := range tests {
 		if want, got := tt.kv, tt.options.enumerate(); !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected key/value options:\n- want: %v\n-  got: %v",
+			t.Errorf("[%02d] test %q, unexpected key/value options:\n- want: %v\n-  got: %v",
 				i, tt.desc, want, got)
 		}
 	}
@@ -2264,23 +2095,22 @@ func Test_parseOptions(t *testing.T) {
 
 	for i, tt := range tests {
 		options, err := parseOptions(tt.buf)
-		if err != nil {
-			if want, got := tt.err, err; want != got {
-				t.Fatalf("[%02d] test %q, unexpected error for parseOptions(%v): %v != %v",
-					i, tt.desc, tt.buf, want, got)
-			}
-
+		if want, got := tt.err, err; want != got {
+			t.Errorf("[%02d] test %q, unexpected error for parseOptions(%v): %v != %v",
+				i, tt.desc, tt.buf, want, got)
+		} else if err != nil {
 			continue
 		}
+
 		if want, got := tt.options, options; !reflect.DeepEqual(want, got) {
-			t.Fatalf("[%02d] test %q, unexpected Options map for parseOptions(%v):\n- want: %v\n-  got: %v",
+			t.Errorf("[%02d] test %q, unexpected Options map for parseOptions(%v):\n- want: %v\n-  got: %v",
 				i, tt.desc, tt.buf, want, got)
 		}
 
 		for k, v := range tt.options {
 			for ii := range v {
 				if want, got := cap(v[ii]), cap(options[k][ii]); want != got {
-					t.Fatalf("[%02d] test %q, unexpected capacity option data:\n- want: %v\n-  got: %v",
+					t.Errorf("[%02d] test %q, unexpected capacity option data:\n- want: %v\n-  got: %v",
 						i, tt.desc, want, got)
 				}
 			}

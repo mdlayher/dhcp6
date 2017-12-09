@@ -303,7 +303,7 @@ func (c *conn) serve() {
 	}
 
 	// If available in request, add client ID to response
-	if cID, ok := r.Options.Get(OptionClientID); ok {
+	if cID, err := r.Options.GetOne(OptionClientID); err == nil {
 		w.options.addRaw(OptionClientID, cID)
 	}
 
