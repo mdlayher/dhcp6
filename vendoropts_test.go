@@ -30,10 +30,10 @@ func TestVendorOptsMarshalBinary(t *testing.T) {
 				EnterpriseNumber: 1368,
 				Options: Options{
 					1: [][]byte{
-						[]byte{3, 4},
+						{3, 4},
 					},
 					2: [][]byte{
-						[]byte{0x04, 0xa3, 0x9e},
+						{0x04, 0xa3, 0x9e},
 					},
 				},
 			},
@@ -81,10 +81,10 @@ func TestVendorOptsUnmarshalBinary(t *testing.T) {
 				EnterpriseNumber: 1368,
 				Options: Options{
 					1: [][]byte{
-						[]byte{3, 4},
+						{3, 4},
 					},
 					2: [][]byte{
-						[]byte{0x04, 0xa3, 0x9e},
+						{0x04, 0xa3, 0x9e},
 					},
 				},
 			},

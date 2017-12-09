@@ -29,14 +29,14 @@ func TestNewIANA(t *testing.T) {
 			t1:   30 * time.Second,
 			t2:   60 * time.Second,
 			options: Options{
-				OptionClientID: [][]byte{[]byte{0, 1}},
+				OptionClientID: [][]byte{{0, 1}},
 			},
 			iana: &IANA{
 				IAID: [4]byte{0, 1, 2, 3},
 				T1:   30 * time.Second,
 				T2:   60 * time.Second,
 				Options: Options{
-					OptionClientID: [][]byte{[]byte{0, 1}},
+					OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},
@@ -109,7 +109,7 @@ func TestIANAMarshalBinary(t *testing.T) {
 				T1:   30 * time.Second,
 				T2:   60 * time.Second,
 				Options: Options{
-					OptionClientID: [][]byte{[]byte{0, 1}},
+					OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 			buf: []byte{

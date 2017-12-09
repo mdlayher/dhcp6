@@ -40,7 +40,7 @@ func TestPacketMarshalBinary(t *testing.T) {
 				MessageType:   MessageTypeSolicit,
 				TransactionID: [3]byte{1, 2, 3},
 				Options: Options{
-					OptionClientID: [][]byte{[]byte{0, 1}},
+					OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 			buf: []byte{1, 1, 2, 3, 0, 1, 0, 2, 0, 1},
@@ -118,7 +118,7 @@ func TestPacketUnmarshalBinary(t *testing.T) {
 				MessageType:   MessageTypeSolicit,
 				TransactionID: [3]byte{2, 3, 4},
 				Options: Options{
-					OptionClientID: [][]byte{[]byte{0, 1}},
+					OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},

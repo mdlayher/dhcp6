@@ -24,12 +24,12 @@ func TestNewIATA(t *testing.T) {
 			desc: "[0 1 2 3] IAID, option client ID [0 1]",
 			iaid: [4]byte{0, 1, 2, 3},
 			options: Options{
-				OptionClientID: [][]byte{[]byte{0, 1}},
+				OptionClientID: [][]byte{{0, 1}},
 			},
 			iata: &IATA{
 				IAID: [4]byte{0, 1, 2, 3},
 				Options: Options{
-					OptionClientID: [][]byte{[]byte{0, 1}},
+					OptionClientID: [][]byte{{0, 1}},
 				},
 			},
 		},

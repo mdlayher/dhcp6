@@ -260,7 +260,7 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 				ArchTypeIntelLeanClient,
 			},
 			options: Options{
-				OptionClientArchType: [][]byte{[]byte{0, 9, 0, 0, 0, 5}},
+				OptionClientArchType: [][]byte{{0, 9, 0, 0, 0, 5}},
 			},
 		},
 		{
@@ -272,7 +272,7 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 				Minor: 3,
 			},
 			options: Options{
-				OptionNII: [][]byte{[]byte{1, 2, 3}},
+				OptionNII: [][]byte{{1, 2, 3}},
 			},
 		},
 	}
@@ -664,8 +664,8 @@ func TestOptionsIATA(t *testing.T) {
 			desc: "two OptionIATA present in Options map",
 			options: Options{
 				OptionIATA: [][]byte{
-					[]byte{0, 1, 2, 3, 0, 1, 0, 1, 1},
-					[]byte{4, 5, 6, 7, 0, 2, 0, 1, 2},
+					{0, 1, 2, 3, 0, 1, 0, 1, 1},
+					{4, 5, 6, 7, 0, 2, 0, 1, 2},
 				},
 			},
 			iata: []*IATA{
@@ -1150,19 +1150,19 @@ func TestElapsedTimeMarshalBinary(t *testing.T) {
 			buf:  []byte{0, 0},
 		},
 		{
-			desc: "OptionElapsedTime elapsed-time = 65534 hundredths of a second",
+			desc:        "OptionElapsedTime elapsed-time = 65534 hundredths of a second",
 			elapsedTime: ElapsedTime(655340 * time.Millisecond),
-			buf:  []byte{0xff, 0xfe},
+			buf:         []byte{0xff, 0xfe},
 		},
 		{
-			desc: "OptionElapsedTime elapsed-time = 65535 hundredths of a second",
+			desc:        "OptionElapsedTime elapsed-time = 65535 hundredths of a second",
 			elapsedTime: ElapsedTime(655350 * time.Millisecond),
-			buf:  []byte{0xff, 0xff},
+			buf:         []byte{0xff, 0xff},
 		},
 		{
-			desc: "OptionElapsedTime elapsed-time = 65537 hundredths of a second",
+			desc:        "OptionElapsedTime elapsed-time = 65537 hundredths of a second",
 			elapsedTime: ElapsedTime(655370 * time.Millisecond),
-			buf:  []byte{0xff, 0xff},
+			buf:         []byte{0xff, 0xff},
 		},
 	}
 
