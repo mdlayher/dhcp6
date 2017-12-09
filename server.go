@@ -58,7 +58,7 @@ type Server struct {
 	Addr string
 
 	// Handler is the handler to use while serving DHCP requests.  If this
-	// value is nil, DefaultServeMux will be used in place of Handler.
+	// value is nil, the Server will panic.
 	Handler Handler
 
 	// MulticastGroups designates which IPv6 multicast groups this server
@@ -94,8 +94,7 @@ func (s *Server) logf(format string, args ...interface{}) {
 
 // ListenAndServe listens for UDP6 connections on the specified address of the
 // specified interface, using the default Server configuration and specified
-// handler to handle DHCPv6 connections.  If the handler is nil,
-// DefaultServeMux is used instead.
+// handler to handle DHCPv6 connections.  The Handler must not be nil.
 //
 // Any traffic which reaches the Server, and is not bound for the specified
 // network interface, will be filtered out and ignored.
@@ -311,11 +310,10 @@ func (c *conn) serve() {
 		w.options.addRaw(OptionClientID, cID)
 	}
 
-	// If set, invoke DHCP handler using request and response
-	// Default to DefaultServeMux if handler is not available
+	// Enforce a valid Handler.
 	handler := c.server.Handler
 	if handler == nil {
-		handler = DefaultServeMux
+		panic("nil DHCPv6 handler for server")
 	}
 
 	handler.ServeDHCP(w, r)

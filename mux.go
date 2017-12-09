@@ -4,10 +4,6 @@ import (
 	"sync"
 )
 
-// DefaultServeMux is the default ServeMux used by Serve.  When the Handle and
-// HandleFunc functions are called, handlers are applied to DefaultServeMux.
-var DefaultServeMux = NewServeMux()
-
 // ServeMux is a DHCP request multiplexer, which implements Handler.  ServeMux
 // matches handlers based on their MessageType, enabling different handlers
 // to be used for different types of DHCP messages.  ServeMux can be helpful
@@ -48,22 +44,9 @@ func (mux *ServeMux) Handle(mt MessageType, handler Handler) {
 	mux.mu.Unlock()
 }
 
-// Handle registers a MessageType and Handler with the DefaultServeMux,
-// so that future requests with that MessageType will invoke the Handler.
-func Handle(mt MessageType, handler Handler) {
-	DefaultServeMux.Handle(mt, handler)
-}
-
 // HandleFunc registers a MessageType and function as a HandlerFunc with a
 // ServeMux, so that future requests with that MessageType will invoke the
 // HandlerFunc.
 func (mux *ServeMux) HandleFunc(mt MessageType, handler func(ResponseSender, *Request)) {
 	mux.Handle(mt, HandlerFunc(handler))
-}
-
-// HandleFunc registers a MessageType and function as a HandlerFunc with the
-// DefaultServeMux, so that future requests with that MessageType will invoke
-// the HandlerFunc.
-func HandleFunc(mt MessageType, handler func(ResponseSender, *Request)) {
-	DefaultServeMux.HandleFunc(mt, handler)
 }
