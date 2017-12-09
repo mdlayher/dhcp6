@@ -108,6 +108,10 @@ const (
 	OptionReconfMsg    OptionCode = 19
 	OptionReconfAccept OptionCode = 20
 
+	// RFC 3646
+	OptionDNSServers OptionCode = 23
+	OptionDomainList OptionCode = 24
+
 	// RFC 3633
 	OptionIAPD     OptionCode = 25
 	OptionIAPrefix OptionCode = 26

@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/opts"
+	"github.com/mdlayher/dhcp6/server"
 )
 
 func main() {
@@ -32,7 +34,7 @@ func main() {
 
 	// Bind DHCPv6 server to interface and use specified handler
 	log.Printf("binding DHCPv6 server to interface %s...", *iface)
-	if err := dhcp6.ListenAndServe(*iface, h); err != nil {
+	if err := server.ListenAndServe(*iface, h); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -45,7 +47,7 @@ type Handler struct {
 
 // ServeDHCP is a dhcp6.Handler which invokes an internal handler that
 // allows errors to be returned and handled in one place.
-func (h *Handler) ServeDHCP(w dhcp6.ResponseSender, r *dhcp6.Request) {
+func (h *Handler) ServeDHCP(w server.ResponseSender, r *server.Request) {
 	if err := h.handler(h.ip, w, r); err != nil {
 		log.Println(err)
 	}
@@ -53,10 +55,10 @@ func (h *Handler) ServeDHCP(w dhcp6.ResponseSender, r *dhcp6.Request) {
 
 // A handler is a DHCPv6 handler function which can assign a single IPv6
 // address and also return an error.
-type handler func(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error
+type handler func(ip net.IP, w server.ResponseSender, r *server.Request) error
 
 // handle is a handler which assigns IPv6 addresses using DHCPv6.
-func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
+func handle(ip net.IP, w server.ResponseSender, r *server.Request) error {
 	// Accept only Solicit, Request, or Confirm, since this server
 	// does not handle Information Request or other message types
 	valid := map[dhcp6.MessageType]struct{}{
@@ -68,9 +70,9 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 		return nil
 	}
 
-	// Make sure client sent a client ID
-	duid, ok := r.Options.Get(dhcp6.OptionClientID)
-	if !ok {
+	// Make sure client sent a client ID.
+	duid, err := r.Options.GetOne(dhcp6.OptionClientID)
+	if err != nil {
 		return nil
 	}
 
@@ -84,7 +86,7 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 	)
 
 	// Print out options the client has requested
-	if opts, ok, err := r.Options.OptionRequest(); err == nil && ok {
+	if opts, err := opts.GetOptionRequest(r.Options); err == nil {
 		log.Println("\t- requested:")
 		for _, o := range opts {
 			log.Printf("\t\t - %s", o)
@@ -92,13 +94,13 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 	}
 
 	// Client must send a IANA to retrieve an IPv6 address
-	ianas, ok, err := r.Options.IANA()
-	if err != nil {
-		return err
-	}
-	if !ok {
+	ianas, err := opts.GetIANA(r.Options)
+	if err == dhcp6.ErrOptionNotPresent {
 		log.Println("no IANAs provided")
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 
 	// Only accept one IANA
@@ -116,22 +118,26 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 	)
 
 	// Instruct client to prefer this server unconditionally
-	_ = w.Options().Add(dhcp6.OptionPreference, dhcp6.Preference(255))
+	_ = w.Options().Add(dhcp6.OptionPreference, opts.Preference(255))
 
 	// IANA may already have an IAAddr if an address was already assigned.
 	// If not, assign a new one.
-	iaaddrs, ok, err := ia.Options.IAAddr()
-	if err != nil {
-		return err
-	}
-
-	// Client did not indicate a previous address, and is soliciting.
-	// Advertise a new IPv6 address.
-	if !ok && r.MessageType == dhcp6.MessageTypeSolicit {
-		return newIAAddr(ia, ip, w, r)
-	} else if !ok {
+	iaaddrs, err := opts.GetIAAddr(ia.Options)
+	switch err {
+	case dhcp6.ErrOptionNotPresent:
+		// Client did not indicate a previous address, and is soliciting.
+		// Advertise a new IPv6 address.
+		if r.MessageType == dhcp6.MessageTypeSolicit {
+			return newIAAddr(ia, ip, w, r)
+		}
 		// Client did not indicate an address and is not soliciting.  Ignore.
 		return nil
+
+	case nil:
+		// Fall through below.
+
+	default:
+		return err
 	}
 
 	// Confirm or renew an existing IPv6 address
@@ -160,10 +166,10 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 
 // newIAAddr creates a IAAddr for a IANA using the specified IPv6 address,
 // and advertises it to a client.
-func newIAAddr(ia *dhcp6.IANA, ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
+func newIAAddr(ia *opts.IANA, ip net.IP, w server.ResponseSender, r *server.Request) error {
 	// Send IPv6 address with 60 second preferred lifetime,
 	// 90 second valid lifetime, no extra options
-	iaaddr, err := dhcp6.NewIAAddr(ip, 60*time.Second, 90*time.Second, nil)
+	iaaddr, err := opts.NewIAAddr(ip, 60*time.Second, 90*time.Second, nil)
 	if err != nil {
 		return err
 	}
