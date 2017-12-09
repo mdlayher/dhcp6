@@ -85,7 +85,7 @@ func (t ElapsedTime) MarshalBinary() ([]byte, error) {
 	// The client uses the value 0xffff to represent any
 	// elapsed time values greater than the largest time value
 	// that can be represented in the Elapsed Time option.
-	if time.Duration(t) > 655350 * time.Millisecond {
+	if time.Duration(t) > 655350*time.Millisecond {
 		t = ElapsedTime(655350 * time.Millisecond)
 	}
 	binary.BigEndian.PutUint16(b, uint16(time.Duration(t)/10/time.Millisecond))
@@ -298,11 +298,11 @@ func (n *NII) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// A DHCPv6 Relay Agent relays messages between clients and servers or
-// other relay agents through Relay-Forward and Relay-Reply message
-// types. The original client DHCP message (i.e., the packet payload,
-// excluding UDP and IP headers) is encapsulated in a Relay Message
-// option
+// A RelayMessageOption is used by a DHCPv6 Relay Agent to relay messages
+// between clients and servers or other relay agents through Relay-Forward
+// and Relay-Reply message types. The original client DHCP message (i.e.,
+// the packet payload,  excluding UDP and IP headers) is encapsulated in a
+// Relay Message option.
 type RelayMessageOption []byte
 
 // MarshalBinary allocates a byte slice containing the data from a RelayMessageOption.
@@ -317,7 +317,7 @@ func (r *RelayMessageOption) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// Set Client Server Message (e.g. Solicit, Advertise ...) into this option.
+// SetClientServerMessage sets a Packet (e.g. Solicit, Advertise ...) into this option.
 func (r *RelayMessageOption) SetClientServerMessage(p *Packet) error {
 	b, err := p.MarshalBinary()
 	if err != nil {
@@ -328,7 +328,7 @@ func (r *RelayMessageOption) SetClientServerMessage(p *Packet) error {
 	return nil
 }
 
-// Set RelayMessage (e.g. Relay Forward, Relay Reply) into this option.
+// SetRelayMessage sets a RelayMessage (e.g. Relay Forward, Relay Reply) into this option.
 func (r *RelayMessageOption) SetRelayMessage(p *RelayMessage) error {
 	b, err := p.MarshalBinary()
 	if err != nil {

@@ -5,8 +5,9 @@ import (
 	"io"
 )
 
-// The definition of the remote-id carried in this option is vendor
-// specific.  The vendor is indicated in the enterprise-number field.
+// A RemoteIdentifier carries vendor-specific options.
+//
+// The vendor is indicated in the enterprise-number field.
 // The remote-id field may be used to encode, for instance:
 // - a "caller ID" telephone number for dial-up connection
 // - a "user name" prompted for by a Remote Access Server
@@ -21,18 +22,18 @@ type RemoteIdentifier struct {
 	EnterpriseNumber uint32
 
 	// The opaque value for the remote-id.
-	RemoteId []byte
+	RemoteID []byte
 }
 
-// RemoteIdentifier allocates a byte slice containing the data
+// MarshalBinary allocates a byte slice containing the data
 // from a RemoteIdentifier.
 func (r *RemoteIdentifier) MarshalBinary() ([]byte, error) {
 	// 4 bytes: EnterpriseNumber
 	// N bytes: RemoteId
-	b := make([]byte, 4, 4+len(r.RemoteId))
+	b := make([]byte, 4, 4+len(r.RemoteID))
 
 	binary.BigEndian.PutUint32(b, r.EnterpriseNumber)
-	b = append(b, r.RemoteId...)
+	b = append(b, r.RemoteID...)
 
 	return b, nil
 }
@@ -50,8 +51,8 @@ func (r *RemoteIdentifier) UnmarshalBinary(b []byte) error {
 	r.EnterpriseNumber = binary.BigEndian.Uint32(b[:4])
 
 	// Extract opaque value as remote-id
-	r.RemoteId = make([]byte, len(b[4:]))
-	copy(r.RemoteId, b[4:])
+	r.RemoteID = make([]byte, len(b[4:]))
+	copy(r.RemoteID, b[4:])
 
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// This option is used by a client to identify the vendor that
+// VendorClass is used by a client to identify the vendor that
 // manufactured the hardware on which the client is running.  The
 // information contained in the data area of this option is contained in
 // one or more opaque fields that identify details of the hardware
