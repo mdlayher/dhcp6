@@ -60,9 +60,9 @@ func handle(ip net.IP, w dhcp6.ResponseSender, r *dhcp6.Request) error {
 	// Accept only Solicit, Request, or Confirm, since this server
 	// does not handle Information Request or other message types
 	valid := map[dhcp6.MessageType]struct{}{
-		dhcp6.MessageTypeSolicit: struct{}{},
-		dhcp6.MessageTypeRequest: struct{}{},
-		dhcp6.MessageTypeConfirm: struct{}{},
+		dhcp6.MessageTypeSolicit: {},
+		dhcp6.MessageTypeRequest: {},
+		dhcp6.MessageTypeConfirm: {},
 	}
 	if _, ok := valid[r.MessageType]; !ok {
 		return nil
