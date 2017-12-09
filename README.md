@@ -1,4 +1,4 @@
-dhcp6 [![Build Status](https://travis-ci.org/mdlayher/dhcp6.svg?branch=master)](https://travis-ci.org/mdlayher/dhcp6) [![Coverage Status](https://coveralls.io/repos/mdlayher/dhcp6/badge.svg?branch=master)](https://coveralls.io/r/mdlayher/dhcp6?branch=master) [![GoDoc](http://godoc.org/github.com/mdlayher/dhcp6?status.svg)](http://godoc.org/github.com/mdlayher/dhcp6)
+dhcp6 [![Build Status](https://travis-ci.org/mdlayher/dhcp6.svg?branch=master)](https://travis-ci.org/mdlayher/dhcp6) [![GoDoc](https://godoc.org/github.com/mdlayher/dhcp6?status.svg)](https://godoc.org/github.com/mdlayher/dhcp6) [![Go Report Card](https://goreportcard.com/badge/github.com/mdlayher/dhcp6)](https://goreportcard.com/report/github.com/mdlayher/dhcp6)
 =====
 
 Package `dhcp6` implements a DHCPv6 server, as described in IETF RFC 3315.  MIT Licensed.
