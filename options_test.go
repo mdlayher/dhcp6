@@ -8,6 +8,11 @@ import (
 	"github.com/mdlayher/dhcp6/util"
 )
 
+type option struct {
+	code OptionCode
+	data []byte
+}
+
 // TestOptionsAddRaw verifies that Options.AddRaw correctly creates or appends
 // key/value Option pairs to an Options map.
 func TestOptionsAddRaw(t *testing.T) {
@@ -20,8 +25,8 @@ func TestOptionsAddRaw(t *testing.T) {
 			desc: "one key/value pair",
 			kv: []option{
 				{
-					Code: 1,
-					Data: []byte("foo"),
+					code: 1,
+					data: []byte("foo"),
 				},
 			},
 			options: Options{
@@ -32,12 +37,12 @@ func TestOptionsAddRaw(t *testing.T) {
 			desc: "two key/value pairs",
 			kv: []option{
 				{
-					Code: 1,
-					Data: []byte("foo"),
+					code: 1,
+					data: []byte("foo"),
 				},
 				{
-					Code: 2,
-					Data: []byte("bar"),
+					code: 2,
+					data: []byte("bar"),
 				},
 			},
 			options: Options{
@@ -49,16 +54,16 @@ func TestOptionsAddRaw(t *testing.T) {
 			desc: "three key/value pairs, two with same key",
 			kv: []option{
 				{
-					Code: 1,
-					Data: []byte("foo"),
+					code: 1,
+					data: []byte("foo"),
 				},
 				{
-					Code: 1,
-					Data: []byte("baz"),
+					code: 1,
+					data: []byte("baz"),
 				},
 				{
-					Code: 2,
-					Data: []byte("bar"),
+					code: 2,
+					data: []byte("bar"),
 				},
 			},
 			options: Options{
@@ -71,7 +76,7 @@ func TestOptionsAddRaw(t *testing.T) {
 	for i, tt := range tests {
 		o := make(Options)
 		for _, p := range tt.kv {
-			o.AddRaw(p.Code, p.Data)
+			o.AddRaw(p.code, p.data)
 		}
 
 		if want, got := tt.options, o; !reflect.DeepEqual(want, got) {
@@ -145,79 +150,6 @@ func TestOptionsGet(t *testing.T) {
 		if want, got := tt.value, value; !bytes.Equal(want, got) {
 			t.Errorf("[%02d] test %q, unexpected value for Options.GetOne(%v):\n- want: %v\n-  got: %v",
 				i, tt.desc, tt.key, want, got)
-		}
-	}
-}
-
-// TestOptions_enumerate verifies that Options.enumerate correctly enumerates
-// and sorts an Options map into key/value option pairs.
-func TestOptions_enumerate(t *testing.T) {
-	var tests = []struct {
-		desc    string
-		options Options
-		kv      optslice
-	}{
-		{
-			desc: "one key/value pair",
-			options: Options{
-				1: [][]byte{[]byte("foo")},
-			},
-			kv: optslice{
-				option{
-					Code: 1,
-					Data: []byte("foo"),
-				},
-			},
-		},
-		{
-			desc: "two key/value pairs",
-			options: Options{
-				1: [][]byte{[]byte("foo")},
-				2: [][]byte{[]byte("bar")},
-			},
-			kv: optslice{
-				option{
-					Code: 1,
-					Data: []byte("foo"),
-				},
-				option{
-					Code: 2,
-					Data: []byte("bar"),
-				},
-			},
-		},
-		{
-			desc: "four key/value pairs, two with same key",
-			options: Options{
-				1: [][]byte{[]byte("foo"), []byte("baz")},
-				3: [][]byte{[]byte("qux")},
-				2: [][]byte{[]byte("bar")},
-			},
-			kv: optslice{
-				option{
-					Code: 1,
-					Data: []byte("foo"),
-				},
-				option{
-					Code: 1,
-					Data: []byte("baz"),
-				},
-				option{
-					Code: 2,
-					Data: []byte("bar"),
-				},
-				option{
-					Code: 3,
-					Data: []byte("qux"),
-				},
-			},
-		},
-	}
-
-	for i, tt := range tests {
-		if want, got := tt.kv, tt.options.enumerate(); !reflect.DeepEqual(want, got) {
-			t.Errorf("[%02d] test %q, unexpected key/value options:\n- want: %v\n-  got: %v",
-				i, tt.desc, want, got)
 		}
 	}
 }

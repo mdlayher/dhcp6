@@ -76,8 +76,19 @@ func (o Options) GetOne(key OptionCode) ([]byte, error) {
 }
 
 // Marshal writes options into the provided Buffer sorted by option codes.
-func (o Options) Marshal(buf *util.Buffer) {
-	o.enumerate().marshal(buf)
+func (o Options) Marshal(b *util.Buffer) {
+	for _, code := range o.sortedCodes() {
+		for _, data := range o[code] {
+			// 2 bytes: option code
+			b.Write16(uint16(code))
+
+			// 2 bytes: option length
+			b.Write16(uint16(len(data)))
+
+			// N bytes: option data
+			b.WriteBytes(data)
+		}
+	}
 }
 
 // Unmarshal fills opts with option codes and corresponding values from an
@@ -116,53 +127,19 @@ func (o *Options) Unmarshal(buf *util.Buffer) error {
 	return nil
 }
 
-// option represents an individual DHCP Option, as defined in RFC 3315, Section
-// 22. An Option carries both an OptionCode and its raw Data.  The format of
-// option data varies depending on the option code.
-type option struct {
-	Code OptionCode
-	Data []byte
-}
+// optionCodes implements sort.Interface.
+type optionCodes []OptionCode
 
-// optslice is a slice of option values, and is used to help marshal option
-// values into binary form.
-type optslice []option
+func (b optionCodes) Len() int               { return len(b) }
+func (b optionCodes) Less(i int, j int) bool { return b[i] < b[j] }
+func (b optionCodes) Swap(i int, j int)      { b[i], b[j] = b[j], b[i] }
 
-// marshal writes the option slice into the provided Buffer.
-func (o optslice) marshal(b *util.Buffer) {
-	for _, oo := range o {
-		// 2 bytes: option code
-		b.Write16(uint16(oo.Code))
-
-		// 2 bytes: option length
-		b.Write16(uint16(len(oo.Data)))
-
-		// N bytes: option data
-		b.WriteBytes(oo.Data)
-	}
-}
-
-// byOptionCode implements sort.Interface for optslice.
-type byOptionCode optslice
-
-func (b byOptionCode) Len() int               { return len(b) }
-func (b byOptionCode) Less(i int, j int) bool { return b[i].Code < b[j].Code }
-func (b byOptionCode) Swap(i int, j int)      { b[i], b[j] = b[j], b[i] }
-
-// enumerate returns an ordered slice of option data from the Options map,
-// for use with sending responses to clients.
-func (o Options) enumerate() optslice {
-	// Send all values for a given key
-	var options optslice
-	for k, v := range o {
-		for _, vv := range v {
-			options = append(options, option{
-				Code: k,
-				Data: vv,
-			})
-		}
+func (o Options) sortedCodes() optionCodes {
+	var codes optionCodes
+	for code := range o {
+		codes = append(codes, code)
 	}
 
-	sort.Sort(byOptionCode(options))
-	return options
+	sort.Sort(codes)
+	return codes
 }
