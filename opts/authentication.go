@@ -3,7 +3,7 @@ package opts
 import (
 	"io"
 
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 // The Authentication option carries authentication information to
@@ -34,7 +34,7 @@ func (a *Authentication) MarshalBinary() ([]byte, error) {
 	// 1 byte:  RDM
 	// 8 bytes: ReplayDetection
 	// N bytes: AuthenticationInformation (can have 0 len byte)
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 	b.Write8(a.Protocol)
 	b.Write8(a.Algorithm)
 	b.Write8(a.RDM)
@@ -48,7 +48,7 @@ func (a *Authentication) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid
 // Authentication, io.ErrUnexpectedEOF is returned.
 func (a *Authentication) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	// Too short to be valid Authentication
 	if b.Len() < 11 {
 		return io.ErrUnexpectedEOF

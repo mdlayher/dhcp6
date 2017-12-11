@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 // A OptionRequestOption is a list OptionCode, as defined in RFC 3315, Section 22.7.
@@ -19,7 +19,7 @@ type OptionRequestOption []dhcp6.OptionCode
 
 // MarshalBinary allocates a byte slice containing the data from a OptionRequestOption.
 func (oro OptionRequestOption) MarshalBinary() ([]byte, error) {
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 	for _, opt := range oro {
 		b.Write16(uint16(opt))
 	}
@@ -31,7 +31,7 @@ func (oro OptionRequestOption) MarshalBinary() ([]byte, error) {
 // If the length of byte slice is not be be divisible by 2,
 // errInvalidOptionRequest is returned.
 func (oro *OptionRequestOption) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	// Length must be divisible by 2.
 	if b.Len()%2 != 0 {
 		return io.ErrUnexpectedEOF
@@ -79,7 +79,7 @@ type ElapsedTime time.Duration
 // MarshalBinary allocates a byte slice containing the data from an
 // ElapsedTime.
 func (t ElapsedTime) MarshalBinary() ([]byte, error) {
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 
 	unit := 10 * time.Millisecond
 	// The elapsed time value is an unsigned, 16 bit integer.
@@ -98,7 +98,7 @@ func (t ElapsedTime) MarshalBinary() ([]byte, error) {
 // If the byte slice is not exactly 2 bytes in length, io.ErrUnexpectedEOF is
 // returned.
 func (t *ElapsedTime) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	if b.Len() != 2 {
 		return io.ErrUnexpectedEOF
 	}
@@ -152,13 +152,13 @@ func (d Data) MarshalBinary() ([]byte, error) {
 		c += 2 + len(dd)
 	}
 
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 	d.Marshal(b)
 	return b.Data(), nil
 }
 
 // Marshal marshals to a given buffer from a Data structure.
-func (d Data) Marshal(b *util.Buffer) {
+func (d Data) Marshal(b *buffer.Buffer) {
 	for _, dd := range d {
 		// 2 byte: length of data
 		b.Write16(uint16(len(dd)))
@@ -170,7 +170,7 @@ func (d Data) Marshal(b *util.Buffer) {
 
 // UnmarshalBinary unmarshals a raw byte slice into a Data structure.
 func (d *Data) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	return d.Unmarshal(b)
 }
 
@@ -178,7 +178,7 @@ func (d *Data) UnmarshalBinary(p []byte) error {
 // Data is packed in the form:
 //   - 2 bytes: data length
 //   - N bytes: raw data
-func (d *Data) Unmarshal(b *util.Buffer) error {
+func (d *Data) Unmarshal(b *buffer.Buffer) error {
 	data := make(Data, 0, b.Len())
 
 	// Iterate until not enough bytes remain to parse another length value
@@ -235,7 +235,7 @@ type ArchTypes []dhcp6.ArchType
 
 // MarshalBinary allocates a byte slice containing the data from ArchTypes.
 func (a ArchTypes) MarshalBinary() ([]byte, error) {
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 	for _, aType := range a {
 		b.Write16(uint16(aType))
 	}
@@ -248,7 +248,7 @@ func (a ArchTypes) MarshalBinary() ([]byte, error) {
 // If the byte slice is less than 2 bytes in length, or is not a length that
 // is divisible by 2, io.ErrUnexpectedEOF is returned.
 func (a *ArchTypes) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	// Length must be at least 2, and divisible by 2.
 	if b.Len() < 2 || b.Len()%2 != 0 {
 		return io.ErrUnexpectedEOF

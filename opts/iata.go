@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/mdlayher/dhcp6"
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 // IATA represents an Identity Association for Temporary Addresses, as
@@ -39,7 +39,7 @@ func NewIATA(iaid [4]byte, options dhcp6.Options) *IATA {
 func (i *IATA) MarshalBinary() ([]byte, error) {
 	// 4 bytes: IAID
 	// N bytes: options slice byte count
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 
 	b.WriteBytes(i.IAID[:])
 	i.Options.Marshal(b)
@@ -52,7 +52,7 @@ func (i *IATA) MarshalBinary() ([]byte, error) {
 // If the byte slice does not contain enough data to form a valid IATA,
 // io.ErrUnexpectedEOF is returned.
 func (i *IATA) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	// IATA must contain at least an IAID.
 	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF

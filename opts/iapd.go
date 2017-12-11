@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 // IAPD represents an Identity Association for Prefix Delegation, as
@@ -55,7 +55,7 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 	// 4 bytes: T1
 	// 4 bytes: T2
 	// N bytes: options slice byte count
-	buf := util.NewBuffer(nil)
+	buf := buffer.New(nil)
 
 	buf.WriteBytes(i.IAID[:])
 	buf.Write32(uint32(i.T1 / time.Second))
@@ -71,7 +71,7 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 // io.ErrUnexpectedEOF is returned.
 func (i *IAPD) UnmarshalBinary(b []byte) error {
 	// IAPD must contain at least an IAID, T1, and T2.
-	buf := util.NewBuffer(b)
+	buf := buffer.New(b)
 	if buf.Len() < 12 {
 		return io.ErrUnexpectedEOF
 	}

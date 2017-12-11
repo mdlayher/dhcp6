@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/mdlayher/dhcp6"
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 // A VendorOpts is used by clients and servers to exchange
@@ -24,7 +24,7 @@ type VendorOpts struct {
 func (v *VendorOpts) MarshalBinary() ([]byte, error) {
 	// 4 bytes: EnterpriseNumber
 	// N bytes: options slice byte count
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 	b.Write32(v.EnterpriseNumber)
 	v.Options.Marshal(b)
 
@@ -36,7 +36,7 @@ func (v *VendorOpts) MarshalBinary() ([]byte, error) {
 // VendorOpts, io.ErrUnexpectedEOF is returned.
 // If option-data are invalid, then ErrInvalidPacket is returned.
 func (v *VendorOpts) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	// Too short to be valid VendorOpts
 	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF

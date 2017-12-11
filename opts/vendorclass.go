@@ -3,7 +3,7 @@ package opts
 import (
 	"io"
 
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 // VendorClass is used by a client to identify the vendor that
@@ -26,7 +26,7 @@ type VendorClass struct {
 
 // MarshalBinary allocates a byte slice containing the data from a VendorClass.
 func (vc *VendorClass) MarshalBinary() ([]byte, error) {
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 	b.Write32(vc.EnterpriseNumber)
 	vc.VendorClassData.Marshal(b)
 	return b.Data(), nil
@@ -37,7 +37,7 @@ func (vc *VendorClass) MarshalBinary() ([]byte, error) {
 // If the byte slice is less than 4 bytes in length, or if VendorClassData is
 // malformed, io.ErrUnexpectedEOF is returned.
 func (vc *VendorClass) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	if b.Len() < 4 {
 		return io.ErrUnexpectedEOF
 	}

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 // IAPrefix represents an Identity Association Prefix, as defined in RFC 3633,
@@ -90,7 +90,7 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 	//  1 byte : prefix length
 	// 16 bytes: IPv6 prefix
 	//  N bytes: options
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 
 	b.Write32(uint32(i.PreferredLifetime / time.Second))
 	b.Write32(uint32(i.ValidLifetime / time.Second))
@@ -108,7 +108,7 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 // byte slice is less than the valid lifetime, ErrInvalidLifetimes is
 // returned.
 func (i *IAPrefix) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	// IAPrefix must at least contain lifetimes, prefix length, and prefix
 	if b.Len() < 25 {
 		return io.ErrUnexpectedEOF

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 // IAAddr represents an Identity Association Address, as defined in RFC 3315,
@@ -81,7 +81,7 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 	//  4 bytes: preferred lifetime
 	//  4 bytes: valid lifetime
 	//  N bytes: options
-	b := util.NewBuffer(nil)
+	b := buffer.New(nil)
 
 	copy(b.WriteN(net.IPv6len), i.IP)
 	b.Write32(uint32(i.PreferredLifetime / time.Second))
@@ -97,7 +97,7 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 // io.ErrUnexpectedEOF is returned.  If the preferred lifetime value in the
 // byte slice is less than the valid lifetime, ErrInvalidLifetimes is returned.
 func (i *IAAddr) UnmarshalBinary(p []byte) error {
-	b := util.NewBuffer(p)
+	b := buffer.New(p)
 	if b.Len() < 24 {
 		return io.ErrUnexpectedEOF
 	}

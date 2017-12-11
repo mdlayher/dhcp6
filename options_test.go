@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mdlayher/dhcp6/util"
+	"github.com/mdlayher/dhcp6/internal/buffer"
 )
 
 type option struct {
@@ -215,7 +215,7 @@ func Test_parseOptions(t *testing.T) {
 
 	for i, tt := range tests {
 		var options Options
-		err := (&options).Unmarshal(util.NewBuffer(tt.buf))
+		err := (&options).Unmarshal(buffer.New(tt.buf))
 		if want, got := tt.err, err; want != got {
 			t.Errorf("[%02d] test %q, unexpected error for parseOptions(%v): %v != %v",
 				i, tt.desc, tt.buf, want, got)

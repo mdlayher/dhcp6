@@ -1,4 +1,4 @@
-package util
+package buffer
 
 import (
 	"encoding/binary"
@@ -12,8 +12,8 @@ type Buffer struct {
 	data []byte
 }
 
-// NewBuffer consumes b for marshaling or unmarshaling.
-func NewBuffer(b []byte) *Buffer {
+// New consumes b for marshaling or unmarshaling.
+func New(b []byte) *Buffer {
 	return &Buffer{b}
 }
 
