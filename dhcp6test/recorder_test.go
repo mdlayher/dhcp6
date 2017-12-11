@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/mdlayher/dhcp6"
-	"github.com/mdlayher/dhcp6/opts"
+	"github.com/mdlayher/dhcp6/dhcp6opts"
 )
 
 // TestRecorder verifies that a Recorder properly captures information

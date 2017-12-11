@@ -1,4 +1,4 @@
-package opts
+package dhcp6opts
 
 import (
 	"io"

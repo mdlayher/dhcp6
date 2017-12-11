@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/dhcp6"
-	"github.com/mdlayher/dhcp6/opts"
+	"github.com/mdlayher/dhcp6/dhcp6opts"
 	"github.com/mdlayher/dhcp6/server"
 )
 
@@ -86,7 +86,7 @@ func handle(ip net.IP, w server.ResponseSender, r *server.Request) error {
 	)
 
 	// Print out options the client has requested
-	if opts, err := opts.GetOptionRequest(r.Options); err == nil {
+	if opts, err := dhcp6opts.GetOptionRequest(r.Options); err == nil {
 		log.Println("\t- requested:")
 		for _, o := range opts {
 			log.Printf("\t\t - %s", o)
@@ -94,7 +94,7 @@ func handle(ip net.IP, w server.ResponseSender, r *server.Request) error {
 	}
 
 	// Client must send a IANA to retrieve an IPv6 address
-	ianas, err := opts.GetIANA(r.Options)
+	ianas, err := dhcp6opts.GetIANA(r.Options)
 	if err == dhcp6.ErrOptionNotPresent {
 		log.Println("no IANAs provided")
 		return nil
@@ -118,11 +118,11 @@ func handle(ip net.IP, w server.ResponseSender, r *server.Request) error {
 	)
 
 	// Instruct client to prefer this server unconditionally
-	_ = w.Options().Add(dhcp6.OptionPreference, opts.Preference(255))
+	_ = w.Options().Add(dhcp6.OptionPreference, dhcp6opts.Preference(255))
 
 	// IANA may already have an IAAddr if an address was already assigned.
 	// If not, assign a new one.
-	iaaddrs, err := opts.GetIAAddr(ia.Options)
+	iaaddrs, err := dhcp6opts.GetIAAddr(ia.Options)
 	switch err {
 	case dhcp6.ErrOptionNotPresent:
 		// Client did not indicate a previous address, and is soliciting.
@@ -166,10 +166,10 @@ func handle(ip net.IP, w server.ResponseSender, r *server.Request) error {
 
 // newIAAddr creates a IAAddr for a IANA using the specified IPv6 address,
 // and advertises it to a client.
-func newIAAddr(ia *opts.IANA, ip net.IP, w server.ResponseSender, r *server.Request) error {
+func newIAAddr(ia *dhcp6opts.IANA, ip net.IP, w server.ResponseSender, r *server.Request) error {
 	// Send IPv6 address with 60 second preferred lifetime,
 	// 90 second valid lifetime, no extra options
-	iaaddr, err := opts.NewIAAddr(ip, 60*time.Second, 90*time.Second, nil)
+	iaaddr, err := dhcp6opts.NewIAAddr(ip, 60*time.Second, 90*time.Second, nil)
 	if err != nil {
 		return err
 	}
