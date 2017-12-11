@@ -412,3 +412,19 @@ func GetNII(o dhcp6.Options) (*NII, error) {
 	err = n.UnmarshalBinary(v)
 	return n, err
 }
+
+// GetDNSServers returns the DNS Recursive Name Servers Option value, as
+// described in RFC 3646, Section 3.
+//
+// The DNS servers are listed in the order of preference for use by the client
+// resolver.
+func GetDNSServers(o dhcp6.Options) (IPs, error) {
+	v, err := o.GetOne(dhcp6.OptionDNSServers)
+	if err != nil {
+		return nil, err
+	}
+
+	var ips IPs
+	err = ips.UnmarshalBinary(v)
+	return ips, err
+}

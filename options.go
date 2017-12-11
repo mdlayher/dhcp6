@@ -75,7 +75,7 @@ func (o Options) GetOne(key OptionCode) ([]byte, error) {
 	return vv[0], nil
 }
 
-// MarshalBytes allocates a buffer and writes options in their DHCPv6 binary
+// MarshalBinary allocates a buffer and writes options in their DHCPv6 binary
 // format into the buffer.
 func (o Options) MarshalBinary() ([]byte, error) {
 	b := buffer.New(nil)

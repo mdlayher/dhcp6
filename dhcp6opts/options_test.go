@@ -1842,3 +1842,68 @@ func TestGetNII(t *testing.T) {
 		}
 	}
 }
+
+// TestGetDNSServers verifies that dhcp6opts.GetDNSServers properly parses and
+// returns a list of net.IPs, if it is available with OptionDNSServers.
+func TestGetDNSServers(t *testing.T) {
+	var tests = []struct {
+		desc    string
+		options dhcp6.Options
+		dns     IPs
+		err     error
+	}{
+		{
+			desc: "OptionDNSServers not present in dhcp6.Options map",
+			err:  dhcp6.ErrOptionNotPresent,
+		},
+		{
+			desc: "OptionDNSServers present in dhcp6.Options map, but too short length",
+			options: dhcp6.Options{
+				dhcp6.OptionDNSServers: [][]byte{{255, 255, 255}},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "OptionDNSServers present in dhcp6.Options map, but too long length",
+			options: dhcp6.Options{
+				dhcp6.OptionDNSServers: [][]byte{bytes.Repeat([]byte{0xff}, 17)},
+			},
+			err: io.ErrUnexpectedEOF,
+		},
+		{
+			desc: "One OptionDNSServers present in dhcp6.Options map",
+			options: dhcp6.Options{
+				dhcp6.OptionDNSServers: [][]byte{bytes.Repeat([]byte{0xfe}, 16)},
+			},
+			dns: IPs{
+				net.IP(bytes.Repeat([]byte{0xfe}, 16)),
+			},
+		},
+		{
+			desc: "Two OptionDNSServers present in dhcp6.Options map",
+			options: dhcp6.Options{
+				dhcp6.OptionDNSServers: [][]byte{append(bytes.Repeat([]byte{0xfd}, 16), bytes.Repeat([]byte{0xfc}, 16)...)},
+			},
+			dns: IPs{
+				net.IP(bytes.Repeat([]byte{0xfd}, 16)),
+				net.IP(bytes.Repeat([]byte{0xfc}, 16)),
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		dns, err := GetDNSServers(tt.options)
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for GetDNSServers(dhcp6.Options): %v != %v",
+					i, tt.desc, want, got)
+			}
+			continue
+		}
+
+		if want, got := tt.dns, dns; !reflect.DeepEqual(want, got) {
+			t.Errorf("[%02d] test %q, unexpected value for GetDNSServers(dhcp6.Options): %v != %v",
+				i, tt.desc, want, got)
+		}
+	}
+}
