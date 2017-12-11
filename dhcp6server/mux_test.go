@@ -1,4 +1,4 @@
-package server_test
+package dhcp6server_test
 
 import (
 	"testing"

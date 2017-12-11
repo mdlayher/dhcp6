@@ -1,4 +1,4 @@
-package server
+package dhcp6server
 
 import (
 	"github.com/mdlayher/dhcp6"
