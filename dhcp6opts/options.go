@@ -209,8 +209,7 @@ func GetStatusCode(o dhcp6.Options) (*StatusCode, error) {
 // GetRapidCommit returns the Rapid Commit Option value, described in RFC 3315,
 // Section 22.14.
 //
-// The boolean return value indicates if OptionRapidCommit was present in the
-// Options map, and thus, if Rapid Commit should be used.
+// Nil is returned if OptionRapidCommit was present in the Options map.
 func GetRapidCommit(o dhcp6.Options) error {
 	v, err := o.GetOne(dhcp6.OptionRapidCommit)
 	if err != nil {
