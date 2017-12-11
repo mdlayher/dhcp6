@@ -259,9 +259,9 @@ func TestOptionsAddBinaryMarshaler(t *testing.T) {
 			desc: "ArchTypes",
 			code: dhcp6.OptionClientArchType,
 			bin: ArchTypes{
-				dhcp6.ArchTypeEFIx8664,
-				dhcp6.ArchTypeIntelx86PC,
-				dhcp6.ArchTypeIntelLeanClient,
+				ArchTypeEFIx8664,
+				ArchTypeIntelx86PC,
+				ArchTypeIntelLeanClient,
 			},
 			options: dhcp6.Options{
 				dhcp6.OptionClientArchType: [][]byte{{0, 9, 0, 0, 0, 5}},
@@ -1730,7 +1730,7 @@ func TestGetClientArchType(t *testing.T) {
 			options: dhcp6.Options{
 				dhcp6.OptionClientArchType: [][]byte{{0, 9}},
 			},
-			arch: ArchTypes{dhcp6.ArchTypeEFIx8664},
+			arch: ArchTypes{ArchTypeEFIx8664},
 		},
 		{
 			desc: "OptionClientArchType present in dhcp6.Options map, three architectures",
@@ -1738,9 +1738,9 @@ func TestGetClientArchType(t *testing.T) {
 				dhcp6.OptionClientArchType: [][]byte{{0, 5, 0, 9, 0, 0}},
 			},
 			arch: ArchTypes{
-				dhcp6.ArchTypeIntelLeanClient,
-				dhcp6.ArchTypeEFIx8664,
-				dhcp6.ArchTypeIntelx86PC,
+				ArchTypeIntelLeanClient,
+				ArchTypeEFIx8664,
+				ArchTypeIntelx86PC,
 			},
 		},
 	}

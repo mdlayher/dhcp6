@@ -231,7 +231,7 @@ func (u *URL) UnmarshalBinary(b []byte) error {
 // ArchTypes is a slice of ArchType values.  It is provided for convenient
 // marshaling and unmarshaling of a slice of ArchType values from an Options
 // map.
-type ArchTypes []dhcp6.ArchType
+type ArchTypes []ArchType
 
 // MarshalBinary allocates a byte slice containing the data from ArchTypes.
 func (a ArchTypes) MarshalBinary() ([]byte, error) {
@@ -257,7 +257,7 @@ func (a *ArchTypes) UnmarshalBinary(p []byte) error {
 	// Allocate ArchTypes at once and unpack every two bytes into an element
 	arch := make(ArchTypes, 0, b.Len()/2)
 	for b.Len() > 1 {
-		arch = append(arch, dhcp6.ArchType(b.Read16()))
+		arch = append(arch, ArchType(b.Read16()))
 	}
 
 	*a = arch

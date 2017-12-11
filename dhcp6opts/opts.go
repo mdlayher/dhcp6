@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-//go:generate stringer -output=string.go -type=DUIDType
+//go:generate stringer -output=string.go -type=ArchType,DUIDType
 
 var (
 	// ErrHardwareTypeNotImplemented is returned when HardwareType is not

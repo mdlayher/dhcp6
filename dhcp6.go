@@ -8,7 +8,7 @@ import (
 	"errors"
 )
 
-//go:generate stringer -output=string.go -type=ArchType,MessageType,Status,OptionCode
+//go:generate stringer -output=string.go -type=MessageType,Status,OptionCode
 
 var (
 	// ErrInvalidOptions is returned when invalid options data is encountered
