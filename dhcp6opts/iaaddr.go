@@ -86,7 +86,11 @@ func (i *IAAddr) MarshalBinary() ([]byte, error) {
 	copy(b.WriteN(net.IPv6len), i.IP)
 	b.Write32(uint32(i.PreferredLifetime / time.Second))
 	b.Write32(uint32(i.ValidLifetime / time.Second))
-	i.Options.Marshal(b)
+	opts, err := i.Options.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	b.WriteBytes(opts)
 
 	return b.Data(), nil
 }
@@ -113,5 +117,5 @@ func (i *IAAddr) UnmarshalBinary(p []byte) error {
 		return ErrInvalidLifetimes
 	}
 
-	return (&i.Options).Unmarshal(b)
+	return (&i.Options).UnmarshalBinary(b.Remaining())
 }

@@ -96,7 +96,11 @@ func (i *IAPrefix) MarshalBinary() ([]byte, error) {
 	b.Write32(uint32(i.ValidLifetime / time.Second))
 	b.Write8(i.PrefixLength)
 	copy(b.WriteN(net.IPv6len), i.Prefix)
-	i.Options.Marshal(b)
+	opts, err := i.Options.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	b.WriteBytes(opts)
 
 	return b.Data(), nil
 }
@@ -126,5 +130,5 @@ func (i *IAPrefix) UnmarshalBinary(p []byte) error {
 	i.Prefix = make(net.IP, net.IPv6len)
 	copy(i.Prefix, b.Consume(net.IPv6len))
 
-	return (&i.Options).Unmarshal(b)
+	return (&i.Options).UnmarshalBinary(b.Remaining())
 }

@@ -34,8 +34,12 @@ func (p *Packet) MarshalBinary() ([]byte, error) {
 
 	b.Write8(uint8(p.MessageType))
 	b.WriteBytes(p.TransactionID[:])
-	p.Options.Marshal(b)
 
+	opts, err := p.Options.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	b.WriteBytes(opts)
 	return b.Data(), nil
 }
 
@@ -53,7 +57,7 @@ func (p *Packet) UnmarshalBinary(q []byte) error {
 	p.MessageType = MessageType(b.Read8())
 	b.ReadBytes(p.TransactionID[:])
 
-	if err := (&p.Options).Unmarshal(b); err != nil {
+	if err := (&p.Options).UnmarshalBinary(b.Remaining()); err != nil {
 		return ErrInvalidPacket
 	}
 	return nil

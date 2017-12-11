@@ -42,7 +42,11 @@ func (i *IATA) MarshalBinary() ([]byte, error) {
 	b := buffer.New(nil)
 
 	b.WriteBytes(i.IAID[:])
-	i.Options.Marshal(b)
+	opts, err := i.Options.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	b.WriteBytes(opts)
 
 	return b.Data(), nil
 }
@@ -59,5 +63,5 @@ func (i *IATA) UnmarshalBinary(p []byte) error {
 	}
 
 	b.ReadBytes(i.IAID[:])
-	return (&i.Options).Unmarshal(b)
+	return (&i.Options).UnmarshalBinary(b.Remaining())
 }

@@ -60,7 +60,11 @@ func (i *IAPD) MarshalBinary() ([]byte, error) {
 	buf.WriteBytes(i.IAID[:])
 	buf.Write32(uint32(i.T1 / time.Second))
 	buf.Write32(uint32(i.T2 / time.Second))
-	i.Options.Marshal(buf)
+	opts, err := i.Options.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	buf.WriteBytes(opts)
 
 	return buf.Data(), nil
 }
@@ -80,5 +84,5 @@ func (i *IAPD) UnmarshalBinary(b []byte) error {
 	i.T1 = time.Duration(buf.Read32()) * time.Second
 	i.T2 = time.Duration(buf.Read32()) * time.Second
 
-	return (&i.Options).Unmarshal(buf)
+	return (&i.Options).UnmarshalBinary(buf.Remaining())
 }

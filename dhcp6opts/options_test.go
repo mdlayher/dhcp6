@@ -328,10 +328,11 @@ func TestGetClientID(t *testing.T) {
 		// DUID parsing is tested elsewhere, so errors should automatically fail
 		// test here
 		duid, err := GetClientID(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected err for dhcp6.Options.ClientID(): %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected err for dhcp6.Options.ClientID(): %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -376,10 +377,11 @@ func TestGetServerID(t *testing.T) {
 		// DUID parsing is tested elsewhere, so errors should automatically fail
 		// test here
 		duid, err := GetServerID(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected err for dhcp6.Options.ServerID(): %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected err for dhcp6.Options.ServerID(): %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -452,10 +454,11 @@ func TestGetIANA(t *testing.T) {
 
 	for i, tt := range tests {
 		iana, err := GetIANA(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IANA: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IANA: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -537,10 +540,11 @@ func TestGetIATA(t *testing.T) {
 
 	for i, tt := range tests {
 		iata, err := GetIATA(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IATA: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IATA: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -629,10 +633,11 @@ func TestGetIAAddr(t *testing.T) {
 
 	for i, tt := range tests {
 		iaaddr, err := GetIAAddr(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IAAddr: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IAAddr: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -693,10 +698,11 @@ func TestGetOptionRequest(t *testing.T) {
 
 	for i, tt := range tests {
 		codes, err := GetOptionRequest(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.OptionRequest(): %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.OptionRequest(): %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -745,10 +751,11 @@ func TestGetPreference(t *testing.T) {
 
 	for i, tt := range tests {
 		preference, err := GetPreference(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.Preference(): %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.Preference(): %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -804,10 +811,11 @@ func TestGetUnicast(t *testing.T) {
 
 	for i, tt := range tests {
 		ip, err := GetUnicast(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.Unicast(): %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.Unicast(): %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -861,10 +869,11 @@ func TestGetStatusCode(t *testing.T) {
 
 	for i, tt := range tests {
 		sc, err := GetStatusCode(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.StatusCode(): %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.StatusCode(): %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -913,10 +922,11 @@ func TestGetElapsedTime(t *testing.T) {
 
 	for i, tt := range tests {
 		duration, err := GetElapsedTime(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.ElapsedTime: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.ElapsedTime: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1170,10 +1180,11 @@ func TestGetUserClass(t *testing.T) {
 
 	for i, tt := range tests {
 		classes, err := GetUserClass(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.UserClass: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.UserClass: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1267,10 +1278,11 @@ func TestGetVendorClass(t *testing.T) {
 
 	for i, tt := range tests {
 		classes, err := GetVendorClass(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.VendorClass: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.VendorClass: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1322,10 +1334,11 @@ func TestInterfaceID(t *testing.T) {
 
 	for i, tt := range tests {
 		interfaceID, err := GetInterfaceID(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.InterfaceID: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.InterfaceID: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1398,10 +1411,11 @@ func TestGetIAPD(t *testing.T) {
 
 	for i, tt := range tests {
 		iapd, err := GetIAPD(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IAPD: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IAPD: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1488,10 +1502,11 @@ func TestGetIAPrefix(t *testing.T) {
 
 	for i, tt := range tests {
 		iaprefix, err := GetIAPrefix(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IAPrefix: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.IAPrefix: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1596,10 +1611,11 @@ func TestGetBootFileURL(t *testing.T) {
 
 	for i, tt := range tests {
 		u, err := GetBootFileURL(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected err for dhcp6.Options.BootFileURL(): %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected err for dhcp6.Options.BootFileURL(): %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1675,10 +1691,11 @@ func TestGetBootFileParam(t *testing.T) {
 
 	for i, tt := range tests {
 		param, err := GetBootFileParam(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.BootFileParam: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.BootFileParam: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1747,10 +1764,11 @@ func TestGetClientArchType(t *testing.T) {
 
 	for i, tt := range tests {
 		arch, err := GetClientArchType(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.ClientArchType: %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.ClientArchType: %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 
@@ -1810,10 +1828,11 @@ func TestGetNII(t *testing.T) {
 
 	for i, tt := range tests {
 		nii, err := GetNII(tt.options)
-		if want, got := tt.err, err; want != got {
-			t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.NII(): %v != %v",
-				i, tt.desc, want, got)
-		} else if err != nil {
+		if err != nil {
+			if want, got := tt.err, err; want != got {
+				t.Errorf("[%02d] test %q, unexpected error for dhcp6.Options.NII(): %v != %v",
+					i, tt.desc, want, got)
+			}
 			continue
 		}
 

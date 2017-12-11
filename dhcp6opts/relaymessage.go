@@ -50,7 +50,11 @@ func (rm *RelayMessage) MarshalBinary() ([]byte, error) {
 	b.Write8(rm.HopCount)
 	copy(b.WriteN(net.IPv6len), rm.LinkAddress)
 	copy(b.WriteN(net.IPv6len), rm.PeerAddress)
-	rm.Options.Marshal(b)
+	opts, err := rm.Options.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	b.WriteBytes(opts)
 
 	return b.Data(), nil
 }
@@ -75,7 +79,7 @@ func (rm *RelayMessage) UnmarshalBinary(p []byte) error {
 	rm.PeerAddress = make(net.IP, net.IPv6len)
 	copy(rm.PeerAddress, b.Consume(net.IPv6len))
 
-	if err := (&rm.Options).Unmarshal(b); err != nil {
+	if err := (&rm.Options).UnmarshalBinary(b.Remaining()); err != nil {
 		// Invalid options means an invalid RelayMessage
 		return dhcp6.ErrInvalidPacket
 	}

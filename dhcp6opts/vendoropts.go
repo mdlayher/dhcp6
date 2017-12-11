@@ -26,7 +26,11 @@ func (v *VendorOpts) MarshalBinary() ([]byte, error) {
 	// N bytes: options slice byte count
 	b := buffer.New(nil)
 	b.Write32(v.EnterpriseNumber)
-	v.Options.Marshal(b)
+	opts, err := v.Options.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	b.WriteBytes(opts)
 
 	return b.Data(), nil
 }
@@ -43,7 +47,7 @@ func (v *VendorOpts) UnmarshalBinary(p []byte) error {
 	}
 
 	v.EnterpriseNumber = b.Read32()
-	if err := (&v.Options).Unmarshal(b); err != nil {
+	if err := (&v.Options).UnmarshalBinary(b.Remaining()); err != nil {
 		// Invalid options means an invalid RelayMessage
 		return dhcp6.ErrInvalidPacket
 	}

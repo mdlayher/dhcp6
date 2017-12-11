@@ -75,8 +75,10 @@ func (o Options) GetOne(key OptionCode) ([]byte, error) {
 	return vv[0], nil
 }
 
-// Marshal writes options into the provided Buffer sorted by option codes.
-func (o Options) Marshal(b *buffer.Buffer) {
+// MarshalBytes allocates a buffer and writes options in their DHCPv6 binary
+// format into the buffer.
+func (o Options) MarshalBinary() ([]byte, error) {
+	b := buffer.New(nil)
 	for _, code := range o.sortedCodes() {
 		for _, data := range o[code] {
 			// 2 bytes: option code
@@ -89,15 +91,17 @@ func (o Options) Marshal(b *buffer.Buffer) {
 			b.WriteBytes(data)
 		}
 	}
+	return b.Data(), nil
 }
 
-// Unmarshal fills opts with option codes and corresponding values from an
-// input byte slice.
+// UnmarshalBinary fills opts with option codes and corresponding values from
+// an input byte slice.
 //
 // It is used with various different types to enable parsing of both top-level
 // options, and options embedded within other options. If options data is
 // malformed, it returns ErrInvalidOptions.
-func (o *Options) Unmarshal(buf *buffer.Buffer) error {
+func (o *Options) UnmarshalBinary(p []byte) error {
+	buf := buffer.New(p)
 	*o = make(Options)
 
 	for buf.Len() >= 4 {

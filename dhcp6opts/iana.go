@@ -60,7 +60,11 @@ func (i IANA) MarshalBinary() ([]byte, error) {
 	b.WriteBytes(i.IAID[:])
 	b.Write32(uint32(i.T1 / time.Second))
 	b.Write32(uint32(i.T2 / time.Second))
-	i.Options.Marshal(b)
+	opts, err := i.Options.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	b.WriteBytes(opts)
 
 	return b.Data(), nil
 }
@@ -80,5 +84,5 @@ func (i *IANA) UnmarshalBinary(p []byte) error {
 	i.T1 = time.Duration(b.Read32()) * time.Second
 	i.T2 = time.Duration(b.Read32()) * time.Second
 
-	return (&i.Options).Unmarshal(b)
+	return (&i.Options).UnmarshalBinary(b.Remaining())
 }
