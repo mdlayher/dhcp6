@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/dhcp6opts"
 )
 
 // TestRecorder verifies that a Recorder properly captures information
@@ -13,7 +14,7 @@ import (
 func TestRecorder(t *testing.T) {
 	mt := dhcp6.MessageTypeAdvertise
 	txID := [3]byte{0, 1, 2}
-	clientID := dhcp6.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
+	clientID := opts.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
 	r := NewRecorder(txID)
 	if err := r.Options().Add(dhcp6.OptionClientID, clientID); err != nil {
@@ -31,12 +32,9 @@ func TestRecorder(t *testing.T) {
 		t.Fatalf("unexpected transaction ID: %v != %v", want, got)
 	}
 
-	duid, ok, err := r.Options().ClientID()
+	duid, err := opts.GetClientID(r.Options())
 	if err != nil {
 		t.Fatal(err)
-	}
-	if !ok {
-		t.Fatal("empty client ID option")
 	}
 	if want, got := clientID, duid; !reflect.DeepEqual(want, got) {
 		t.Fatalf("unexpected client ID: %v != %v", want, got)
