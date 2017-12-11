@@ -4,16 +4,16 @@ import (
 	"testing"
 
 	"github.com/mdlayher/dhcp6"
+	"github.com/mdlayher/dhcp6/dhcp6server"
 	"github.com/mdlayher/dhcp6/dhcp6test"
-	"github.com/mdlayher/dhcp6/server"
 )
 
 // TestServeMuxHandleNoResponse verifies that no Handler is invoked when a
 // ServeMux does not have a Handler registered for a given message type.
 func TestServeMuxHandleNoResponse(t *testing.T) {
-	mux := server.NewServeMux()
+	mux := dhcp6server.NewServeMux()
 
-	r, err := server.ParseRequest([]byte{1, 1, 2, 3}, nil)
+	r, err := dhcp6server.ParseRequest([]byte{1, 1, 2, 3}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,12 +32,12 @@ func TestServeMuxHandleNoResponse(t *testing.T) {
 // TestServeMuxHandleOK verifies that a Handler is invoked when a ServeMux
 // has a Handler registered for a given message type.
 func TestServeMuxHandleOK(t *testing.T) {
-	mux := server.NewServeMux()
+	mux := dhcp6server.NewServeMux()
 	mt := dhcp6.MessageTypeSolicit
 
 	mux.Handle(mt, &solicitHandler{})
 
-	r, err := server.ParseRequest([]byte{byte(mt), 0, 1, 2}, nil)
+	r, err := dhcp6server.ParseRequest([]byte{byte(mt), 0, 1, 2}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,12 +54,12 @@ func TestServeMuxHandleOK(t *testing.T) {
 // as a Handler is invoked when a ServeMux has a HandlerFunc registered for
 // a given message type.
 func TestServeMuxHandleFuncOK(t *testing.T) {
-	mux := server.NewServeMux()
+	mux := dhcp6server.NewServeMux()
 	mt := dhcp6.MessageTypeSolicit
 
 	mux.HandleFunc(mt, solicit)
 
-	r, err := server.ParseRequest([]byte{byte(mt), 0, 1, 2}, nil)
+	r, err := dhcp6server.ParseRequest([]byte{byte(mt), 0, 1, 2}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,11 +76,11 @@ func TestServeMuxHandleFuncOK(t *testing.T) {
 // to a Solicit request.
 type solicitHandler struct{}
 
-func (h *solicitHandler) ServeDHCP(w server.ResponseSender, r *server.Request) {
+func (h *solicitHandler) ServeDHCP(w dhcp6server.ResponseSender, r *dhcp6server.Request) {
 	solicit(w, r)
 }
 
 // solicit is a function which can be adapted as a HandlerFunc.
-func solicit(w server.ResponseSender, r *server.Request) {
+func solicit(w dhcp6server.ResponseSender, r *dhcp6server.Request) {
 	w.Send(dhcp6.MessageTypeAdvertise)
 }

@@ -14,7 +14,7 @@ import (
 func TestRecorder(t *testing.T) {
 	mt := dhcp6.MessageTypeAdvertise
 	txID := [3]byte{0, 1, 2}
-	clientID := opts.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
+	clientID := dhcp6opts.NewDUIDLL(1, []byte{0, 1, 0, 1, 0, 1})
 
 	r := NewRecorder(txID)
 	if err := r.Options().Add(dhcp6.OptionClientID, clientID); err != nil {
@@ -32,7 +32,7 @@ func TestRecorder(t *testing.T) {
 		t.Fatalf("unexpected transaction ID: %v != %v", want, got)
 	}
 
-	duid, err := opts.GetClientID(r.Options())
+	duid, err := dhcp6opts.GetClientID(r.Options())
 	if err != nil {
 		t.Fatal(err)
 	}
