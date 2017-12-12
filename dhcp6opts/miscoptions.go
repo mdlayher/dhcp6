@@ -129,13 +129,44 @@ func (i *IP) UnmarshalBinary(b []byte) error {
 		return io.ErrUnexpectedEOF
 	}
 
-	ip := net.IP(b)
-	if ip.To4() != nil {
+	if ip := net.IP(b); ip.To4() != nil {
 		return io.ErrUnexpectedEOF
 	}
 
 	*i = make(IP, net.IPv6len)
 	copy(*i, b)
+	return nil
+}
+
+// IPs represents a list of IPv6 addresses.
+type IPs []net.IP
+
+// MarshalBinary allocates a byte slice containing the consecutive data of all
+// IPs.
+func (i IPs) MarshalBinary() ([]byte, error) {
+	ips := make([]byte, 0, len(i)*net.IPv6len)
+	for _, ip := range i {
+		ips = append(ips, ip.To16()...)
+	}
+	return ips, nil
+}
+
+// UnmarshalBinary unmarshals a raw byte slice into a list of IPs.
+//
+// If the byte slice contains any non-IPv6 addresses, io.ErrUnexpectedEOF is
+// returned.
+func (i *IPs) UnmarshalBinary(p []byte) error {
+	b := buffer.New(p)
+	if b.Len()%net.IPv6len != 0 || b.Len() == 0 {
+		return io.ErrUnexpectedEOF
+	}
+
+	*i = make(IPs, 0, b.Len()/net.IPv6len)
+	for b.Len() > 0 {
+		ip := make(net.IP, net.IPv6len)
+		b.ReadBytes(ip)
+		*i = append(*i, ip)
+	}
 	return nil
 }
 
