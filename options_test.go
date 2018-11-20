@@ -178,9 +178,11 @@ func Test_parseOptions(t *testing.T) {
 			err:  ErrInvalidOptions,
 		},
 		{
-			desc:    "zero code, zero length option bytes",
-			buf:     []byte{0, 0, 0, 0},
-			options: Options{},
+			desc: "zero code, zero length option bytes",
+			buf:  []byte{0, 0, 0, 0},
+			options: Options{
+				0: [][]byte{{}},
+			},
 		},
 		{
 			desc: "zero code, zero length option bytes with trailing byte",
@@ -191,6 +193,13 @@ func Test_parseOptions(t *testing.T) {
 			desc: "zero code, length 3, incorrect length for data",
 			buf:  []byte{0, 0, 0, 3, 1, 2},
 			err:  ErrInvalidOptions,
+		},
+		{
+			desc: "Rapid Commit, length 0",
+			buf:  []byte{0, 14, 0, 0},
+			options: Options{
+				OptionRapidCommit: [][]byte{{}},
+			},
 		},
 		{
 			desc: "client ID, length 1, value [1]",
