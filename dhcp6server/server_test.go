@@ -406,8 +406,8 @@ func testServe(r *testMessage, s *Server, expectReply bool, fn func(w ResponseSe
 	c := &oneReadPacketConn{
 		PacketConn: tc,
 
-		readDoneC:  make(chan struct{}, 0),
-		writeDoneC: make(chan struct{}, 0),
+		readDoneC:  make(chan struct{}),
+		writeDoneC: make(chan struct{}),
 	}
 
 	// If no reply is expected, this channel will never be closed,
@@ -432,7 +432,6 @@ func testServe(r *testMessage, s *Server, expectReply bool, fn func(w ResponseSe
 type oneReadPacketConn struct {
 	PacketConn
 
-	err    error
 	txDone bool
 
 	readDoneC  chan struct{}

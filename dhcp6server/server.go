@@ -225,7 +225,7 @@ func (s *Server) newConn(p PacketConn, addr *net.UDPAddr, n int, buf []byte) (*c
 		conn:       p,
 		remoteAddr: addr,
 		server:     s,
-		buf:        make([]byte, n, n),
+		buf:        make([]byte, n),
 	}
 	copy(c.buf, buf[:n])
 
